@@ -5,6 +5,10 @@ import {
     MapPin, Activity, AlertTriangle, Luggage, User
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import SearchBar from '../../components/ui/SearchBar'
+import useGeolocation from '../../hooks/useGeolocation'
+import { useGlobalSocket } from '../../context/SocketContext'
+import LocationPermissionModal from '../../components/location/LocationPermissionModal'
 
 /* ── Mock Data ───────────────────────────────────────────────── */
 const INITIAL_REQUESTS = [
@@ -154,6 +158,26 @@ export default function CoolieDashboard() {
     const [activeJob, setActiveJob] = useState(null)
     const [completedToday, setCompletedToday] = useState(COMPLETED)
     const [shiftSeconds, setShiftSeconds] = useState(6 * 3600 + 42 * 60 + 15)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchFilter, setSearchFilter] = useState('all')
+
+    // Live Tracking Hooks
+    const { location, permission, startWatching, stopWatching } = useGeolocation()
+    const { socket, connected } = useGlobalSocket()
+    const [showLocationModal, setShowLocationModal] = useState(false)
+    const coolieId = 'dummy-coolie-123' // Replace with actual coolie ID from auth context
+
+    // Handle Location Updates
+    useEffect(() => {
+        if (status !== 'offline' && location && socket && connected) {
+            socket.emit('coolie:location-update', {
+                coolieId,
+                lat: location.lat,
+                lng: location.lng,
+                bookingId: activeJob ? activeJob.id : null
+            })
+        }
+    }, [location, status, socket, connected, activeJob])
 
     // Shift clock
     useEffect(() => {
@@ -169,8 +193,36 @@ export default function CoolieDashboard() {
     }
 
     const toggleStatus = () => {
-        if (status === 'available') { setStatus('offline'); toast('You are now offline', { icon: '💤' }) }
-        else { setStatus('available'); toast.success('You are AVAILABLE! 🔔') }
+        if (status === 'available' || status === 'onduty') { 
+            setStatus('offline')
+            stopWatching()
+            if (socket && connected) socket.emit('coolie:go-offline', { coolieId })
+            toast('You are now offline', { icon: '💤' }) 
+        }
+        else { 
+            // Going online
+            if (permission === 'granted') {
+                startWatching()
+                setStatus('available')
+                if (socket && connected && location) {
+                    socket.emit('coolie:go-online', { coolieId, lat: location.lat, lng: location.lng })
+                }
+                toast.success('You are AVAILABLE! 🔔')
+            } else {
+                setShowLocationModal(true)
+            }
+        }
+    }
+
+    const handleEnableLocation = () => {
+        startWatching()
+        setShowLocationModal(false)
+        if (permission === 'denied') {
+            toast.error('Please allow location in browser settings')
+        } else {
+            setStatus('available')
+            toast.success('You are AVAILABLE! 🔔')
+        }
     }
 
     const handleAccept = (id) => {
@@ -185,6 +237,43 @@ export default function CoolieDashboard() {
         setRequests(prev => prev.filter(r => r.id !== id))
         toast('Request rejected', { icon: '❌' })
     }
+
+    // Search filters for requests
+    const requestFilters = [
+        { value: 'all', label: 'All Requests' },
+        { value: 'urgent', label: 'Urgent Only' },
+        { value: 'high', label: 'High Value' },
+        { value: 'regular', label: 'Regular Jobs' }
+    ]
+
+    // Filter requests based on search
+    const filteredRequests = requests.filter(req => {
+        const matchesSearch = searchQuery === '' || 
+            req.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            req.platform.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            req.to.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            req.tag.toLowerCase().includes(searchQuery.toLowerCase())
+        
+        if (!matchesSearch) return false
+
+        switch (searchFilter) {
+            case 'urgent':
+                return req.timer <= 30
+            case 'high':
+                return req.price >= 200
+            case 'regular':
+                return req.tag === 'REGULAR'
+            default:
+                return true
+        }
+    })
+
+    // Filter completed jobs based on search
+    const filteredCompleted = completedToday.filter(job => {
+        return searchQuery === '' ||
+            job.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            job.time.toLowerCase().includes(searchQuery.toLowerCase())
+    })
 
     const handleComplete = () => {
         const newEntry = { label: `Job #${activeJob.id}`, time: 'Completed just now', amount: activeJob.price }
@@ -206,6 +295,19 @@ export default function CoolieDashboard() {
             <Sidebar role="coolie" />
             <main className="flex-1 md:ml-64 p-5 md:p-7">
                 <div className="max-w-6xl mx-auto space-y-5">
+
+                    {/* ── Search Bar ── */}
+                    <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-4">
+                        <SearchBar
+                            placeholder="Search requests, customers, platforms..."
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            onFilter={setSearchFilter}
+                            filters={requestFilters}
+                            selectedFilter={searchFilter}
+                            showFilters={true}
+                        />
+                    </div>
 
                     {/* ── Hero Header ── */}
                     <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
@@ -269,13 +371,14 @@ export default function CoolieDashboard() {
 
                             {activeJob && <ActiveJobCard job={activeJob} onComplete={handleComplete} />}
 
-                            {requests.length === 0 && !activeJob && (
+                            {filteredRequests.length === 0 && !activeJob && (
                                 <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-10 text-center">
                                     <div className="text-4xl mb-3">🕐</div>
                                     <p className="text-[#6B6188]">
-                                        {status === 'offline' ? 'You are offline. Go online to receive requests.' : 'Waiting for new booking requests...'}
+                                        {searchQuery ? 'No requests found matching your search criteria' : 
+                                            (status === 'offline' ? 'You are offline. Go online to receive requests.' : 'Waiting for new booking requests...')}
                                     </p>
-                                    {status === 'offline' && (
+                                    {status === 'offline' && !searchQuery && (
                                         <button onClick={toggleStatus} className="mt-4 px-6 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-bold text-sm hover:bg-[#5B1FCC]">
                                             Go Online
                                         </button>
@@ -283,7 +386,7 @@ export default function CoolieDashboard() {
                                 </div>
                             )}
 
-                            {requests.map(req => (
+                            {filteredRequests.map(req => (
                                 <RequestCard key={req.id} req={req} onAccept={handleAccept} onReject={handleReject} />
                             ))}
                         </div>
@@ -320,7 +423,7 @@ export default function CoolieDashboard() {
                             <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl overflow-hidden">
                                 <p className="text-[#6B6188] text-[10px] uppercase tracking-widest px-4 pt-4 pb-2 font-semibold">Completed Today</p>
                                 <div className="divide-y divide-[#1E1A40]">
-                                    {completedToday.slice(0, 3).map((c, i) => (
+                                    {filteredCompleted.slice(0, 3).map((c, i) => (
                                         <div key={i} className="flex items-center gap-3 px-4 py-3">
                                             <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
                                                 <CheckCircle size={14} className="text-green-400" />
@@ -357,6 +460,14 @@ export default function CoolieDashboard() {
                     </div>
                 </div>
             </main>
+
+            {showLocationModal && (
+                <LocationPermissionModal 
+                    onEnable={handleEnableLocation}
+                    onStayOffline={() => setShowLocationModal(false)}
+                    isDenied={permission === 'denied'}
+                />
+            )}
         </div>
     )
 }

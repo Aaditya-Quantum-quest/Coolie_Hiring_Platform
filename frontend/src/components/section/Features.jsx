@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Shield, Globe, MapPin, CreditCard, UserCheck, LifeBuoy, Calendar, Heart } from 'lucide-react'
+import { Shield, Globe, MapPin, CreditCard, UserCheck, LifeBuoy, Calendar, Heart, Clock, Languages } from 'lucide-react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -108,9 +108,6 @@ export default function Features() {
                             <span className="text-[#A855F7] block">Indian Traveler</span>
                         </h2>
                     </div>
-                    <p className="text-[16px] text-[#B0A8CC] max-w-sm">
-                        The most advanced platform for railway porters ever created.
-                    </p>
                 </div>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -119,15 +116,15 @@ export default function Features() {
                         <div className="feature-icon w-[36px] h-[36px] bg-[#1A1535] rounded-full flex items-center justify-center text-[#7B2FFF] mb-4">
                             <Shield size={18} />
                         </div>
-                        <h3 className="text-[15px] font-bold text-white mb-2">Insurance Cover</h3>
-                        <p className="text-[13px] text-[#B0A8CC]">Every bag is insured up to ₹2,000 against any accidental damage or loss.</p>
+                        <h3 className="text-[15px] font-bold text-white mb-2">Insurance To Station Lounge</h3>
+                        <p className="text-[13px] text-[#B0A8CC]">Premium insurance coverage for all station lounge bookings with zero deductible claims processing.</p>
                     </div>
                     <div ref={el => featureCardsRef.current[1] = el} className="bg-[#12102A] border border-[#1E1A40] rounded-[14px] p-[20px]">
                         <div className="feature-icon w-[36px] h-[36px] bg-[#1A1535] rounded-full flex items-center justify-center text-[#7B2FFF] mb-4">
-                            <Globe size={18} />
+                            <Heart size={18} />
                         </div>
-                        <h3 className="text-[15px] font-bold text-white mb-2">Multi-lingual</h3>
-                        <p className="text-[13px] text-[#B0A8CC]">Support for 12+ Indian languages to ensure smooth communication with porters.</p>
+                        <h3 className="text-[15px] font-bold text-white mb-2">Goals & Achievements</h3>
+                        <p className="text-[13px] text-[#B0A8CC]">Track your progress, unlock achievements, and earn rewards for completing milestones and helping fellow travelers.</p>
                     </div>
                     <div ref={el => featureCardsRef.current[2] = el} className="bg-[#12102A] border border-[#1E1A40] rounded-[14px] p-[20px]">
                         <div className="feature-icon w-[36px] h-[36px] bg-[#1A1535] rounded-full flex items-center justify-center text-[#7B2FFF] mb-4">
@@ -140,8 +137,8 @@ export default function Features() {
                         <div className="feature-icon w-[36px] h-[36px] bg-[#1A1535] rounded-full flex items-center justify-center text-[#7B2FFF] mb-4">
                             <CreditCard size={18} />
                         </div>
-                        <h3 className="text-[15px] font-bold text-white mb-2">Flat Pricing</h3>
-                        <p className="text-[13px] text-[#B0A8CC]">No more bargaining. Get clear, fixed quotes based on weight and distance.</p>
+                        <h3 className="text-[15px] font-bold text-white mb-2">Smart Flat Pricing</h3>
+                        <p className="text-[13px] text-[#B0A8CC]">Fixed rates based on luggage weight and distance. Optional bargaining available for premium users.</p>
                     </div>
 
                     {/* Row 2 */}
@@ -161,10 +158,10 @@ export default function Features() {
                     </div>
                     <div ref={el => featureCardsRef.current[6] = el} className="bg-[#12102A] border border-[#1E1A40] rounded-[14px] p-[20px]">
                         <div className="feature-icon w-[36px] h-[36px] bg-[#1A1535] rounded-full flex items-center justify-center text-[#7B2FFF] mb-4">
-                            <Calendar size={18} />
+                            <Clock size={18} />
                         </div>
-                        <h3 className="text-[15px] font-bold text-white mb-2">Pre-Booking</h3>
-                        <p className="text-[13px] text-[#B0A8CC]">Book your porter up to 7 days in advance to ensure availability during rush hours.</p>
+                        <h3 className="text-[15px] font-bold text-white mb-2">Smart Pre-Booking</h3>
+                        <p className="text-[13px] text-[#B0A8CC]">Book your porter up to 10 minutes before reaching station for guaranteed availability and zero wait time.</p>
                     </div>
                     <div ref={el => featureCardsRef.current[7] = el} className="bg-[#12102A] border border-[#1E1A40] rounded-[14px] p-[20px]">
                         <div className="feature-icon w-[36px] h-[36px] bg-[#1A1535] rounded-full flex items-center justify-center text-[#7B2FFF] mb-4">

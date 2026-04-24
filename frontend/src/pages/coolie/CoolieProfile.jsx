@@ -10,17 +10,17 @@ const INITIAL_PROFILE = {
     name: 'Ramesh Kumar',
     id: 'CL-1042',
     badge: 'Star of the Week',
-    phone: '+91 98765-43210',
-    altPhone: '+91 98765-01234',
     station: 'New Delhi Railway Station (NDLS)',
     stationZone: 'Zone: Northern Railway',
     platforms: ['01', '02', '04', '05', '12', '16'],
-    experience: 'Senior Porter (8.5 Years)',
+    age: 32,
     languages: ['Hindi', 'English', 'Bengali'],
     memberSince: '14 March 2016',
     rating: 4.8,
     totalTrips: 1248,
-    expYears: '8yr',
+    xp: 2850,
+    level: 12,
+    nextLevelXP: 3000,
     verified: true,
     verifiedDate: 'Feb 12, 2024',
     platformCoverage: 'Authorized access to all 16 platforms with specialized handling for heavy baggage and parcel cargo sections.',
@@ -99,6 +99,72 @@ export default function CoolieProfile() {
         )
     }
 
+    const XPDisplay = () => {
+        const currentXP = profile.xp
+        const currentLevel = profile.level
+        const nextLevelXP = profile.nextLevelXP
+        const xpProgress = ((currentXP - (currentLevel - 1) * 250) / 250) * 100
+        const xpToNext = nextLevelXP - currentXP
+
+        return (
+            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-white font-bold flex items-center gap-2 text-sm">
+                        <Zap size={15} className="text-yellow-400" /> Experience Points
+                    </h2>
+                    <button
+                        onClick={() => startEdit('xp', currentXP.toString())}
+                        className="text-[10px] text-[#A855F7] font-semibold hover:text-white transition-colors flex items-center gap-1"
+                    >
+                        <Edit3 size={11} /> Edit XP
+                    </button>
+                </div>
+                
+                <div className="space-y-4">
+                    {/* Level Display */}
+                    <div className="bg-[#12102A] rounded-xl p-4 border border-[#1E1A40]">
+                        <div className="flex items-center justify-between mb-3">
+                            <div>
+                                <p className="text-[#6B6188] text-[10px] uppercase tracking-wider">Current Level</p>
+                                <p className="text-3xl font-black text-yellow-400">Lv.{currentLevel}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[#6B6188] text-[10px] uppercase tracking-wider">Total XP</p>
+                                <p className="text-2xl font-black text-white">{currentXP.toLocaleString()}</p>
+                            </div>
+                        </div>
+                        
+                        {/* XP Progress Bar */}
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-[#6B6188] text-[10px]">Level Progress</p>
+                                <p className="text-[#A855F7] text-[10px] font-semibold">{xpToNext} XP to Lv.{currentLevel + 1}</p>
+                            </div>
+                            <div className="w-full bg-[#1E1A40] rounded-full h-3 overflow-hidden">
+                                <div 
+                                    className="bg-gradient-to-r from-[#7B2FFF] to-[#A855F7] h-full rounded-full transition-all duration-500"
+                                    style={{ width: `${Math.min(xpProgress, 100)}%` }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* XP Stats */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-[#1E1A40] rounded-lg p-3 border border-[#7B2FFF]/20">
+                            <p className="text-[#6B6188] text-[10px] mb-1">XP Rate</p>
+                            <p className="text-white font-bold text-lg">+25 per trip</p>
+                        </div>
+                        <div className="bg-[#1E1A40] rounded-lg p-3 border border-[#7B2FFF]/20">
+                            <p className="text-[#6B6188] text-[10px] mb-1">Next Milestone</p>
+                            <p className="text-[#A855F7] font-bold text-lg">Lv.{currentLevel + 5}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="flex bg-[#0A0814] min-h-screen">
             <Sidebar role="coolie" />
@@ -143,8 +209,8 @@ export default function CoolieProfile() {
                                         <p className="text-[#6B6188] text-[10px] uppercase tracking-wider mt-0.5">Total Trips</p>
                                     </div>
                                     <div>
-                                        <p className="text-white font-black text-lg leading-none">{profile.expYears}</p>
-                                        <p className="text-[#6B6188] text-[10px] uppercase tracking-wider mt-0.5">Experience</p>
+                                        <p className="text-white font-black text-lg leading-none">{profile.age} years</p>
+                                        <p className="text-[#6B6188] text-[10px] uppercase tracking-wider mt-0.5">Age</p>
                                     </div>
                                 </div>
                             </div>
@@ -173,6 +239,9 @@ export default function CoolieProfile() {
                     {/* ── MAIN GRID ── */}
                     <div className="grid md:grid-cols-2 gap-5">
 
+                        {/* ── XP SYSTEM ── */}
+                        <XPDisplay />
+
                         {/* ── PERSONAL INFORMATION ── */}
                         <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
                             <div className="flex items-center justify-between mb-4">
@@ -190,11 +259,7 @@ export default function CoolieProfile() {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <Field label="Full Name" field="name" editable />
-                                    <Field label="Phone" field="phone" editable />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Field label="Alternate Phone" field="altPhone" editable />
-                                    <Field label="Experience" field="experience" />
+                                    <Field label="Age" field="age" editable />
                                 </div>
                                 <div>
                                     <p className="text-[11px] text-[#6B6188] uppercase tracking-wider mb-2">Languages Spoken</p>

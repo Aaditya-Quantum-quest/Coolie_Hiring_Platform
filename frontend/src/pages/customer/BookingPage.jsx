@@ -1,24 +1,30 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Sidebar from '../../components/Sidebar'
 import { useApp } from '../../context/AppContext'
-import { COOLIES, PRICE_TABLE, STATIONS } from '../../data/mockData'
+import { COOLIES, PRICE_TABLE } from '../../data/mockData'
 import { useNavigate, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
+
 import {
     MapPin, Star, CheckCircle, X, Camera,
     Zap, TrendingDown, Navigation, Package, Hash,
     Train, Clock, Trophy, Crown
 } from 'lucide-react'
+import { useGlobalSocket } from '../../context/SocketContext'
+import useGeolocation from '../../hooks/useGeolocation'
 
 /* ─── Bargain Modal ─────────────────────────────────────────── */
-function BargainModal({ coolie, luggageSize, onClose, onDone }) {
+function BargainModal({ coolie, luggageSize, customAmount, onClose, onDone }) {
     const pt = PRICE_TABLE[luggageSize] || PRICE_TABLE.medium
-    const [offer, setOffer] = useState(pt.base)
+    const [offer, setOffer] = useState(customAmount && customAmount > 0 ? parseInt(customAmount) : pt.base)
     const [coolieOffer, setCoolieOffer] = useState(null)
     const [status, setStatus] = useState('idle')
 
+    // Use custom amount if provided, otherwise use luggage-based pricing
+    const basePrice = customAmount && customAmount > 0 ? parseInt(customAmount) : pt.base
+
     const sendOffer = (discount) => {
-        const newOffer = Math.max(pt.floor, pt.base - discount)
+        const newOffer = Math.max(pt.floor, basePrice - discount)
         setOffer(newOffer)
         setStatus('waiting')
         setTimeout(() => {
@@ -57,8 +63,8 @@ function BargainModal({ coolie, luggageSize, onClose, onDone }) {
                                 </button>
                             ))}
                         </div>
-                        <button onClick={() => accept(pt.base)} className="w-full mt-3 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-semibold hover:bg-[#5B1FCC] transition-colors text-sm">
-                            Accept Base ₹{pt.base}
+                        <button onClick={() => accept(basePrice)} className="w-full mt-3 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-semibold hover:bg-[#5B1FCC] transition-colors text-sm">
+                            Accept ₹{basePrice}
                         </button>
                     </div>
                 )}
@@ -117,6 +123,7 @@ export default function BookingPage() {
         luggageSize: 'medium',
         selectedCoolie: preselectedCoolie || null,
         finalPrice: preselectedCoolie?.basePrice || 0,
+        customAmount: '',
     })
     const [showBargain, setShowBargain] = useState(false)
     const [preview, setPreview] = useState(null)
@@ -125,8 +132,47 @@ export default function BookingPage() {
     const [booked, setBooked] = useState(false)
     const [otp] = useState(Math.floor(1000 + Math.random() * 9000))
 
+    // Real-time coolie fetching
+    const [availCoolies, setAvailCoolies] = useState(COOLIES.filter(c => c.status === 'available'))
+    const { socket, connected } = useGlobalSocket()
+    const { location: geoLoc, startWatching } = useGeolocation()
+
+    useEffect(() => {
+        // Start watching customer location when booking page opens
+        startWatching();
+    }, [startWatching]);
+
+    useEffect(() => {
+        // Fetch initially via REST or rely on mock if location isn't available
+        const fetchNearby = async () => {
+            if (!geoLoc) return;
+            try {
+                const res = await fetch(`http://localhost:5000/api/location/nearby?lat=${geoLoc.lat}&lng=${geoLoc.lng}`);
+                const data = await res.json();
+                if (data.success && data.coolies.length > 0) {
+                    setAvailCoolies(data.coolies);
+                }
+            } catch (err) {
+                console.log('Using mock coolies. API fetch failed:', err.message);
+            }
+        };
+        fetchNearby();
+    }, [geoLoc]);
+
+    useEffect(() => {
+        if (socket && connected) {
+            socket.on('nearby:coolies-update', (updatedCoolies) => {
+                if (updatedCoolies && updatedCoolies.length > 0) {
+                    setAvailCoolies(updatedCoolies);
+                }
+            });
+        }
+        return () => {
+            if (socket) socket.off('nearby:coolies-update');
+        };
+    }, [socket, connected]);
+
     const update = (f, v) => setForm(prev => ({ ...prev, [f]: v }))
-    const availCoolies = COOLIES.filter(c => c.status === 'available')
 
     const handlePhoto = (e) => {
         const file = e.target.files[0]
@@ -141,19 +187,60 @@ export default function BookingPage() {
     }
 
     const handleSubmit = async () => {
-        if (!form.selectedCoolie) { toast.error('Please select a porter'); return }
-        if (!form.platform) { toast.error('Please fill platform number'); return }
+        if (!form.station || !form.platform || !form.dateTime || !form.selectedCoolie) {
+            toast.error('Please fill all required fields')
+            return
+        }
+
+        // Validate custom amount if provided
+        if (form.customAmount) {
+            const amount = parseInt(form.customAmount)
+            if (isNaN(amount) || amount <= 0) {
+                toast.error('Please enter a valid amount')
+                return
+            }
+            if (amount > 10000) {
+                toast.error('Amount cannot exceed ₹10,000')
+                return
+            }
+
+            // Update final price with custom amount
+            update('finalPrice', amount)
+        }
+
         setSubmitting(true)
-        await new Promise(r => setTimeout(r, 1500))
+
+        // Backend integration - send booking data with single amount source
+        const bookingData = {
+            ...form,
+            finalAmount: form.customAmount ? parseInt(form.customAmount) : form.finalPrice,
+            amountSource: form.customAmount ? 'custom' : 'luggage',
+            timestamp: new Date().toISOString(),
+            status: 'pending'
+        }
+
+        // Let the tracking page know which booking we just created
+        // We'll pass it via navigation state
+        const generatedBookingId = 'BK' + Math.floor(1000 + Math.random() * 9000);
+
+        // Simulate backend API call
+        console.log('Sending booking to backend:', bookingData)
+
+        await new Promise(r => setTimeout(r, 2000))
         setBooked(true)
-        addNotification(`🎉 Booking confirmed! OTP: ${otp}. ${form.selectedCoolie.name} is on the way!`)
+        addNotification(`🎉 Booking confirmed! OTP: ${otp}`)
         setSubmitting(false)
+
+        // Auto navigate to tracking page
+        setTimeout(() => {
+            navigate('/customer/track', { state: { bookingId: generatedBookingId, coolie: form.selectedCoolie } })
+        }, 3000)
     }
 
     const luggageTypes = [
-        { key: 'small',  icon: '🧳', label: 'Small',      sub: 'Up to 7kg' },
-        { key: 'medium', icon: '🧳', label: 'Medium',     sub: 'Up to 15kg' },
-        { key: 'large',  icon: '📦', label: 'Large',      sub: 'Up to 25kg' },
+        { key: 'small', icon: '🧳', label: 'Small', sub: 'Up to 7kg' },
+        { key: 'medium', icon: '🧳', label: 'Medium', sub: 'Up to 15kg' },
+        { key: 'large', icon: '📦', label: 'Large', sub: 'Up to 25kg' },
         { key: 'xlarge', icon: '📦', label: 'Extra Large', sub: 'Custom Cargo' },
     ]
 
@@ -283,17 +370,22 @@ export default function BookingPage() {
                                     {luggageTypes.map(({ key, icon, label, sub }) => (
                                         <button
                                             key={key}
-                                            onClick={() => { update('luggageSize', key); update('finalPrice', PRICE_TABLE[key]?.base || 0) }}
-                                            className={`p-3 rounded-xl border text-center transition-all ${
-                                                form.luggageSize === key
-                                                    ? 'border-[#7B2FFF] bg-[#7B2FFF]/10'
-                                                    : 'border-[#1E1A40] bg-[#12102A] hover:border-[#7B2FFF]/40'
-                                            }`}
+                                            onClick={() => {
+                                                update('luggageSize', key);
+                                                // Only update finalPrice if no custom amount is entered
+                                                if (!form.customAmount) {
+                                                    update('finalPrice', PRICE_TABLE[key]?.base || 0);
+                                                }
+                                            }}
+                                            className={`p-3 rounded-xl border text-center transition-all ${form.luggageSize === key
+                                                ? 'border-[#7B2FFF] bg-[#7B2FFF]/10'
+                                                : 'border-[#1E1A40] bg-[#12102A] hover:border-[#7B2FFF]/40'
+                                                }`}
                                         >
                                             <div className={`text-xl mb-1 ${form.luggageSize === key ? '' : 'grayscale opacity-60'}`}>{icon}</div>
                                             <p className={`text-xs font-semibold ${form.luggageSize === key ? 'text-white' : 'text-[#6B6188]'}`}>{label}</p>
                                             <p className="text-[10px] text-[#6B6188] mt-0.5">{sub}</p>
-                                            {form.luggageSize === key && (
+                                            {form.luggageSize === key && !form.customAmount && (
                                                 <p className="text-[#7B2FFF] text-[11px] font-bold mt-1">₹{PRICE_TABLE[key]?.base}</p>
                                             )}
                                         </button>
@@ -337,9 +429,58 @@ export default function BookingPage() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Custom Amount Section */}
+                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
+                                <h2 className="text-white font-bold text-sm flex items-center gap-2 mb-4">
+                                    <span className="w-5 h-5 rounded bg-[#7B2FFF]/20 flex items-center justify-center">
+                                        <Trophy size={11} className="text-[#7B2FFF]" />
+                                    </span>
+                                    Custom Amount
+                                </h2>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1.5 block">Enter Your Desired Amount</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7B2FFF] font-bold text-lg">₹</span>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="10000"
+                                                step="10"
+                                                className="w-full bg-[#12102A] border border-[#1E1A40] rounded-xl pl-12 pr-3 py-3 text-white text-lg font-bold outline-none focus:border-[#7B2FFF] placeholder-[#3a3560] transition-colors"
+                                                placeholder="Enter custom amount..."
+                                                value={form.customAmount}
+                                                onChange={e => {
+                                                    const value = e.target.value
+                                                    update('customAmount', value)
+                                                    // Update final price when custom amount is entered
+                                                    if (value && value > 0) {
+                                                        update('finalPrice', parseInt(value))
+                                                        // Clear luggage selection when custom amount is entered
+                                                        update('luggageSize', '')
+                                                    } else {
+                                                        // Revert to base price if custom amount is cleared
+                                                        update('finalPrice', PRICE_TABLE[form.luggageSize]?.base || 0)
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="bg-[#12102A] rounded-xl p-3 border border-[#1E1A40]">
+                                        <p className="text-[10px] text-[#6B6188] mb-2">💡 <strong>Pro Tip:</strong> Enter your desired amount and we'll try to match it with available porters!</p>
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-[#6B6188]">Suggested Range:</span>
+                                            <span className="text-[#7B2FFF] font-bold">
+                                                ₹{PRICE_TABLE[form.luggageSize]?.floor} - ₹{PRICE_TABLE[form.luggageSize]?.base + 50}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* ══ RIGHT COLUMN ═══════════════════════════ */}
+                        {/* ══ RIGHT COLUMN ═════════════════════════ */}
                         <div className="space-y-4">
 
                             {/* Available Porters Header */}
@@ -389,11 +530,10 @@ export default function BookingPage() {
                                                     </div>
                                                     <button
                                                         onClick={() => { update('selectedCoolie', c); update('finalPrice', c.basePrice) }}
-                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                                            isSelected
-                                                                ? 'bg-green-500 text-white'
-                                                                : 'bg-[#7B2FFF] text-white hover:bg-[#5B1FCC]'
-                                                        }`}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isSelected
+                                                            ? 'bg-green-500 text-white'
+                                                            : 'bg-[#7B2FFF] text-white hover:bg-[#5B1FCC]'
+                                                            }`}
                                                     >
                                                         {isSelected ? '✓ Selected' : 'Select'}
                                                     </button>
@@ -461,6 +601,7 @@ export default function BookingPage() {
                 <BargainModal
                     coolie={form.selectedCoolie}
                     luggageSize={form.luggageSize}
+                    customAmount={form.customAmount}
                     onClose={() => setShowBargain(false)}
                     onDone={(price) => { update('finalPrice', price); toast.success(`Price set to ₹${price}`) }}
                 />

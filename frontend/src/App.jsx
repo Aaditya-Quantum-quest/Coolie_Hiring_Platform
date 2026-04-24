@@ -2,10 +2,25 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AppProvider, useApp } from './context/AppContext'
+import { SocketProvider } from './context/SocketContext'
+import { BusinessAuthProvider } from './context/BusinessAuthContext'
 import { useState } from 'react'
 import Preloader from './components/ui/Preloader'
 import CustomCursor from './components/ui/Cursor'
 import ScrollProgressBar from './components/ui/ScrollProgressBar'
+
+// Business Portal
+import BusinessRegister from './pages/business/BusinessRegister'
+import BusinessLogin from './pages/business/BusinessLogin'
+import OwnerDashboard from './pages/business/OwnerDashboard'
+import MenuManagement from './pages/business/MenuManagement'
+import RoomManagement from './pages/business/RoomManagement'
+import HallManagement from './pages/business/HallManagement'
+import ReviewsPage from './pages/business/ReviewsPage'
+import SettingsPage from './pages/business/SettingsPage'
+import NotificationsPage from './pages/business/NotificationsPage'
+import NearbyBusinesses from './pages/business/NearbyBusinesses'
+import BusinessDetail from './pages/business/BusinessDetail'
 
 // Public Pages
 import HomePage from './pages/HomePage'
@@ -78,6 +93,21 @@ function AppRoutes() {
       <Route path="/admin/disputes" element={<ProtectedRoute allowedRole="admin"><AdminDisputes /></ProtectedRoute>} />
       <Route path="/admin/analytics" element={<ProtectedRoute allowedRole="admin"><AdminAnalytics /></ProtectedRoute>} />
 
+      {/* Business Portal */}
+      <Route path="/register/business" element={<BusinessRegister />} />
+      <Route path="/business/login" element={<BusinessLogin />} />
+      <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+      <Route path="/owner/menu" element={<MenuManagement />} />
+      <Route path="/owner/rooms" element={<RoomManagement />} />
+      <Route path="/owner/halls" element={<HallManagement />} />
+      <Route path="/owner/reviews" element={<ReviewsPage />} />
+      <Route path="/owner/settings" element={<SettingsPage />} />
+      <Route path="/owner/notifications" element={<NotificationsPage />} />
+
+      {/* Public Business Pages (require customer login) */}
+      <Route path="/station/:stationId/nearby" element={<ProtectedRoute allowedRole="customer"><NearbyBusinesses /></ProtectedRoute>} />
+      <Route path="/business/:businessId" element={<ProtectedRoute allowedRole="customer"><BusinessDetail /></ProtectedRoute>} />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
@@ -88,8 +118,10 @@ export default function App() {
   
   return (
     <AppProvider>
-      <BrowserRouter>
-        <CustomCursor />
+      <BusinessAuthProvider>
+      <SocketProvider>
+        <BrowserRouter>
+          <CustomCursor />
         <ScrollProgressBar />
         <Toaster
           position="top-right"
@@ -100,6 +132,8 @@ export default function App() {
         />
         {loaded ? <AppRoutes /> : <Preloader onComplete={() => setLoaded(true)} />}
       </BrowserRouter>
+      </SocketProvider>
+      </BusinessAuthProvider>
     </AppProvider>
   )
 }

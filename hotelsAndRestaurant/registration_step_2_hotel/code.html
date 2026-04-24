@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Business Registration - Step 2</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#eff4ff",
+                        "error": "#ba1a1a",
+                        "on-background": "#0b1c30",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#dce9ff",
+                        "outline": "#757684",
+                        "surface-bright": "#f8f9ff",
+                        "surface-dim": "#cbdbf5",
+                        "on-primary-fixed-variant": "#173bab",
+                        "on-error": "#ffffff",
+                        "tertiary": "#003272",
+                        "on-surface-variant": "#444653",
+                        "outline-variant": "#c4c5d5",
+                        "surface-container": "#e5eeff",
+                        "surface-tint": "#3755c3",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "background": "#f8f9ff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#ffddb8",
+                        "surface": "#f8f9ff",
+                        "inverse-primary": "#b8c4ff",
+                        "secondary-container": "#fea619",
+                        "primary": "#00288e",
+                        "secondary": "#855300",
+                        "inverse-surface": "#213145",
+                        "on-secondary-container": "#684000",
+                        "primary-container": "#1e40af",
+                        "on-tertiary-fixed": "#001a42",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#004395",
+                        "tertiary-container": "#00489e",
+                        "primary-fixed": "#dde1ff",
+                        "tertiary-fixed-dim": "#adc6ff",
+                        "tertiary-fixed": "#d8e2ff",
+                        "on-surface": "#0b1c30",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-tertiary-container": "#9cbbff",
+                        "on-secondary-fixed": "#2a1700",
+                        "surface-container-highest": "#d3e4fe",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#d3e4fe",
+                        "primary-fixed-dim": "#b8c4ff",
+                        "on-primary-container": "#a8b8ff",
+                        "on-primary-fixed": "#001453"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "32px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "xxl": "48px",
+                        "gutter": "16px",
+                        "container-margin": "20px",
+                        "lg": "24px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "h2": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "h1": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "h3": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "h2": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "h1": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "h3": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md antialiased selection:bg-primary selection:text-on-primary">
+<!-- Transactional Header (Nav Shell Suppressed) -->
+<header class="bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-50">
+<div class="max-w-5xl mx-auto px-container-margin h-[72px] flex items-center justify-between">
+<div class="flex items-center gap-sm text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 32px;">domain</span>
+<span class="font-h3 text-h3 tracking-tight">StationSuite</span>
+</div>
+<div class="flex items-center gap-md">
+<div class="hidden sm:flex flex-col items-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Progress</span>
+<span class="font-label-md text-label-md text-on-surface">Step 2 of 3: Business Details</span>
+</div>
+<!-- Radial Progress Indicator -->
+<div class="relative w-12 h-12 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle class="stroke-surface-variant" cx="18" cy="18" fill="none" r="16" stroke-width="4"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="33" stroke-width="4"></circle>
+</svg>
+<span class="absolute font-label-sm text-label-sm text-primary">2/3</span>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-4xl mx-auto py-xl px-container-margin pb-xxl">
+<div class="mb-xl">
+<h1 class="font-h1 text-h1 text-on-surface mb-sm">Tell us about your property</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Provide the essential details to list your hotel on StationSuite.</p>
+</div>
+<form class="flex flex-col gap-xl">
+<!-- Section 1: Basic Info -->
+<section class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-surface-variant overflow-hidden">
+<div class="bg-surface-bright px-lg py-md border-b border-surface-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">info</span>
+<h2 class="font-h3 text-h3 text-on-surface">Basic Information</h2>
+</div>
+<div class="p-lg grid grid-cols-1 md:grid-cols-2 gap-lg">
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="hotelName">Property Name *</label>
+<input class="bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" id="hotelName" type="text" value="Hotel Sunrise"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="ownerName">Owner / Manager Name *</label>
+<input class="bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" id="ownerName" placeholder="e.g. Jane Doe" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="email">Business Email *</label>
+<input class="bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" id="email" type="email" value="contact@hotelsunrise.com"/>
+</div>
+<!-- Inline Validation Example -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="gst">GST Number *</label>
+<div class="relative">
+<input class="w-full bg-error-container/20 border border-error rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:ring-1 focus:ring-error pr-10" id="gst" type="text" value="22AAAAA0000A1Z"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-error text-[20px]">error</span>
+</div>
+<p class="font-label-sm text-label-sm text-error mt-1">Enter a valid 15-character GST number.</p>
+</div>
+<div class="flex flex-col gap-xs md:col-span-2">
+<label class="font-label-md text-label-md text-on-surface" for="password">Account Password *</label>
+<div class="relative">
+<input class="w-full bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary pr-10" id="password" type="password" value="Str0ngP@ssw0rd!"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline cursor-pointer hover:text-on-surface">visibility</span>
+</div>
+<!-- Strength Meter -->
+<div class="flex gap-1 mt-2 h-1.5 w-full">
+<div class="flex-1 bg-green-500 rounded-l-full"></div>
+<div class="flex-1 bg-green-500"></div>
+<div class="flex-1 bg-green-500"></div>
+<div class="flex-1 bg-green-500 rounded-r-full"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant text-right mt-1">Strong password</p>
+</div>
+<div class="flex flex-col gap-xs md:col-span-2">
+<label class="font-label-md text-label-md text-on-surface" for="description">Property Description</label>
+<textarea class="bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-y" id="description" placeholder="Describe your property, its vibe, and what makes it special..." rows="4"></textarea>
+<p class="font-label-sm text-label-sm text-outline text-right">0 / 500 characters</p>
+</div>
+<!-- Uploads -->
+<div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-lg mt-sm">
+<div class="flex flex-col gap-sm">
+<span class="font-label-md text-label-md text-on-surface">Property Logo</span>
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center bg-surface-bright hover:bg-surface-container transition-colors cursor-pointer min-h-[140px]">
+<div class="w-16 h-16 rounded-full bg-surface-dim flex items-center justify-center mb-sm overflow-hidden">
+<span class="material-symbols-outlined text-primary text-[32px]">add_photo_alternate</span>
+</div>
+<span class="font-label-md text-label-md text-primary">Click to upload logo</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-1">PNG, JPG up to 2MB</span>
+</div>
+</div>
+<div class="flex flex-col gap-sm">
+<span class="font-label-md text-label-md text-on-surface">Cover Image</span>
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-md flex flex-col items-center justify-center text-center bg-surface-bright hover:bg-surface-container transition-colors cursor-pointer min-h-[140px] relative overflow-hidden group">
+<img alt="Cover Preview" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" data-alt="luxurious hotel exterior at twilight with warm lighting and a modern architectural design" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4mIo-Qgc4hHgQIBz1_YoY_0IOMeFomEZHJsc0zzA7lSHBqvHbI0xP4vo0L03MctLJdywIAIDXyO6HOTAKfHBC19upTZwLErELHfshfeW1O724acyeKP3jtj7rCXdzmwz8nFt81d5NFghhhp7rBsSzYqyE0kMhO4LJA9ANG9Ol4-cbfFf-7jCAcbKcQEn1ZqfcyQcpvH_MgVrTZrK4QEkB8IP4stMSN-WSg-aguRb8dvbQl67GaCK2UXtiCjjSsx-LxH5tIBNJ5QU"/>
+<div class="relative z-10 bg-surface-container-lowest/80 backdrop-blur-sm px-4 py-2 rounded-full border border-outline-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface text-[20px]">edit</span>
+<span class="font-label-md text-label-md text-on-surface">Change Cover</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Location -->
+<section class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-surface-variant overflow-hidden">
+<div class="bg-surface-bright px-lg py-md border-b border-surface-variant flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<h2 class="font-h3 text-h3 text-on-surface">Location Details</h2>
+</div>
+<button class="flex items-center gap-2 text-primary hover:bg-surface-container-low px-4 py-2 rounded-lg transition-colors font-label-md text-label-md" type="button">
+<span class="material-symbols-outlined text-[20px]">my_location</span>
+                        Use My Current Location
+                    </button>
+</div>
+<div class="p-lg flex flex-col gap-lg">
+<!-- Interactive Map Mockup -->
+<div class="w-full h-[300px] rounded-xl border border-outline-variant relative overflow-hidden bg-surface-dim">
+<img alt="Map View" class="w-full h-full object-cover opacity-80 mix-blend-multiply" data-alt="stylized top-down street map view of a city grid with soft pastel colors and subtle road lines" data-location="Mumbai" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFUFw_y5dbb701I-XbZhVHJGdRAO0pw3e2c6C03lZH-0bqSbj42TcVO3h8aqSLQCf3XX3evPu35LZWtU1eMnpo9uURyK2GbPpahoFK-AQMjepdjHIhh6VPwTRfwp7iMAh20rcs6YAn-E01hZnlxbRsErlENyn7XZr_wCHtx3RZBX6-6DPvoeVZLpwgibVryVtl-C5MLQxh02VjgnjL_Y4QSzjzBS8YT9u2TC9U2obFA1MkCYlqVp7H8z7p33Tl5lBwRVcKnMbS3R0"/>
+<!-- Draggable Pin -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full cursor-move drop-shadow-xl z-10 flex flex-col items-center">
+<div class="bg-primary text-on-primary px-3 py-1 rounded-lg font-label-sm text-label-sm mb-1 whitespace-nowrap shadow-md">
+                                Drag to position
+                            </div>
+<span class="material-symbols-outlined text-error text-[48px]" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<!-- Map Controls Mockup -->
+<div class="absolute bottom-4 right-4 flex flex-col gap-2 bg-surface-container-lowest rounded-lg shadow-md border border-outline-variant overflow-hidden">
+<button class="p-2 hover:bg-surface-container flex items-center justify-center border-b border-outline-variant" type="button"><span class="material-symbols-outlined">add</span></button>
+<button class="p-2 hover:bg-surface-container flex items-center justify-center" type="button"><span class="material-symbols-outlined">remove</span></button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<div class="flex flex-col gap-xs md:col-span-2">
+<label class="font-label-md text-label-md text-on-surface" for="address">Street Address *</label>
+<input class="bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="address" placeholder="e.g. 123 Station Road" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="city">City *</label>
+<input class="bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="city" placeholder="City name" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="state">State / Province *</label>
+<input class="bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="state" placeholder="State" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="pincode">Pincode / Zip Code *</label>
+<input class="bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="pincode" placeholder="123456" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="station">Nearest Railway Station</label>
+<div class="relative">
+<select class="w-full bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="station">
+<option disabled="" selected="" value="">Select a station...</option>
+<option value="cst">Chhatrapati Shivaji Terminus</option>
+<option value="ndls">New Delhi Railway Station</option>
+<option value="hwh">Howrah Junction</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Hotel Specific -->
+<section class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-surface-variant overflow-hidden">
+<div class="bg-surface-bright px-lg py-md border-b border-surface-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">hotel_class</span>
+<h2 class="font-h3 text-h3 text-on-surface">Property Specifics</h2>
+</div>
+<div class="p-lg flex flex-col gap-xl">
+<!-- Star Rating -->
+<div>
+<label class="font-label-md text-label-md text-on-surface block mb-sm">Official Star Rating</label>
+<div class="flex items-center gap-2">
+<button class="p-1 hover:bg-surface-container rounded-full transition-colors" type="button"><span class="material-symbols-outlined text-[32px] text-secondary-container" style="font-variation-settings: 'FILL' 1;">star</span></button>
+<button class="p-1 hover:bg-surface-container rounded-full transition-colors" type="button"><span class="material-symbols-outlined text-[32px] text-secondary-container" style="font-variation-settings: 'FILL' 1;">star</span></button>
+<button class="p-1 hover:bg-surface-container rounded-full transition-colors" type="button"><span class="material-symbols-outlined text-[32px] text-secondary-container" style="font-variation-settings: 'FILL' 1;">star</span></button>
+<button class="p-1 hover:bg-surface-container rounded-full transition-colors" type="button"><span class="material-symbols-outlined text-[32px] text-outline-variant">star</span></button>
+<button class="p-1 hover:bg-surface-container rounded-full transition-colors" type="button"><span class="material-symbols-outlined text-[32px] text-outline-variant">star</span></button>
+<span class="ml-2 font-body-md text-body-md text-on-surface-variant">3 Star Property</span>
+</div>
+</div>
+<!-- Room Types & Pricing Bento -->
+<div>
+<label class="font-label-md text-label-md text-on-surface block mb-sm">Available Room Types &amp; Base Pricing</label>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<!-- Single Room (Unselected) -->
+<div class="border border-outline-variant rounded-xl p-md flex flex-col gap-md bg-surface-bright hover:border-primary cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded border-2 border-outline flex items-center justify-center"></div>
+<span class="font-label-md text-label-md text-on-surface">Single Room</span>
+</div>
+</div>
+<!-- Double Room (Selected) -->
+<div class="border-2 border-primary rounded-xl p-md flex flex-col gap-md bg-primary-fixed/30">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-[18px]">check</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Double Room</span>
+</div>
+<div class="flex flex-col gap-xs mt-auto">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Base Price per night</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 font-body-md text-on-surface-variant">₹</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-8 pr-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" type="number" value="2500"/>
+</div>
+</div>
+</div>
+<!-- Suite (Unselected) -->
+<div class="border border-outline-variant rounded-xl p-md flex flex-col gap-md bg-surface-bright hover:border-primary cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded border-2 border-outline flex items-center justify-center"></div>
+<span class="font-label-md text-label-md text-on-surface">Luxury Suite</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Timings -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface">Standard Check-in Time</label>
+<div class="relative">
+<input class="w-full bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" type="time" value="14:00"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">schedule</span>
+</div>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface">Standard Check-out Time</label>
+<div class="relative">
+<input class="w-full bg-surface-bright border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" type="time" value="11:00"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">schedule</span>
+</div>
+</div>
+</div>
+<!-- Amenities -->
+<div>
+<label class="font-label-md text-label-md text-on-surface block mb-sm">Key Amenities</label>
+<div class="flex flex-wrap gap-3">
+<!-- Active Pill -->
+<button class="px-4 py-2 rounded-full border border-primary bg-primary-container text-on-primary-container font-label-md text-label-md flex items-center gap-2 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">wifi</span>
+                                Free WiFi
+                            </button>
+<!-- Inactive Pills -->
+<button class="px-4 py-2 rounded-full border border-outline-variant bg-surface-bright text-on-surface font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">ac_unit</span>
+                                Air Conditioning
+                            </button>
+<button class="px-4 py-2 rounded-full border border-primary bg-primary-container text-on-primary-container font-label-md text-label-md flex items-center gap-2 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">restaurant</span>
+                                Restaurant
+                            </button>
+<button class="px-4 py-2 rounded-full border border-outline-variant bg-surface-bright text-on-surface font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">local_parking</span>
+                                Parking
+                            </button>
+<button class="px-4 py-2 rounded-full border border-outline-variant bg-surface-bright text-on-surface font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">pool</span>
+                                Swimming Pool
+                            </button>
+<button class="px-4 py-2 rounded-full border border-outline-variant bg-surface-bright text-on-surface font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">fitness_center</span>
+                                Gym
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 4: Media -->
+<section class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-surface-variant overflow-hidden">
+<div class="bg-surface-bright px-lg py-md border-b border-surface-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">gallery_thumbnail</span>
+<h2 class="font-h3 text-h3 text-on-surface">Property Gallery</h2>
+</div>
+<div class="p-lg">
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">Upload high-quality images of your rooms, lobby, and amenities. First image acts as the primary thumbnail.</p>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-md">
+<!-- Add New Box -->
+<div class="aspect-square border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center text-center bg-surface-bright hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-surface-dim flex items-center justify-center mb-2 group-hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-on-primary-container">add</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary">Add Photos</span>
+</div>
+<!-- Image Preview 1 -->
+<div class="aspect-square rounded-xl relative overflow-hidden group border border-outline-variant">
+<img alt="Room Preview" class="w-full h-full object-cover" data-alt="bright modern hotel room with a large comfortable bed and clean white linens" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEsryzKLfkCMwzG3tDITQjFAWfiVHIzZZBVrcrWfDhgicb2fm4oP3cOXpheuJ0r_a6ajhByxwgOB5138OO23klrvpynaaxtj__e37lpYqXOHjhPvvum69_NT0ZGJxBzafczaDmUeFzeSucqCz1KYc0v9ZDVHebQiV49Sai5COZmoHAbLFHeW36TXQIDdMp-TAQDoNyMIpwICThqxN-mFoJJO3qWUKxaZebhVAH6tNcei-ZHfUoM8eJzKYIwQz1yUVMzQ7CKESCjD0"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
+<button class="w-8 h-8 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface hover:text-error" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+<div class="absolute top-2 left-2 bg-primary text-on-primary px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase">Primary</div>
+</div>
+<!-- Image Preview 2 -->
+<div class="aspect-square rounded-xl relative overflow-hidden group border border-outline-variant">
+<img alt="Bathroom Preview" class="w-full h-full object-cover" data-alt="luxurious modern hotel bathroom with warm lighting and a large mirror" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_dtPej645yYDdwV39FA7bQF-yklkbcco4hIKufu4pQ9t1zC6rVKg38M2drW9InWe9VlcYZ8LLkBsT77VMlwi9lyMfPKKZaGYoWFFW0uLodrH7nxKpGN4klQ3Rggi4iiRf5ca1Gz1JxGykVA54j_NmWl3yecSH3GbVjClAlahUa5_NLtc_vp-cwUihTLNnsrZo_Qebq2tBhFRMC5Wqoeb-HNLxS7r7qZ7YbuQmjLp_BIHAj2agkt5oE0SeqbuAQHY03KgxThZyEdU"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
+<button class="w-8 h-8 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface hover:text-error" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</div>
+<!-- Image Preview 3 -->
+<div class="aspect-square rounded-xl relative overflow-hidden group border border-outline-variant">
+<img alt="Restaurant Preview" class="w-full h-full object-cover" data-alt="elegant empty hotel restaurant setting with set tables and ambient lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGFrPsxbkuLV3KkZhhJZb5E2DXU8Lkcw9cBV8btKvE78ioEGFKsDmXU_TE85D1tmPnpnwXLhqyTFjk_8mSvmIf-rmfzKKmQFl4pOotFi0iGs8HcEeAaueRO6KdWl3IZpjd4OLfn8O3friL3_2mMjn29-ZzPT6QjuEUse_C5_ZX2WTP62B56u4vmXhqQxExyldFBcwRwhdKKQYGON3hAFnMJjKVAVDpBsQGgKztVw5V0pymE1AaYZe85xuTlvPGWwr6Q8N8QwXokkg"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
+<button class="w-8 h-8 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface hover:text-error" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Action Bar -->
+<div class="flex items-center justify-between pt-lg border-t border-outline-variant mt-sm">
+<button class="px-6 py-3 rounded-lg border border-outline font-label-md text-label-md text-on-surface hover:bg-surface-container transition-colors" type="button">
+                    Back to Step 1
+                </button>
+<button class="px-8 py-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container hover:text-on-primary-container shadow-md transition-all active:scale-95 flex items-center gap-2" type="button">
+                    Continue to Final Step
+                    <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</form>
+</main>
+</body></html>

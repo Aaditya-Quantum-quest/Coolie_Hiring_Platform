@@ -8,6 +8,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom'
 import { COOLIES, BOOKINGS, STATIONS } from '../../data/mockData'
 import toast from 'react-hot-toast'
+import SearchBar from '../../components/ui/SearchBar'
 
 function SOSButton() {
     const { addNotification, setActiveSOS } = useApp()
@@ -99,6 +100,8 @@ export default function CustomerDashboard() {
     const [detecting, setDetecting] = useState(false)
     const [availCoolies, setAvailCoolies] = useState(COOLIES.filter(c => c.status === 'available'))
     const [firstBookingOffer, setFirstBookingOffer] = useState(true)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchFilter, setSearchFilter] = useState('all')
 
     const detectStation = () => {
         setDetecting(true)
@@ -119,7 +122,44 @@ export default function CustomerDashboard() {
 
     useEffect(() => { detectStation() }, [])
 
-    const myBookings = BOOKINGS.slice(0, 3)
+    // Search filters for coolies
+    const coolieFilters = [
+        { value: 'all', label: 'All Coolies' },
+        { value: 'available', label: 'Available Now' },
+        { value: 'rating', label: 'Top Rated' },
+        { value: 'price', label: 'Lowest Price' }
+    ]
+
+    // Filter coolies based on search
+    const filteredCoolies = availCoolies.filter(coolie => {
+        const matchesSearch = searchQuery === '' || 
+            coolie.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            coolie.badge.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            coolie.platform.toLowerCase().includes(searchQuery.toLowerCase())
+        
+        if (!matchesSearch) return false
+
+        switch (searchFilter) {
+            case 'available':
+                return coolie.status === 'available'
+            case 'rating':
+                return coolie.rating >= 4.5
+            case 'price':
+                return coolie.basePrice <= 150
+            default:
+                return true
+        }
+    })
+
+    // Filter bookings based on search
+    const filteredBookings = BOOKINGS.filter(booking => {
+        return searchQuery === '' ||
+            booking.coolieName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            booking.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            booking.date.toLowerCase().includes(searchQuery.toLowerCase())
+    })
+
+    const myBookings = filteredBookings.slice(0, 3)
     const completed = myBookings.filter(b => b.status === 'completed').length
 
     return (
@@ -148,6 +188,19 @@ export default function CustomerDashboard() {
                             <Zap size={16} /> Book Now
                         </button>
                     </div>
+                </div>
+
+                {/* Search Bar */}
+                <div className="mb-6">
+                    <SearchBar
+                        placeholder="Search coolies, bookings, platforms..."
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        onFilter={setSearchFilter}
+                        filters={coolieFilters}
+                        selectedFilter={searchFilter}
+                        showFilters={true}
+                    />
                 </div>
 
                 {/* First Booking Offer Banner */}
@@ -185,7 +238,7 @@ export default function CustomerDashboard() {
                             </Link>
                         </div>
                         <div className="space-y-3">
-                            {availCoolies.slice(0, 3).map(coolie => (
+                            {filteredCoolies.slice(0, 3).map(coolie => (
                                 <div key={coolie.id} className="card p-4 flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                                         {coolie.name[0]}

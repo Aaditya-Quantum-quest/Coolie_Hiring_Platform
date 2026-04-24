@@ -6,6 +6,8 @@ import 'leaflet/dist/leaflet.css'
 import { COOLIES } from '../../data/mockData'
 import { Navigation, Clock, Phone, MessageSquare, Star, Navigation2, KeyRound, CheckCircle2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useLocation } from 'react-router-dom'
+import { useGlobalSocket } from '../../context/SocketContext'
 
 // Fix leaflet default marker
 delete L.Icon.Default.prototype._getIconUrl
@@ -28,33 +30,49 @@ const customerIcon = L.divIcon({
 const CUSTOMER_POS = [28.6410, 77.2190]
 
 export default function TrackCoolie() {
-    const coolie = COOLIES[0]
-    const [cooliePos, setCooliePos] = useState([coolie.lat, coolie.lng])
+    const locState = useLocation().state || {}
+    const coolie = locState.coolie || COOLIES[0]
+    const bookingId = locState.bookingId || 'BK003'
+
+    const [cooliePos, setCooliePos] = useState([coolie.lat || 28.6420, coolie.lng || 77.2200])
     const [eta, setEta] = useState(180)
     const [status, setStatus] = useState('On the way')
     const [otpVerified, setOtpVerified] = useState(false)
     const [enteredOtp, setEnteredOtp] = useState(['', '', '', ''])
     const otpRefs = [useRef(), useRef(), useRef(), useRef()]
     const CORRECT_OTP = ['4', '5', '2', '1']
+    
+    const { socket, connected } = useGlobalSocket()
 
-    // Simulate coolie moving toward customer
+    // Real-time location tracking via Socket.IO
     useEffect(() => {
-        const interval = setInterval(() => {
-            setCooliePos(prev => {
-                const latDiff = CUSTOMER_POS[0] - prev[0]
-                const lngDiff = CUSTOMER_POS[1] - prev[1]
+        if (socket && connected) {
+            socket.emit('customer:request-tracking', { bookingId, customerId: 'cust-123' })
+
+            socket.on('coolie:location-changed', (data) => {
+                setCooliePos([data.lat, data.lng])
+                // Calculate simple ETA and distance based on Haversine in a real app
+                // Here we just use a simple mock distance to update ETA
+                const latDiff = CUSTOMER_POS[0] - data.lat
+                const lngDiff = CUSTOMER_POS[1] - data.lng
                 const dist = Math.sqrt(latDiff ** 2 + lngDiff ** 2)
-                if (dist < 0.001) {
-                    setStatus('Arrived!')
-                    clearInterval(interval)
-                    return prev
-                }
-                return [prev[0] + latDiff * 0.02, prev[1] + lngDiff * 0.02]
+                setEta(Math.floor(dist * 10000))
             })
-            setEta(prev => Math.max(0, prev - 3))
-        }, 1500)
-        return () => clearInterval(interval)
-    }, [])
+
+            socket.on('coolie:arrived', () => {
+                setStatus('Arrived!')
+                setEta(0)
+            })
+        }
+
+        return () => {
+            if (socket) {
+                socket.emit('customer:stop-tracking', { bookingId })
+                socket.off('coolie:location-changed')
+                socket.off('coolie:arrived')
+            }
+        }
+    }, [socket, connected, bookingId])
 
     const handleOtpInput = (i, val) => {
         if (!/^\d?$/.test(val)) return
@@ -200,7 +218,7 @@ export default function TrackCoolie() {
 
                         {/* Booking Info */}
                         <div className="card p-4 text-sm space-y-2">
-                            <div className="flex justify-between"><span className="text-slate-400">Booking ID</span><span className="text-white font-mono">BK003</span></div>
+                            <div className="flex justify-between"><span className="text-slate-400">Booking ID</span><span className="text-white font-mono">{bookingId}</span></div>
                             <div className="flex justify-between"><span className="text-slate-400">Platform</span><span className="text-white">Platform 1</span></div>
                             <div className="flex justify-between"><span className="text-slate-400">Destination</span><span className="text-white">Auto Stand</span></div>
                             <div className="flex justify-between"><span className="text-slate-400">Amount</span><span className="text-green-400 font-bold">₹150</span></div>

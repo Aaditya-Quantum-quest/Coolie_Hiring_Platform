@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Menu Management - Business Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-container-low": "#eff4ff",
+                    "error": "#ba1a1a",
+                    "on-background": "#0b1c30",
+                    "on-secondary-fixed-variant": "#653e00",
+                    "on-error-container": "#93000a",
+                    "surface-container-high": "#dce9ff",
+                    "outline": "#757684",
+                    "surface-bright": "#f8f9ff",
+                    "surface-dim": "#cbdbf5",
+                    "on-primary-fixed-variant": "#173bab",
+                    "on-error": "#ffffff",
+                    "tertiary": "#003272",
+                    "on-surface-variant": "#444653",
+                    "outline-variant": "#c4c5d5",
+                    "surface-container": "#e5eeff",
+                    "surface-tint": "#3755c3",
+                    "secondary-fixed-dim": "#ffb95f",
+                    "background": "#f8f9ff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed": "#ffddb8",
+                    "surface": "#f8f9ff",
+                    "inverse-primary": "#b8c4ff",
+                    "secondary-container": "#fea619",
+                    "primary": "#00288e",
+                    "secondary": "#855300",
+                    "inverse-surface": "#213145",
+                    "on-secondary-container": "#684000",
+                    "primary-container": "#1e40af",
+                    "on-tertiary-fixed": "#001a42",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#004395",
+                    "tertiary-container": "#00489e",
+                    "primary-fixed": "#dde1ff",
+                    "tertiary-fixed-dim": "#adc6ff",
+                    "tertiary-fixed": "#d8e2ff",
+                    "on-surface": "#0b1c30",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-tertiary-container": "#9cbbff",
+                    "on-secondary-fixed": "#2a1700",
+                    "surface-container-highest": "#d3e4fe",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#d3e4fe",
+                    "primary-fixed-dim": "#b8c4ff",
+                    "on-primary-container": "#a8b8ff",
+                    "on-primary-fixed": "#001453"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xl": "32px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "xxl": "48px",
+                    "gutter": "16px",
+                    "container-margin": "20px",
+                    "lg": "24px",
+                    "unit": "4px"
+            },
+            "fontFamily": {
+                    "h2": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "h1": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "h3": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "h2": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "h1": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "h3": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .ambient-shadow {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased flex min-h-screen">
+<!-- SideNavBar (from JSON) -->
+<nav class="hidden md:flex flex-col bg-white dark:bg-slate-900 h-screen w-64 border-r border-outline-variant/30 rounded-none divide-y divide-slate-100 dark:divide-slate-800 shadow-2xl fixed left-0 top-0 z-50 transition-all duration-300 ease-in-out transform active:scale-95 font-['Inter'] text-sm font-medium">
+<div class="p-lg flex flex-col gap-sm">
+<h1 class="text-lg font-black tracking-tighter text-blue-900 dark:text-blue-300">Business Portal</h1>
+<p class="text-label-sm font-label-sm text-outline">Verified Status: Approved</p>
+</div>
+<div class="flex-1 py-md overflow-y-auto">
+<!-- Inactive -->
+<a class="text-slate-500 dark:text-slate-400 rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-blue-700 transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<!-- Active (Mapped to Menu Management intent) -->
+<a class="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">storefront</span>
+                Manage Listings
+            </a>
+<!-- Inactive -->
+<a class="text-slate-500 dark:text-slate-400 rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-blue-700 transition-colors" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+                Reservations
+            </a>
+<!-- Inactive -->
+<a class="text-slate-500 dark:text-slate-400 rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-blue-700 transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                Analytics
+            </a>
+<!-- Inactive -->
+<a class="text-slate-500 dark:text-slate-400 rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-blue-700 transition-colors" href="#">
+<span class="material-symbols-outlined">settings_accessibility</span>
+                Account Settings
+            </a>
+</div>
+<div class="p-md">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-md flex items-center justify-center gap-xs focus:ring-2 focus:ring-offset-2 focus:ring-primary outline-none">
+<span class="material-symbols-outlined text-sm">add</span>
+                Add New Service
+            </button>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 ml-0 md:ml-64 flex flex-col bg-surface-bright min-h-screen">
+<!-- Top Action Bar -->
+<header class="sticky top-0 z-40 glass-panel border-b border-outline-variant/40 px-container-margin md:px-xl py-lg flex flex-col lg:flex-row gap-md justify-between items-start lg:items-center">
+<div>
+<h2 class="font-h1 text-h1 text-on-surface">Menu Management</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Manage your dishes, pricing, and availability.</p>
+</div>
+<div class="flex flex-wrap items-center gap-sm w-full lg:w-auto">
+<!-- Search -->
+<div class="relative flex-grow lg:flex-grow-0 min-w-[200px]">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="Search dishes..." type="text"/>
+</div>
+<!-- Filters -->
+<select class="bg-surface-container-lowest border border-outline-variant rounded-full px-4 py-2 font-label-md text-label-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none cursor-pointer">
+<option value="all">All Categories</option>
+<option value="starter">Starters</option>
+<option value="main">Mains</option>
+<option value="dessert">Desserts</option>
+</select>
+<select class="bg-surface-container-lowest border border-outline-variant rounded-full px-4 py-2 font-label-md text-label-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none cursor-pointer hidden sm:block">
+<option value="all">Any Type</option>
+<option value="veg">Vegetarian</option>
+<option value="nonveg">Non-Veg</option>
+</select>
+<!-- Add Button -->
+<button class="bg-primary text-on-primary font-label-md text-label-md px-5 py-2 rounded-full hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md flex items-center gap-xs focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-primary outline-none ml-auto lg:ml-sm">
+<span class="material-symbols-outlined text-sm">add</span>
+                    Add Dish
+                </button>
+</div>
+</header>
+<!-- Content Area -->
+<div class="p-container-margin md:p-xl flex-1">
+<!-- High-End Bento/Card Grid (replaces standard list) -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-md xl:gap-lg">
+<!-- Dish Card 1: Paneer Tikka -->
+<article class="bg-surface-container-lowest rounded-xl p-sm flex flex-col sm:flex-row gap-md ambient-shadow border border-outline-variant/20 hover:shadow-[0_12px_40px_rgba(0,0,0,0.1)] transition-all group relative overflow-hidden">
+<!-- Status Indicator Strip -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary-container"></div>
+<div class="w-full sm:w-32 h-48 sm:h-auto rounded-lg overflow-hidden shrink-0 relative bg-surface-container">
+<img alt="Paneer Tikka" class="w-full h-full object-cover" data-alt="Close-up of vibrant orange Paneer Tikka chunks on skewers with charred edges, resting on a dark slate plate with fresh cilantro garnish and warm dramatic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEHsY36HF9-wWLLLJxJsc4HoE6uCwMO8OME0HCSlKReaIxbSb-f8__fnGVo34IZdGZT9lX4mjSbfbWrjwHLs8Tu_E3MWJdmlt55O-DchT_pSBJBdv0oBAAM3obAhNQxm1FWHnNrHSfg5uoT6TmL3la9F3lekGZq9kcLqi-9KmjQC3RKHskDZRV5iP2ChGZfX2K56W5j54Rky5WfzFewZRp1ACJKcqHgzXuUkmTo_WK9eZ0N735bf2I-5GPIr4z4NdZdWzoGpHFA0U"/>
+</div>
+<div class="flex-1 flex flex-col py-xs pr-sm">
+<div class="flex justify-between items-start gap-sm">
+<div>
+<div class="flex items-center gap-xs mb-xs">
+<span class="material-symbols-outlined text-green-600 text-sm" style="font-variation-settings: 'FILL' 1;">eco</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Starter</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-surface">Paneer Tikka</h3>
+</div>
+<span class="font-h3 text-h3 text-primary">$14.99</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mt-xs">Marinated cottage cheese cubes grilled to perfection with bell peppers and onions in a traditional tandoor.</p>
+<div class="flex flex-wrap gap-xs mt-sm">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-secondary-container/20 text-on-secondary-container font-label-sm text-label-sm gap-1">
+<span class="material-symbols-outlined text-[14px]">local_fire_department</span>
+                                Best Seller
+                            </span>
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm">
+                                Gluten Free
+                            </span>
+</div>
+<div class="mt-auto pt-md flex items-center justify-between border-t border-outline-variant/20">
+<label class="flex items-center cursor-pointer gap-sm">
+<div class="relative">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-outline-variant/50 rounded-full peer peer-checked:bg-primary transition-colors"></div>
+<div class="absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform peer-checked:translate-x-5 shadow-sm"></div>
+</div>
+<span class="font-label-md text-label-md text-on-surface">Available</span>
+</label>
+<div class="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+<button aria-label="Edit" class="p-2 text-outline hover:text-primary transition-colors rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button aria-label="Delete" class="p-2 text-outline hover:text-error transition-colors rounded-full hover:bg-error-container">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Dish Card 2: Butter Chicken -->
+<article class="bg-surface-container-lowest rounded-xl p-sm flex flex-col sm:flex-row gap-md ambient-shadow border border-outline-variant/20 hover:shadow-[0_12px_40px_rgba(0,0,0,0.1)] transition-all group relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+<div class="w-full sm:w-32 h-48 sm:h-auto rounded-lg overflow-hidden shrink-0 relative bg-surface-container">
+<img alt="Butter Chicken" class="w-full h-full object-cover" data-alt="Rich creamy orange butter chicken curry in a copper bowl, garnished with a swirl of cream and fresh coriander, high angle view with soft directional light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8E9LT-MdljezowVasYHho_pQNM_ZKEUyB4e7vtj4QO1w5rv0cW8yE8b8Js3KCpV-PWYWmF03RMmSuGq_HDH5o5mDzLzWx_bjxbIpgjsuNoUkeyaSuNqdh105b8rntnSCpycOKR-slDQCMXvL0O3buOU203MOtpgrgKcpLNzB652ytrCo5JbLEguy0YgeDyOeU3i2PgI0aASfmj2A0fdT4nkdv_F1gg1PNKbC2TalWgUuNYmt07lGOVJXTOwKK64z3rYQKR5Ih0Sc"/>
+</div>
+<div class="flex-1 flex flex-col py-xs pr-sm">
+<div class="flex justify-between items-start gap-sm">
+<div>
+<div class="flex items-center gap-xs mb-xs">
+<span class="material-symbols-outlined text-error text-sm" style="font-variation-settings: 'FILL' 1;">restaurant_menu</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Main Course</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-surface">Butter Chicken</h3>
+</div>
+<span class="font-h3 text-h3 text-primary">$18.99</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mt-xs">Tender chicken tikka simmered in a rich, creamy tomato gravy accented with fenugreek leaves.</p>
+<div class="flex flex-wrap gap-xs mt-sm">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-secondary-container/20 text-on-secondary-container font-label-sm text-label-sm gap-1">
+<span class="material-symbols-outlined text-[14px]">local_fire_department</span>
+                                Popular
+                            </span>
+</div>
+<div class="mt-auto pt-md flex items-center justify-between border-t border-outline-variant/20">
+<label class="flex items-center cursor-pointer gap-sm">
+<div class="relative">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-outline-variant/50 rounded-full peer peer-checked:bg-primary transition-colors"></div>
+<div class="absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform peer-checked:translate-x-5 shadow-sm"></div>
+</div>
+<span class="font-label-md text-label-md text-on-surface">Available</span>
+</label>
+<div class="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-outline hover:text-primary transition-colors rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 text-outline hover:text-error transition-colors rounded-full hover:bg-error-container">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Dish Card 3: Garlic Naan (Out of Stock) -->
+<article class="bg-surface-variant/30 rounded-xl p-sm flex flex-col sm:flex-row gap-md border border-outline-variant/40 transition-all group relative overflow-hidden grayscale-[0.4]">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-outline-variant"></div>
+<div class="w-full sm:w-32 h-48 sm:h-auto rounded-lg overflow-hidden shrink-0 relative bg-surface-container opacity-70">
+<img alt="Garlic Naan" class="w-full h-full object-cover" data-alt="Stack of golden brown garlic naan bread speckled with fresh herbs and burnt garlic pieces, resting on a rustic wooden board with soft ambient cafe lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHrmBZTiVEoUdlUE1pzYU799wl0uBeAD7ajAHqt9u5rrvuvf2gnsoOEW3bEI3kBMNXZpEE0nxPVMgWoDtDLZhrKgLoLTSPXyrzix78O0N9ulkoQPshWwPYxYysrp_aBn1B7O7ouzJleqybtANZ-fRVpPH5CNUBZHGt-DsEBxcdYZEIpFAokwNfbGeYnsNhWf4SxET0qb5Ha_njnRmp6DKmUznOi_mtXXokWXKeBWuLkkgKqBzz9Qjpbj5fiNnQC2ZLgCgkxN0n6Wo"/>
+</div>
+<div class="flex-1 flex flex-col py-xs pr-sm">
+<div class="flex justify-between items-start gap-sm">
+<div>
+<div class="flex items-center gap-xs mb-xs">
+<span class="material-symbols-outlined text-green-600/70 text-sm" style="font-variation-settings: 'FILL' 1;">eco</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Breads</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-surface/70">Garlic Naan</h3>
+</div>
+<span class="font-h3 text-h3 text-primary/70">$4.99</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant/70 line-clamp-2 mt-xs">Traditional Indian flatbread baked in a tandoor oven, brushed with butter and minced garlic.</p>
+<div class="mt-auto pt-md flex items-center justify-between border-t border-outline-variant/30">
+<label class="flex items-center cursor-pointer gap-sm">
+<div class="relative">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-outline-variant/50 rounded-full peer peer-checked:bg-primary transition-colors"></div>
+<div class="absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform peer-checked:translate-x-5 shadow-sm"></div>
+</div>
+<span class="font-label-md text-label-md text-outline">Sold Out</span>
+</label>
+<div class="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-outline hover:text-primary transition-colors rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 text-outline hover:text-error transition-colors rounded-full hover:bg-error-container">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+</div>
+<!-- Pagination / Load More Space -->
+<div class="mt-xl flex justify-center pb-xl">
+<button class="bg-surface-container hover:bg-surface-container-high text-primary font-label-md text-label-md px-6 py-2 rounded-full border border-outline-variant/30 transition-colors shadow-sm focus:ring-2 focus:ring-primary outline-none">
+                    Load More Dishes
+                </button>
+</div>
+</div>
+</main>
+</body></html>

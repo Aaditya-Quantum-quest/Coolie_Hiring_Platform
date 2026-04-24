@@ -7,6 +7,7 @@ import {
     MapPin, Bell, ChevronRight, Zap
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import SearchBar from '../../components/ui/SearchBar'
 
 const CHART_DATA = [
     { time: '6AM', bookings: 12, revenue: 840 },
@@ -46,11 +47,43 @@ export default function AdminDashboard() {
     const navigate = useNavigate()
     const [liveBookings, setLiveBookings] = useState(LIVE_BOOKINGS)
     const [tick, setTick] = useState(0)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchFilter, setSearchFilter] = useState('all')
 
     useEffect(() => {
         const t = setInterval(() => setTick(x => x + 1), 5000)
         return () => clearInterval(t)
     }, [])
+
+    // Search filters for bookings
+    const bookingFilters = [
+        { value: 'all', label: 'All Bookings' },
+        { value: 'active', label: 'Active Only' },
+        { value: 'pending', label: 'Pending Only' },
+        { value: 'completed', label: 'Completed Only' }
+    ]
+
+    // Filter bookings based on search
+    const filteredBookings = liveBookings.filter(booking => {
+        const matchesSearch = searchQuery === '' || 
+            booking.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            booking.coolie.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            booking.station.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            booking.id.toLowerCase().includes(searchQuery.toLowerCase())
+        
+        if (!matchesSearch) return false
+
+        switch (searchFilter) {
+            case 'active':
+                return booking.status === 'active'
+            case 'pending':
+                return booking.status === 'pending'
+            case 'completed':
+                return booking.status === 'completed'
+            default:
+                return true
+        }
+    })
 
     return (
         <div className="flex">
@@ -74,6 +107,19 @@ export default function AdminDashboard() {
                                 <Shield size={16} /> System Health
                             </button>
                         </div>
+                    </div>
+
+                    {/* Search Bar */}
+                    <div className="mb-6">
+                        <SearchBar
+                            placeholder="Search bookings, customers, coolies, stations..."
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            onFilter={setSearchFilter}
+                            filters={bookingFilters}
+                            selectedFilter={searchFilter}
+                            showFilters={true}
+                        />
                     </div>
 
                     {/* Stat Cards */}
@@ -180,7 +226,7 @@ export default function AdminDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {liveBookings.map((b, i) => (
+                                    {filteredBookings.map((b, i) => (
                                         <tr key={i} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
                                             <td className="py-3 font-mono text-slate-400 text-xs">{b.id}</td>
                                             <td className="py-3 text-slate-200 font-medium">{b.customer}</td>

@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css'
 import { COOLIES, STATIONS, BUSY_HOURS } from '../../data/mockData'
 import { MapPin, Users, Clock, Layers } from 'lucide-react'
 import toast from 'react-hot-toast'
+import SearchBar from '../../components/ui/SearchBar'
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -40,6 +41,36 @@ const heatColor = (val) => {
 export default function StationMap() {
     const [selectedStation, setSelectedStation] = useState(STATIONS[0])
     const [tab, setTab] = useState('map') // map | heatmap
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchFilter, setSearchFilter] = useState('all')
+
+    // Search filters for stations
+    const stationFilters = [
+        { value: 'all', label: 'All Stations' },
+        { value: 'major', label: 'Major Stations' },
+        { value: 'available', label: 'Available Coolies' },
+        { value: 'busy', label: 'High Traffic' }
+    ]
+
+    // Filter stations based on search
+    const filteredStations = STATIONS.filter(station => {
+        const matchesSearch = searchQuery === '' || 
+            station.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            station.code.toLowerCase().includes(searchQuery.toLowerCase())
+        
+        if (!matchesSearch) return false
+
+        switch (searchFilter) {
+            case 'major':
+                return station.name.includes('Delhi') || station.name.includes('Mumbai') || station.name.includes('Howrah')
+            case 'available':
+                return COOLIES.filter(c => c.station === station.name && c.status === 'available').length > 0
+            case 'busy':
+                return station.traffic === 'high'
+            default:
+                return true
+        }
+    })
 
     return (
         <div className="min-h-screen bg-slate-900 flex">
@@ -50,9 +81,22 @@ export default function StationMap() {
                     <p className="text-slate-400 text-sm">Interactive station map with platform guide & busy hour analysis</p>
                 </div>
 
+                {/* Search Bar */}
+                <div className="mb-6">
+                    <SearchBar
+                        placeholder="Search stations, platforms, routes..."
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        onFilter={setSearchFilter}
+                        filters={stationFilters}
+                        selectedFilter={searchFilter}
+                        showFilters={true}
+                    />
+                </div>
+
                 {/* Station Selector */}
                 <div className="flex gap-2 mb-4 flex-wrap">
-                    {STATIONS.slice(0, 4).map(s => (
+                    {filteredStations.slice(0, 4).map(s => (
                         <button key={s.id} onClick={() => setSelectedStation(s)}
                             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${selectedStation.id === s.id ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                                 }`}>

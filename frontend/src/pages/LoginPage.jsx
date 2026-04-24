@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { Eye, EyeOff, User, Briefcase, Shield, Zap, Sparkles, Mail, Lock, ArrowRight, Train } from 'lucide-react'
+import { Eye, EyeOff, User, Briefcase, Shield, Zap, Sparkles, Mail, Lock, ArrowRight, Train, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const DEMO_ACCOUNTS = {
@@ -24,6 +24,10 @@ export default function LoginPage() {
     const [showPass, setShowPass] = useState(false)
     const [form, setForm] = useState({ email: '', password: '' })
     const [loading, setLoading] = useState(false)
+
+    const handleGoBack = () => {
+        navigate(-1)
+    }
 
     const handleLogin = async (e) => {
         e.preventDefault()
@@ -48,6 +52,17 @@ export default function LoginPage() {
 
     return (
         <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg-dark)' }}>
+            {/* Go Back Button */}
+            <div className="fixed top-24 left-4 z-50">
+                <button
+                    onClick={handleGoBack}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-700/80 hover:border-slate-600/50 hover:text-white transition-all duration-200 group"
+                    title="Go back to previous page"
+                >
+                    <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
+                    <span className="text-sm font-medium">Go Back</span>
+                </button>
+            </div>
 
             {/* ── Left Visual Panel ── */}
             <div className="login-left-panel">

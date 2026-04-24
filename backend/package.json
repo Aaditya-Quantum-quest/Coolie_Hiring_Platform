@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "db:setup": "psql $DATABASE_URL -f src/config/schema.sql",
+    "db:setup": "node src/config/setupDb.js",
     "create:admin": "node scripts/createAdmin.js"
   },
   "keywords": [],
@@ -27,6 +27,7 @@
     "nodemailer": "^8.0.1",
     "pg": "^8.19.0",
     "qrcode": "^1.5.4",
+    "socket.io": "^4.8.3",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

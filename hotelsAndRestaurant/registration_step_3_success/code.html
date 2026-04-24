@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StationSuite - Business Registration Review</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-container-low": "#eff4ff",
+                    "error": "#ba1a1a",
+                    "on-background": "#0b1c30",
+                    "on-secondary-fixed-variant": "#653e00",
+                    "on-error-container": "#93000a",
+                    "surface-container-high": "#dce9ff",
+                    "outline": "#757684",
+                    "surface-bright": "#f8f9ff",
+                    "surface-dim": "#cbdbf5",
+                    "on-primary-fixed-variant": "#173bab",
+                    "on-error": "#ffffff",
+                    "tertiary": "#003272",
+                    "on-surface-variant": "#444653",
+                    "outline-variant": "#c4c5d5",
+                    "surface-container": "#e5eeff",
+                    "surface-tint": "#3755c3",
+                    "secondary-fixed-dim": "#ffb95f",
+                    "background": "#f8f9ff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed": "#ffddb8",
+                    "surface": "#f8f9ff",
+                    "inverse-primary": "#b8c4ff",
+                    "secondary-container": "#fea619",
+                    "primary": "#00288e",
+                    "secondary": "#855300",
+                    "inverse-surface": "#213145",
+                    "on-secondary-container": "#684000",
+                    "primary-container": "#1e40af",
+                    "on-tertiary-fixed": "#001a42",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#004395",
+                    "tertiary-container": "#00489e",
+                    "primary-fixed": "#dde1ff",
+                    "tertiary-fixed-dim": "#adc6ff",
+                    "tertiary-fixed": "#d8e2ff",
+                    "on-surface": "#0b1c30",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-tertiary-container": "#9cbbff",
+                    "on-secondary-fixed": "#2a1700",
+                    "surface-container-highest": "#d3e4fe",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#d3e4fe",
+                    "primary-fixed-dim": "#b8c4ff",
+                    "on-primary-container": "#a8b8ff",
+                    "on-primary-fixed": "#001453"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xl": "32px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "xxl": "48px",
+                    "gutter": "16px",
+                    "container-margin": "20px",
+                    "lg": "24px",
+                    "unit": "4px"
+            },
+            "fontFamily": {
+                    "h2": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "h1": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "h3": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "h2": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "h1": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "h3": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Suppressed TopNavBar for Transactional Flow, rendering simplified brand anchor -->
+<header class="w-full py-md px-container-margin border-b border-outline-variant/30 bg-surface-container-lowest/80 backdrop-blur-md sticky top-0 z-40">
+<div class="max-w-6xl mx-auto flex justify-center items-center">
+<span class="font-h3 text-h3 text-primary tracking-tight font-black">StationSuite</span>
+</div>
+</header>
+<main class="flex-grow w-full max-w-6xl mx-auto px-container-margin py-xl flex flex-col gap-xxl">
+<!-- PART 1: REVIEW SECTION -->
+<section class="flex flex-col gap-xl">
+<div class="flex flex-col gap-sm text-center md:text-left">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">Step 3 of 3</span>
+<h1 class="font-h1 text-h1 text-on-surface">Review &amp; Submit</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Please verify your property details before submitting for final approval.</p>
+</div>
+<!-- Bento Grid Summary -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md md:gap-lg auto-rows-min">
+<!-- General Info (Spans 2 columns) -->
+<div class="md:col-span-2 bg-surface-container-lowest rounded-xl p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-outline-variant/50 flex flex-col gap-md transition-shadow hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-sm">
+<h2 class="font-h3 text-h3 text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">business</span>
+                            General Information
+                        </h2>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-outline">Property Name</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">The Grand Central Hotel</span>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-outline">Property Type</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">Luxury Hotel</span>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-outline">Primary Contact</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">Jane Doe (GM)</span>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-outline">Email Address</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">management@grandcentral.com</span>
+</div>
+</div>
+</div>
+<!-- Location Map (Spans 1 column) -->
+<div class="md:col-span-1 bg-surface-container-lowest rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-outline-variant/50 overflow-hidden flex flex-col transition-shadow hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+<div class="h-48 w-full bg-surface-variant relative">
+<img alt="Map Preview" class="w-full h-full object-cover opacity-80 mix-blend-multiply" data-alt="digital map interface showing urban city grid with a prominent red location pin marker in the center" data-location="New York" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFIOP57YsLRAURg76Ime6jLanir4FfVboTmaiPFihyGYGzg1ElouTQaFi8zLtuhdna4bR58ZZjXPYJfR8_EwXoBRcrZjeVRfxFWFNmoVo1V81GDFCpnCXGGvhs_BJMJ_huV19o0_Xf_kf9Gz4C8dHoQAv4IN2NdO8LjrllOnjTFOnKjVi8zoU8RnTj7aoYfr-w8g3Uy--FgQ3fQgB2FegadMFAIitXE1Gh15Ni2qKqL1K56lo4dgVV06YMGCeMVK68VtI8hpVlwJQ"/>
+</div>
+<div class="p-md flex flex-col gap-xs bg-surface-container-lowest">
+<span class="font-label-sm text-label-sm text-outline">Registered Address</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">42nd Street &amp; Park Ave<br/>New York, NY 10017</span>
+</div>
+</div>
+<!-- Pricing Table (Spans full width) -->
+<div class="md:col-span-3 bg-surface-container-lowest rounded-xl p-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-outline-variant/50 flex flex-col gap-md transition-shadow hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-sm">
+<h2 class="font-h3 text-h3 text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">payments</span>
+                            Pricing &amp; Capacity
+                        </h2>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr>
+<th class="font-label-md text-label-md text-outline border-b border-outline-variant/30 pb-sm font-semibold">Room Type</th>
+<th class="font-label-md text-label-md text-outline border-b border-outline-variant/30 pb-sm font-semibold">Capacity</th>
+<th class="font-label-md text-label-md text-outline border-b border-outline-variant/30 pb-sm font-semibold">Base Price (Night)</th>
+<th class="font-label-md text-label-md text-outline border-b border-outline-variant/30 pb-sm font-semibold">Peak Price (Night)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20">
+<tr>
+<td class="py-md font-body-md text-body-md text-on-surface font-medium">Standard King</td>
+<td class="py-md font-body-md text-body-md text-on-surface-variant">2 Guests</td>
+<td class="py-md font-body-md text-body-md text-on-surface">$250.00</td>
+<td class="py-md font-body-md text-body-md text-on-surface">$350.00</td>
+</tr>
+<tr>
+<td class="py-md font-body-md text-body-md text-on-surface font-medium">Executive Suite</td>
+<td class="py-md font-body-md text-body-md text-on-surface-variant">4 Guests</td>
+<td class="py-md font-body-md text-body-md text-on-surface">$450.00</td>
+<td class="py-md font-body-md text-body-md text-on-surface">$600.00</td>
+</tr>
+<tr>
+<td class="py-md font-body-md text-body-md text-on-surface font-medium">Presidential Penthouse</td>
+<td class="py-md font-body-md text-body-md text-on-surface-variant">6 Guests</td>
+<td class="py-md font-body-md text-body-md text-on-surface">$1,200.00</td>
+<td class="py-md font-body-md text-body-md text-on-surface">$1,800.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Legal & Actions Container -->
+<div class="bg-surface-container-low rounded-xl p-lg border border-outline-variant/50 flex flex-col gap-lg mt-md">
+<div class="flex flex-col gap-sm">
+<label class="flex items-start gap-md cursor-pointer group">
+<input class="mt-1 appearance-none w-5 h-5 rounded border-2 border-outline checked:bg-primary checked:border-primary transition-colors cursor-pointer flex-shrink-0 grid place-content-center before:content-[''] before:w-2.5 before:h-2.5 before:bg-on-primary before:clip-path-polygon-[14%_44%,0_65%,50%_100%,100%_16%,80%_0%,43%_62%] before:scale-0 checked:before:scale-100 before:transition-transform before:duration-200" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">I agree to the StationSuite <a class="text-primary underline underline-offset-2" href="#">Terms and Conditions</a> and Privacy Policy.</span>
+</label>
+<label class="flex items-start gap-md cursor-pointer group">
+<input class="mt-1 appearance-none w-5 h-5 rounded border-2 border-outline checked:bg-primary checked:border-primary transition-colors cursor-pointer flex-shrink-0 grid place-content-center before:content-[''] before:w-2.5 before:h-2.5 before:bg-on-primary before:clip-path-polygon-[14%_44%,0_65%,50%_100%,100%_16%,80%_0%,43%_62%] before:scale-0 checked:before:scale-100 before:transition-transform before:duration-200" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">I declare that all information provided is accurate and authorized by the business entity.</span>
+</label>
+</div>
+<div class="flex flex-col-reverse sm:flex-row justify-between items-center gap-md border-t border-outline-variant/30 pt-lg">
+<button class="w-full sm:w-auto px-lg py-md rounded-lg font-label-md text-label-md text-on-surface-variant hover:text-primary hover:bg-surface-container-highest transition-colors flex items-center justify-center gap-xs focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                        Back to Edit
+                    </button>
+<button class="w-full sm:w-auto bg-primary text-on-primary px-xl py-md rounded-lg font-label-md text-label-md shadow-md hover:shadow-lg hover:bg-primary-container hover:text-on-primary-container transition-all flex items-center justify-center gap-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background active:scale-[0.98]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Submit for Approval
+                    </button>
+</div>
+</div>
+</section>
+<!-- Divider for Demo Purposes -->
+<div class="w-full flex items-center gap-md py-xl opacity-50">
+<div class="h-px bg-outline-variant flex-grow"></div>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Success State Demo Below</span>
+<div class="h-px bg-outline-variant flex-grow"></div>
+</div>
+<!-- PART 2: SUCCESS STATE (Designed as an inline block to satisfy the 'Two-part screen' request without JS overlay logic) -->
+<section class="flex flex-col items-center justify-center py-xxl text-center bg-surface-container-lowest rounded-xl border border-outline-variant/50 shadow-xl max-w-2xl mx-auto w-full relative overflow-hidden">
+<!-- Decorative background glow -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col items-center gap-lg p-xl">
+<div class="w-24 h-24 rounded-full bg-surface-container flex items-center justify-center mb-sm shadow-inner">
+<span class="material-symbols-outlined text-[64px] text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex flex-col gap-sm">
+<h2 class="font-h1 text-h1 text-on-surface tracking-tight">Registration Submitted!</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-md mx-auto">
+                        Your application for <strong class="text-on-surface">The Grand Central Hotel</strong> is currently under review by our team.
+                    </p>
+</div>
+<div class="bg-surface-container-low border border-outline-variant/30 rounded-lg p-md text-left max-w-sm mt-sm">
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-secondary-container mt-1" style="font-variation-settings: 'FILL' 1;">schedule</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface block mb-xs">Review Timeline</span>
+<span class="font-body-md text-body-md text-on-surface-variant block text-sm">This process typically takes 24-48 hours. We will notify you via email once approved.</span>
+</div>
+</div>
+</div>
+<button class="mt-md bg-inverse-surface text-inverse-on-surface px-xl py-md rounded-lg font-label-md text-label-md shadow-md hover:bg-on-surface transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background active:scale-[0.98]">
+                    Go to Login
+                </button>
+</div>
+</section>
+</main>
+</body></html>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Sidebar from '../../components/Sidebar'
 import { Star, Award, Trophy, TrendingUp, Medal, MapPin } from 'lucide-react'
+import SearchBar from '../../components/ui/SearchBar'
 
 const LEADERBOARD_DATA = [
     { rank: 1, name: 'Ramesh Kumar', id: 'CL-1042', station: 'New Delhi', rating: 4.9, trips: 87, earnings: '₹12,400', badge: '🥇', you: true },
@@ -20,8 +21,39 @@ const STATIONS = ['New Delhi', 'Mumbai CST', 'Chennai Central', 'Howrah', 'Banga
 export default function Leaderboard() {
     const [selectedStation, setSelectedStation] = useState('New Delhi')
     const [period, setPeriod] = useState('weekly')
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchFilter, setSearchFilter] = useState('all')
 
     const myRank = LEADERBOARD_DATA.find(d => d.you)
+
+    // Search filters for coolies
+    const coolieFilters = [
+        { value: 'all', label: 'All Coolies' },
+        { value: 'top', label: 'Top Rated' },
+        { value: 'active', label: 'Most Active' },
+        { value: 'earnings', label: 'Top Earners' }
+    ]
+
+    // Filter coolies based on search
+    const filteredCoolies = LEADERBOARD_DATA.filter(coolie => {
+        const matchesSearch = searchQuery === '' || 
+            coolie.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            coolie.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            coolie.station.toLowerCase().includes(searchQuery.toLowerCase())
+        
+        if (!matchesSearch) return false
+
+        switch (searchFilter) {
+            case 'top':
+                return coolie.rating >= 4.7
+            case 'active':
+                return coolie.trips >= 60
+            case 'earnings':
+                return parseInt(coolie.earnings.replace(/[₹,]/g, '')) >= 8000
+            default:
+                return true
+        }
+    })
 
     return (
         <div className="flex">
@@ -34,6 +66,19 @@ export default function Leaderboard() {
                         </div>
                         <h1 className="text-3xl font-black text-white">Coolie Leaderboard</h1>
                         <p className="text-slate-400 mt-2">Top performers earn Star of the Week badge + ₹100 bonus!</p>
+                    </div>
+
+                    {/* Search Bar */}
+                    <div className="mb-6">
+                        <SearchBar
+                            placeholder="Search coolies by name, ID, station..."
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            onFilter={setSearchFilter}
+                            filters={coolieFilters}
+                            selectedFilter={searchFilter}
+                            showFilters={true}
+                        />
                     </div>
 
                     {/* Filters */}
@@ -100,7 +145,7 @@ export default function Leaderboard() {
                     <div className="card p-6">
                         <h2 className="text-white font-bold mb-4">Full Rankings — {selectedStation}</h2>
                         <div className="space-y-2">
-                            {LEADERBOARD_DATA.map((porter, i) => (
+                            {filteredCoolies.map((porter, i) => (
                                 <div
                                     key={i}
                                     className={`flex items-center gap-4 p-4 rounded-xl transition-all ${porter.you ? 'bg-orange-500/10 border border-orange-500/30' : 'hover:bg-slate-800/50'}`}

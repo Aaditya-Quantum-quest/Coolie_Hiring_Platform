@@ -290,6 +290,8 @@ export default function Sidebar({ role = 'customer' }) {
                 flex: 1, padding: '12px 10px', overflowY: 'auto', overflowX: 'hidden',
                 position: 'relative', zIndex: 2,
                 scrollbarWidth: 'none',
+                height: 'calc(100vh - 200px)',
+                display: 'flex', flexDirection: 'column',
             }}>
                 <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -458,16 +460,16 @@ export default function Sidebar({ role = 'customer' }) {
         </div>
     )
 
-    /* ═══════════════════════════════════════════
+    /* ═══════════════════════════════════
        RENDER
-    ════════════════════════════════════════════ */
+    ══════════════════════════════════════════ */
     return (
         <>
             {/* ── DESKTOP ── */}
             <div
                 ref={sidebarRef}
                 style={{
-                    display: 'none',
+                    display: 'flex',
                     position: 'fixed', top: 0, left: 0, height: '100%', zIndex: 50,
                     width: collapsed ? 72 : 256,
                     background: 'linear-gradient(180deg,#0f1729 0%,#0d1424 60%,#0a1020 100%)',
@@ -562,7 +564,8 @@ export default function Sidebar({ role = 'customer' }) {
         @media(max-width:767px){
           .md-sidebar { display:none !important; }
         }
-      `}</style>
+      `}
+            </style>
         </>
     )
 }

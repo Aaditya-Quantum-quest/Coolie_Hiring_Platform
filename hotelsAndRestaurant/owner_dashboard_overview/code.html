@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Business Owner Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#eff4ff",
+                        "error": "#ba1a1a",
+                        "on-background": "#0b1c30",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#dce9ff",
+                        "outline": "#757684",
+                        "surface-bright": "#f8f9ff",
+                        "surface-dim": "#cbdbf5",
+                        "on-primary-fixed-variant": "#173bab",
+                        "on-error": "#ffffff",
+                        "tertiary": "#003272",
+                        "on-surface-variant": "#444653",
+                        "outline-variant": "#c4c5d5",
+                        "surface-container": "#e5eeff",
+                        "surface-tint": "#3755c3",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "background": "#f8f9ff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#ffddb8",
+                        "surface": "#f8f9ff",
+                        "inverse-primary": "#b8c4ff",
+                        "secondary-container": "#fea619",
+                        "primary": "#00288e",
+                        "secondary": "#855300",
+                        "inverse-surface": "#213145",
+                        "on-secondary-container": "#684000",
+                        "primary-container": "#1e40af",
+                        "on-tertiary-fixed": "#001a42",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#004395",
+                        "tertiary-container": "#00489e",
+                        "primary-fixed": "#dde1ff",
+                        "tertiary-fixed-dim": "#adc6ff",
+                        "tertiary-fixed": "#d8e2ff",
+                        "on-surface": "#0b1c30",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-tertiary-container": "#9cbbff",
+                        "on-secondary-fixed": "#2a1700",
+                        "surface-container-highest": "#d3e4fe",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#d3e4fe",
+                        "primary-fixed-dim": "#b8c4ff",
+                        "on-primary-container": "#a8b8ff",
+                        "on-primary-fixed": "#001453",
+                        "status-success": "#10b981",
+                        "status-success-bg": "#d1fae5",
+                        "status-warning": "#f59e0b",
+                        "status-warning-bg": "#fef3c7",
+                        "status-error": "#ef4444",
+                        "status-error-bg": "#fee2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "32px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "xxl": "48px",
+                        "gutter": "16px",
+                        "container-margin": "20px",
+                        "lg": "24px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "h2": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "h1": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "h3": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "h2": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "h1": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "h3": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-background'); }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden antialiased">
+<!-- SideNavBar Component -->
+<nav class="fixed left-0 top-0 h-full flex flex-col z-50 bg-white dark:bg-slate-900 border-r rounded-none divide-y divide-slate-100 dark:divide-slate-800 shadow-2xl h-screen w-64 md:flex hidden">
+<!-- Header area -->
+<div class="p-lg flex flex-col gap-sm">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden flex-shrink-0">
+<img alt="Business Profile Logo" class="w-full h-full object-cover" data-alt="Modern hotel building exterior during daytime with blue sky" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ6L2VJPn55dYW-i7F8UOlRJpipG_GN0_zmXiGr6L9lObUZkLeNj5bqG95KE8KY7mToTXFuZ74HKh6m0TF2JySzEZ9-28zqeJcXf2Wb7Ma6TSFREtHzSzJdykDmGvz6-gusNyX2WfsOT5scvqeczKYBg9pmVO_IWNP87gVN7Ip3LPiqD1eg1pow51H6Pb0k0Q_FphbpLSCLUGszCDyo_DozSsSJnO0ln9wZdxPFYEVBWHNZq7pjqAYYZf-ETeH-Az5TazIYPVDfbY"/>
+</div>
+<div class="flex-1 min-w-0">
+<h2 class="font-h3 text-h3 text-blue-900 dark:text-blue-300 font-black tracking-tighter truncate" title="Grand Central Hotel">Grand Central Hotel</h2>
+<p class="font-label-sm text-label-sm text-slate-500 truncate">Verified Status: Approved</p>
+</div>
+</div>
+<div class="flex gap-sm mt-sm">
+<span class="inline-flex items-center px-2 py-1 rounded-full font-label-sm text-label-sm bg-primary/10 text-primary">Hotel</span>
+<span class="inline-flex items-center px-2 py-1 rounded-full font-label-sm text-label-sm bg-status-success-bg text-status-success">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="check_circle">check_circle</span>
+                    Approved
+                </span>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 overflow-y-auto py-md">
+<ul class="space-y-xs">
+<li>
+<a class="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-all duration-300 ease-in-out transform active:scale-95 font-['Inter'] text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<a class="text-slate-500 dark:text-slate-400 rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-blue-700 transition-all duration-300 ease-in-out transform active:scale-95 font-['Inter'] text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="storefront">storefront</span>
+<span>Manage Listings</span>
+</a>
+</li>
+<li>
+<a class="text-slate-500 dark:text-slate-400 rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-blue-700 transition-all duration-300 ease-in-out transform active:scale-95 font-['Inter'] text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span>Reservations</span>
+</a>
+</li>
+<li>
+<a class="text-slate-500 dark:text-slate-400 rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-blue-700 transition-all duration-300 ease-in-out transform active:scale-95 font-['Inter'] text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span>Analytics</span>
+</a>
+</li>
+<li>
+<a class="text-slate-500 dark:text-slate-400 rounded-lg mx-2 my-1 px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-blue-700 transition-all duration-300 ease-in-out transform active:scale-95 font-['Inter'] text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="settings_accessibility">settings_accessibility</span>
+<span>Account Settings</span>
+</a>
+</li>
+</ul>
+</div>
+<!-- CTA -->
+<div class="p-md">
+<button class="w-full bg-primary text-on-primary rounded-lg py-3 px-4 font-label-md text-label-md flex justify-center items-center gap-2 hover:bg-primary/90 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+                Add New Service
+            </button>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 ml-0 md:ml-64 h-full overflow-y-auto bg-surface">
+<!-- Top App Bar (Mobile Only for Sidebar substitution if needed, but keeping simple for this layout) -->
+<div class="md:hidden flex items-center justify-between p-md bg-white border-b border-surface-dim sticky top-0 z-40">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="menu">menu</span>
+<span class="font-h3 text-h3 text-primary font-bold">Business Portal</span>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Professional headshot of a smiling woman in business attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_7VDXE5urBQcbWGpupjJam2Eku7SClwwnaJNoj1LYKVt8A1bUOgkOyAhMv9byWzM6xJfRx2zhg_l8zbZOoH9FRbZS8Yb-u3A30OkVMCznRNnNSKyzdi76guWpCiygQAsOPyJu0V7px4hhNDhe9k9zyel-_FTHQWMEe1TDao5al7rMWm0429fkzYC-NBkzusYbM1AGGtkZrYes6YQbjHiuHDijQ69JvTxxTJAmVOZTt9REMGXtukYy65uUbxbb6MTatnqMFZcPeW4"/>
+</div>
+</div>
+<div class="p-lg md:p-xxl max-w-7xl mx-auto space-y-xl">
+<!-- Welcome Banner -->
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-md">
+<div>
+<h1 class="font-h1 text-h1 text-on-surface">Welcome back, Jane Doe 👋</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-sm">Here's what's happening at Grand Central Hotel today.</p>
+</div>
+<div class="flex items-center gap-sm">
+<button class="bg-surface-container text-on-surface px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-surface-dim transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_today">calendar_today</span>
+                         Today
+                     </button>
+<button class="bg-secondary text-on-secondary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+                         Export Report
+                     </button>
+</div>
+</header>
+<!-- Stat Cards Grid -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
+<!-- Stat Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_8px_20px_rgb(0,0,0,0.04)] border border-surface-dim flex flex-col justify-between hover:shadow-[0_12px_24px_rgb(0,0,0,0.08)] transition-shadow">
+<div class="flex justify-between items-start mb-md">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="bed">bed</span>
+</div>
+<span class="inline-flex items-center text-status-success font-label-sm text-label-sm gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="trending_up">trending_up</span>
+                            0%
+                        </span>
+</div>
+<div>
+<h3 class="font-h2 text-h2 text-on-surface">4</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">Room Types</p>
+</div>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_8px_20px_rgb(0,0,0,0.04)] border border-surface-dim flex flex-col justify-between hover:shadow-[0_12px_24px_rgb(0,0,0,0.08)] transition-shadow">
+<div class="flex justify-between items-start mb-md">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="rate_review">rate_review</span>
+</div>
+<span class="inline-flex items-center text-status-success font-label-sm text-label-sm gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="trending_up">trending_up</span>
+                            12%
+                        </span>
+</div>
+<div>
+<h3 class="font-h2 text-h2 text-on-surface">128</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">Total Reviews</p>
+</div>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_8px_20px_rgb(0,0,0,0.04)] border border-surface-dim flex flex-col justify-between hover:shadow-[0_12px_24px_rgb(0,0,0,0.08)] transition-shadow">
+<div class="flex justify-between items-start mb-md">
+<div class="w-10 h-10 rounded-full bg-status-warning-bg flex items-center justify-center text-status-warning">
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+</div>
+<span class="inline-flex items-center text-status-success font-label-sm text-label-sm gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="trending_up">trending_up</span>
+                            0.2
+                        </span>
+</div>
+<div>
+<h3 class="font-h2 text-h2 text-on-surface">4.8</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">Average Rating</p>
+</div>
+</div>
+<!-- Stat Card 4 -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_8px_20px_rgb(0,0,0,0.04)] border border-surface-dim flex flex-col justify-between hover:shadow-[0_12px_24px_rgb(0,0,0,0.08)] transition-shadow">
+<div class="flex justify-between items-start mb-md">
+<div class="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</div>
+<span class="inline-flex items-center text-status-warning font-label-sm text-label-sm gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="trending_down">trending_down</span>
+                            3%
+                        </span>
+</div>
+<div>
+<h3 class="font-h2 text-h2 text-on-surface">1.2k</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">Profile Views</p>
+</div>
+</div>
+</section>
+<!-- Charts Section -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-lg">
+<!-- Bar Chart Area (Mockup) -->
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-xl p-lg shadow-[0_8px_20px_rgb(0,0,0,0.04)] border border-surface-dim">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-h3 text-h3 text-on-surface">Room Types &amp; Pricing</h3>
+<button class="p-2 hover:bg-surface-container rounded-full text-outline"><span class="material-symbols-outlined" data-icon="more_vert">more_vert</span></button>
+</div>
+<div class="h-64 flex items-end gap-sm md:gap-md relative border-l border-b border-surface-dim pt-4 pb-2 px-2">
+<!-- Y-axis labels -->
+<div class="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-outline-variant -ml-8 pb-8">
+<span>$300</span>
+<span>$200</span>
+<span>$100</span>
+<span>$0</span>
+</div>
+<!-- Bars -->
+<div class="flex-1 flex flex-col justify-end items-center group">
+<div class="w-full bg-primary/20 hover:bg-primary/40 rounded-t-sm h-[40%] transition-all relative">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface text-xs py-1 px-2 rounded whitespace-nowrap">$120</div>
+</div>
+<span class="text-xs text-outline mt-2 font-label-sm">Standard</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group">
+<div class="w-full bg-primary/40 hover:bg-primary/60 rounded-t-sm h-[60%] transition-all relative">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface text-xs py-1 px-2 rounded whitespace-nowrap">$180</div>
+</div>
+<span class="text-xs text-outline mt-2 font-label-sm">Deluxe</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group">
+<div class="w-full bg-primary/80 hover:bg-primary rounded-t-sm h-[85%] transition-all relative">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface text-xs py-1 px-2 rounded whitespace-nowrap">$250</div>
+</div>
+<span class="text-xs text-outline mt-2 font-label-sm">Suite</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group">
+<div class="w-full bg-secondary/80 hover:bg-secondary rounded-t-sm h-[95%] transition-all relative">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface text-xs py-1 px-2 rounded whitespace-nowrap">$285</div>
+</div>
+<span class="text-xs text-outline mt-2 font-label-sm">Penthouse</span>
+</div>
+</div>
+</div>
+<!-- Pie Chart Area (Mockup) -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_8px_20px_rgb(0,0,0,0.04)] border border-surface-dim flex flex-col">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-h3 text-h3 text-on-surface">Amenities Coverage</h3>
+<span class="font-label-md text-label-md text-primary bg-primary/10 px-2 py-1 rounded">10/13</span>
+</div>
+<div class="flex-1 flex items-center justify-center relative my-md">
+<!-- CSS Donut Chart approximation -->
+<div class="w-40 h-40 rounded-full border-[16px] border-surface-container relative" style="border-top-color: theme('colors.primary'); border-right-color: theme('colors.primary'); border-bottom-color: theme('colors.primary'); transform: rotate(-45deg);">
+</div>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-h2 text-h2 text-on-surface">76%</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Enabled</span>
+</div>
+</div>
+<div class="mt-auto space-y-2">
+<div class="flex items-center justify-between font-label-md text-label-md">
+<div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-primary"></span><span class="text-on-surface">Enabled</span></div>
+<span class="text-on-surface-variant">10</span>
+</div>
+<div class="flex items-center justify-between font-label-md text-label-md">
+<div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-surface-container"></span><span class="text-on-surface">Missing</span></div>
+<span class="text-on-surface-variant">3</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Row: Activity & Reviews -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-lg">
+<!-- Recent Activity Timeline -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_8px_20px_rgb(0,0,0,0.04)] border border-surface-dim">
+<div class="flex justify-between items-center mb-lg">
+<h3 class="font-h3 text-h3 text-on-surface">Recent Activity</h3>
+<a class="font-label-md text-label-md text-primary hover:underline" href="#">View All</a>
+</div>
+<div class="relative pl-6 space-y-6 before:absolute before:inset-y-0 before:left-[11px] before:w-[2px] before:bg-surface-dim">
+<!-- Timeline Item 1 -->
+<div class="relative">
+<div class="absolute -left-[31px] top-1 w-[14px] h-[14px] rounded-full bg-primary border-[3px] border-white ring-2 ring-primary/20"></div>
+<p class="font-label-md text-label-md text-on-surface">New Reservation: Suite A</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">John Smith booked for Oct 12 - Oct 15.</p>
+<span class="font-label-sm text-label-sm text-outline mt-2 block">10 mins ago</span>
+</div>
+<!-- Timeline Item 2 -->
+<div class="relative">
+<div class="absolute -left-[31px] top-1 w-[14px] h-[14px] rounded-full bg-secondary border-[3px] border-white ring-2 ring-secondary/20"></div>
+<p class="font-label-md text-label-md text-on-surface">Listing Updated</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Pool amenity was marked as 'Under Maintenance'.</p>
+<span class="font-label-sm text-label-sm text-outline mt-2 block">2 hours ago</span>
+</div>
+<!-- Timeline Item 3 -->
+<div class="relative">
+<div class="absolute -left-[31px] top-1 w-[14px] h-[14px] rounded-full bg-status-success border-[3px] border-white ring-2 ring-status-success/20"></div>
+<p class="font-label-md text-label-md text-on-surface">Payment Received</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">$450 payout processed for last week's stays.</p>
+<span class="font-label-sm text-label-sm text-outline mt-2 block">Yesterday</span>
+</div>
+</div>
+</div>
+<!-- Reviews Snapshot -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_8px_20px_rgb(0,0,0,0.04)] border border-surface-dim">
+<div class="flex justify-between items-center mb-lg">
+<h3 class="font-h3 text-h3 text-on-surface">Latest Reviews</h3>
+<a class="font-label-md text-label-md text-primary hover:underline" href="#">Manage</a>
+</div>
+<div class="space-y-4">
+<!-- Review Mini Card 1 -->
+<div class="p-4 rounded-lg bg-surface hover:bg-surface-container-low transition-colors border border-transparent hover:border-surface-dim">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-label-sm">MR</div>
+<span class="font-label-md text-label-md text-on-surface">Maria R.</span>
+</div>
+<div class="flex text-status-warning text-[14px]">
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">"Absolutely wonderful stay. The penthouse view was incredible and the staff was extremely accommodating to our late arrival."</p>
+</div>
+<!-- Review Mini Card 2 -->
+<div class="p-4 rounded-lg bg-surface hover:bg-surface-container-low transition-colors border border-transparent hover:border-surface-dim">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-sm">DK</div>
+<span class="font-label-md text-label-md text-on-surface">David K.</span>
+</div>
+<div class="flex text-status-warning text-[14px]">
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-outline-variant" data-icon="star" data-weight="fill">star</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">"Great location and clean rooms. Breakfast could have more options, but overall a solid experience for business travel."</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Spacer for bottom scroll -->
+<div class="h-8"></div>
+</div>
+</main>
+</body></html>

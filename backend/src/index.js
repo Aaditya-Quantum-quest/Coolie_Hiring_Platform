@@ -9,8 +9,33 @@ const path = require('path')
 const authRoutes    = require('./routes/auth.routes')
 const adminRoutes   = require('./routes/admin.routes')
 const rankingRoutes = require('./routes/rankings.routes')
+const locationRoutes = require('./routes/location.routes')
+const coolieRoutes  = require('./routes/coolie.routes')
+
+// Business (Hotels & Restaurants) routes
+const businessAuthRoutes   = require('./routes/business/auth.routes')
+const businessOwnerRoutes  = require('./routes/business/owner.routes')
+const businessPublicRoutes = require('./routes/business/public.routes')
+const businessAdminRoutes  = require('./routes/admin/businessAdmin.routes')
+
+const { createServer } = require('http')
+const { Server } = require('socket.io')
+const setupSocketHandlers = require('./socket/socketHandler')
 
 const app = express()
+const httpServer = createServer(app)
+
+// ─── SOCKET.IO SETUP ───────────────────────────────────────────────
+const io = new Server(httpServer, {
+    cors: {
+        origin: process.env.CLIENT_URL || 'http://localhost:5173',
+        methods: ['GET', 'POST'],
+        credentials: true
+    }
+})
+
+// Initialize Socket event handlers
+setupSocketHandlers(io)
 
 // ─── SECURITY MIDDLEWARE ────────────────────────────────────────────
 app.use(
@@ -70,6 +95,14 @@ app.use(
 app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/admin', authLimiter, adminRoutes)
 app.use('/api/v1/rankings', rankingRoutes)
+app.use('/api/location', locationRoutes)
+app.use('/api/coolie', coolieRoutes)
+
+// Business (Hotels & Restaurants)
+app.use('/api/v1/business/auth', businessAuthRoutes)
+app.use('/api/v1/owner', businessOwnerRoutes)
+app.use('/api/v1/public', businessPublicRoutes)
+app.use('/api/v1/admin/businesses', businessAdminRoutes)
 
 // ─── HEALTH CHECK ──────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
@@ -110,8 +143,8 @@ const PORT = process.env.PORT || 5000
 const pool = require('./config/db')
 
 pool.query('SELECT 1').then(() => {
-    app.listen(PORT, () => {
-        console.log(`\n🚀 Server running on http://localhost:${PORT}`)
+    httpServer.listen(PORT, () => {
+        console.log(`\n🚀 Server & Socket.IO running on http://localhost:${PORT}`)
         console.log(`📁 Environment: ${process.env.NODE_ENV}`)
         console.log(`📂 Uploads served at: http://localhost:${PORT}/uploads`)
         console.log(`🔐 Auth API at: http://localhost:${PORT}/api/auth`)

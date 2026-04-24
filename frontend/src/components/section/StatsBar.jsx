@@ -68,23 +68,23 @@ export default function StatsBar() {
     }, [])
 
     return (
-        <section ref={sectionRef} className="bg-[#0E0C1E] py-[60px] px-4">
-            <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+        <section ref={sectionRef} className="bg-[#0E0C1E] py-10 sm:py-12 lg:py-16 px-4">
+            <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 text-center">
                 <div ref={el => statItemsRef.current[0] = el}>
-                    <p className="stat-number text-[48px] md:text-[56px] font-bold text-white leading-tight">50,000+</p>
-                    <p className="text-[13px] text-[#6B6188] uppercase tracking-[0.08em]">SUCCESSFUL TRIPS</p>
+                    <p className="stat-number text-3xl sm:text-4xl lg:text-5xl font-medium text-white leading-tight">50,000+</p>
+                    <p className="text-xs sm:text-sm text-[#6B6188] uppercase tracking-wider font-normal mt-2">SUCCESSFUL TRIPS</p>
                 </div>
                 <div ref={el => statItemsRef.current[1] = el}>
-                    <p className="stat-number text-[48px] md:text-[56px] font-bold text-white leading-tight">120+</p>
-                    <p className="text-[13px] text-[#6B6188] uppercase tracking-[0.08em]">STATIONS LIVE</p>
+                    <p className="stat-number text-3xl sm:text-4xl lg:text-5xl font-medium text-white leading-tight">120+</p>
+                    <p className="text-xs sm:text-sm text-[#6B6188] uppercase tracking-wider font-normal mt-2">STATIONS LIVE</p>
                 </div>
                 <div ref={el => statItemsRef.current[2] = el}>
-                    <p className="stat-number text-[48px] md:text-[56px] font-bold text-white leading-tight">4.9/5</p>
-                    <p className="text-[13px] text-[#6B6188] uppercase tracking-[0.08em]">AVERAGE RATING</p>
+                    <p className="stat-number text-3xl sm:text-4xl lg:text-5xl font-medium text-white leading-tight">4.9/5</p>
+                    <p className="text-xs sm:text-sm text-[#6B6188] uppercase tracking-wider font-normal mt-2">AVERAGE RATING</p>
                 </div>
                 <div ref={el => statItemsRef.current[3] = el}>
-                    <p className="stat-number text-[48px] md:text-[56px] font-bold text-white leading-tight">24/7</p>
-                    <p className="text-[13px] text-[#6B6188] uppercase tracking-[0.08em]">HUMAN SUPPORT</p>
+                    <p className="stat-number text-3xl sm:text-4xl lg:text-5xl font-medium text-white leading-tight">24/7</p>
+                    <p className="text-xs sm:text-sm text-[#6B6188] uppercase tracking-wider font-normal mt-2">HUMAN SUPPORT</p>
                 </div>
             </div>
         </section>

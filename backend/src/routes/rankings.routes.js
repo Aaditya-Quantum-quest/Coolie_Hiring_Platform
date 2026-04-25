@@ -3,7 +3,9 @@
  */
 
 const express = require('express')
-const router  = express.Router()
+const router = express.Router()
+const { ipKeyGenerator } = require('express-rate-limit');
+
 const rateLimit = require('express-rate-limit')
 const { body, param, query } = require('express-validator')
 const { validate } = require('../middleware/validate.middleware')
@@ -20,11 +22,15 @@ const {
 
 // ─── Rate limiter for XP award endpoint ──────────────────────────────────────
 const xpAwardLimiter = rateLimit({
-    windowMs: 60 * 1000,  // 1 minute
+    windowMs: 60 * 1000, // 1 minute
     max: 20,
-    message: { success: false, message: 'Too many XP award requests.' },
-    keyGenerator: (req) => req.body?.coolie_id || req.ip,
-})
+    message: {
+        success: false,
+        message: 'Too many XP award requests.'
+    },
+    keyGenerator: (req) =>
+        req.body?.coolie_id || ipKeyGenerator(req),
+});
 
 // ─── Internal service key middleware ─────────────────────────────────────────
 const requireServiceKey = (req, res, next) => {

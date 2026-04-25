@@ -31,7 +31,7 @@ const fileFilter = (req, file, cb) => {
     }
 }
 
-const limits = { fileSize: 5 * 1024 * 1024 } // 5MB max
+const limits = { fileSize: 2 * 1024 * 1024 } // 2MB max
 
 // Coolie KYC — 4 files: passport_photo, aadhaar_front, aadhaar_back, secondary_doc
 const coolieUpload = multer({

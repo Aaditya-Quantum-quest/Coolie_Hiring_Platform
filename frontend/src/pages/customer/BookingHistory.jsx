@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import Sidebar from '../../components/Sidebar'
-import { BOOKINGS } from '../../data/mockData'
-import { Clock, Star, Download, Search, Filter, ChevronDown, Eye, Calendar, MapPin, Package, Navigation, X } from 'lucide-react'
+import axios from 'axios'
+import { Clock, Star, Download, Search, Filter, ChevronDown, Eye, Calendar, MapPin, Package, Navigation, X, ClipboardList } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
@@ -16,10 +16,18 @@ export default function BookingHistory() {
     const navigate = useNavigate()
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState('all')
-    const [expanded, setExpanded] = useState(null)
+    const [bookings, setBookings] = useState([])
 
-    const filtered = BOOKINGS.filter(b => {
-        const matchSearch = b.coolieName.toLowerCase().includes(search.toLowerCase()) || b.id.includes(search)
+    React.useEffect(() => {
+        axios.get('http://localhost:5000/api/bookings/my-bookings')
+            .then(res => {
+                if (res.data.success) setBookings(res.data.bookings)
+            })
+            .catch(err => console.error(err))
+    }, [])
+
+    const filtered = bookings.filter(b => {
+        const matchSearch = b.coolieName?.toLowerCase().includes(search.toLowerCase()) || b.id?.includes(search)
         const matchFilter = filter === 'all' || b.status === filter
         return matchSearch && matchFilter
     })
@@ -57,10 +65,10 @@ export default function BookingHistory() {
                 {/* Stats Row */}
                 <div className="grid grid-cols-4 gap-3 mb-6">
                     {[
-                        { label: 'Total', val: BOOKINGS.length, color: 'text-white' },
-                        { label: 'Completed', val: BOOKINGS.filter(b => b.status === 'completed').length, color: 'text-green-400' },
-                        { label: 'Pending', val: BOOKINGS.filter(b => b.status === 'pending').length, color: 'text-orange-400' },
-                        { label: 'Spent', val: `₹${BOOKINGS.reduce((a, b) => a + b.amount, 0)}`, color: 'text-blue-400' },
+                        { label: 'Total', val: bookings.length, color: 'text-white' },
+                        { label: 'Completed', val: bookings.filter(b => b.status === 'completed').length, color: 'text-green-400' },
+                        { label: 'Pending', val: bookings.filter(b => b.status === 'pending').length, color: 'text-orange-400' },
+                        { label: 'Spent', val: `₹${bookings.reduce((a, b) => a + Number(b.amount || 0), 0)}`, color: 'text-blue-400' },
                     ].map(s => (
                         <div key={s.label} className="card p-3 text-center">
                             <p className={`text-xl font-bold ${s.color}`}>{s.val}</p>
@@ -79,7 +87,7 @@ export default function BookingHistory() {
                         <div key={b.id} className="card p-4">
                             <div className="flex items-start gap-4 flex-wrap">
                                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                                    {b.coolieName[0]}
+                                    {b.coolieName?.[0] || 'C'}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap mb-1">

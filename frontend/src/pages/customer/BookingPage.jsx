@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Sidebar from '../../components/Sidebar'
 import { useApp } from '../../context/AppContext'
-import { COOLIES, PRICE_TABLE } from '../../data/mockData'
+import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
@@ -14,8 +14,8 @@ import { useGlobalSocket } from '../../context/SocketContext'
 import useGeolocation from '../../hooks/useGeolocation'
 
 /* ─── Bargain Modal ─────────────────────────────────────────── */
-function BargainModal({ coolie, luggageSize, customAmount, onClose, onDone }) {
-    const pt = PRICE_TABLE[luggageSize] || PRICE_TABLE.medium
+function BargainModal({ coolie, luggageSize, customAmount, onClose, onDone, priceTable }) {
+    const pt = priceTable[luggageSize] || priceTable.medium
     const [offer, setOffer] = useState(customAmount && customAmount > 0 ? parseInt(customAmount) : pt.base)
     const [coolieOffer, setCoolieOffer] = useState(null)
     const [status, setStatus] = useState('idle')
@@ -133,7 +133,8 @@ export default function BookingPage() {
     const [otp] = useState(Math.floor(1000 + Math.random() * 9000))
 
     // Real-time coolie fetching
-    const [availCoolies, setAvailCoolies] = useState(COOLIES.filter(c => c.status === 'available'))
+    const [priceTable, setPriceTable] = useState(null)
+    const [availCoolies, setAvailCoolies] = useState([])
     const { socket, connected } = useGlobalSocket()
     const { location: geoLoc, startWatching } = useGeolocation()
 
@@ -143,20 +144,27 @@ export default function BookingPage() {
     }, [startWatching]);
 
     useEffect(() => {
-        // Fetch initially via REST or rely on mock if location isn't available
-        const fetchNearby = async () => {
-            if (!geoLoc) return;
+        axios.get('http://localhost:5000/api/config/pricing')
+            .then(res => {
+                if (res.data.success) setPriceTable(res.data.priceTable)
+            })
+            .catch(err => console.error(err))
+    }, [])
+
+    useEffect(() => {
+        const fetchCoolies = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/api/location/nearby?lat=${geoLoc.lat}&lng=${geoLoc.lng}`);
-                const data = await res.json();
-                if (data.success && data.coolies.length > 0) {
-                    setAvailCoolies(data.coolies);
+                let url = 'http://localhost:5000/api/customer/coolies';
+                if (geoLoc) url = `http://localhost:5000/api/location/nearby?lat=${geoLoc.lat}&lng=${geoLoc.lng}`;
+                const res = await axios.get(url);
+                if (res.data.success) {
+                    setAvailCoolies(res.data.coolies.filter(c => c.status === 'available'));
                 }
             } catch (err) {
-                console.log('Using mock coolies. API fetch failed:', err.message);
+                console.error('API fetch failed:', err);
             }
         };
-        fetchNearby();
+        fetchCoolies();
     }, [geoLoc]);
 
     useEffect(() => {
@@ -233,7 +241,7 @@ export default function BookingPage() {
 
         // Auto navigate to tracking page
         setTimeout(() => {
-            navigate('/customer/track', { state: { bookingId: generatedBookingId, coolie: form.selectedCoolie } })
+            navigate('/customer/history')
         }, 3000)
     }
 
@@ -241,7 +249,7 @@ export default function BookingPage() {
         { key: 'small', icon: '🧳', label: 'Small', sub: 'Up to 7kg' },
         { key: 'medium', icon: '🧳', label: 'Medium', sub: 'Up to 15kg' },
         { key: 'large', icon: '📦', label: 'Large', sub: 'Up to 25kg' },
-        { key: 'xlarge', icon: '📦', label: 'Extra Large', sub: 'Custom Cargo' },
+        { key: 'heavy', icon: '📦', label: 'Heavy', sub: 'Custom Cargo' },
     ]
 
     /* ── Booked Success Screen ── */
@@ -372,9 +380,8 @@ export default function BookingPage() {
                                             key={key}
                                             onClick={() => {
                                                 update('luggageSize', key);
-                                                // Only update finalPrice if no custom amount is entered
-                                                if (!form.customAmount) {
-                                                    update('finalPrice', PRICE_TABLE[key]?.base || 0);
+                                                if (!form.customAmount && priceTable) {
+                                                    update('finalPrice', priceTable[key]?.base || 0);
                                                 }
                                             }}
                                             className={`p-3 rounded-xl border text-center transition-all ${form.luggageSize === key
@@ -385,8 +392,8 @@ export default function BookingPage() {
                                             <div className={`text-xl mb-1 ${form.luggageSize === key ? '' : 'grayscale opacity-60'}`}>{icon}</div>
                                             <p className={`text-xs font-semibold ${form.luggageSize === key ? 'text-white' : 'text-[#6B6188]'}`}>{label}</p>
                                             <p className="text-[10px] text-[#6B6188] mt-0.5">{sub}</p>
-                                            {form.luggageSize === key && !form.customAmount && (
-                                                <p className="text-[#7B2FFF] text-[11px] font-bold mt-1">₹{PRICE_TABLE[key]?.base}</p>
+                                            {form.luggageSize === key && !form.customAmount && priceTable && (
+                                                <p className="text-[#7B2FFF] text-[11px] font-bold mt-1">₹{priceTable[key]?.base}</p>
                                             )}
                                         </button>
                                     ))}
@@ -461,7 +468,9 @@ export default function BookingPage() {
                                                         update('luggageSize', '')
                                                     } else {
                                                         // Revert to base price if custom amount is cleared
-                                                        update('finalPrice', PRICE_TABLE[form.luggageSize]?.base || 0)
+                                                        if (priceTable) {
+                                                            update('finalPrice', priceTable[form.luggageSize]?.base || 0)
+                                                        }
                                                     }
                                                 }}
                                             />
@@ -471,9 +480,11 @@ export default function BookingPage() {
                                         <p className="text-[10px] text-[#6B6188] mb-2">💡 <strong>Pro Tip:</strong> Enter your desired amount and we'll try to match it with available porters!</p>
                                         <div className="flex items-center justify-between text-xs">
                                             <span className="text-[#6B6188]">Suggested Range:</span>
-                                            <span className="text-[#7B2FFF] font-bold">
-                                                ₹{PRICE_TABLE[form.luggageSize]?.floor} - ₹{PRICE_TABLE[form.luggageSize]?.base + 50}
-                                            </span>
+                                            {priceTable && (
+                                                <span className="text-[#7B2FFF] font-bold">
+                                                    ₹{priceTable[form.luggageSize]?.floor} - ₹{priceTable[form.luggageSize]?.base + 50}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -597,11 +608,12 @@ export default function BookingPage() {
                 </div>
             </main>
 
-            {showBargain && form.selectedCoolie && (
+            {showBargain && form.selectedCoolie && priceTable && (
                 <BargainModal
                     coolie={form.selectedCoolie}
                     luggageSize={form.luggageSize}
                     customAmount={form.customAmount}
+                    priceTable={priceTable}
                     onClose={() => setShowBargain(false)}
                     onDone={(price) => { update('finalPrice', price); toast.success(`Price set to ₹${price}`) }}
                 />

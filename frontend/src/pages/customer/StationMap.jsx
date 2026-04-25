@@ -3,7 +3,7 @@ import Sidebar from '../../components/Sidebar'
 import { MapContainer, TileLayer, Marker, Popup, Rectangle } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { COOLIES, STATIONS, BUSY_HOURS } from '../../data/mockData'
+import axios from 'axios'
 import { MapPin, Users, Clock, Layers } from 'lucide-react'
 import toast from 'react-hot-toast'
 import SearchBar from '../../components/ui/SearchBar'
@@ -39,10 +39,34 @@ const heatColor = (val) => {
 }
 
 export default function StationMap() {
-    const [selectedStation, setSelectedStation] = useState(STATIONS[0])
+    const [stations, setStations] = useState([])
+    const [coolies, setCoolies] = useState([])
+    const [busyHours, setBusyHours] = useState(Array.from({ length: 7 }, () => Array(24).fill(0)))
+    const [selectedStation, setSelectedStation] = useState(null)
     const [tab, setTab] = useState('map') // map | heatmap
     const [searchQuery, setSearchQuery] = useState('')
     const [searchFilter, setSearchFilter] = useState('all')
+
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const [statRes, coolRes, busyRes] = await Promise.all([
+                    axios.get('http://localhost:5000/api/customer/stations'),
+                    axios.get('http://localhost:5000/api/customer/coolies'),
+                    axios.get('http://localhost:5000/api/config/busy-hours')
+                ])
+                if (statRes.data.success) {
+                    setStations(statRes.data.stations)
+                    if (statRes.data.stations.length > 0) setSelectedStation(statRes.data.stations[0])
+                }
+                if (coolRes.data.success) setCoolies(coolRes.data.coolies)
+                if (busyRes.data.success) setBusyHours(busyRes.data.busyHours)
+            } catch (err) {
+                console.error(err)
+            }
+        }
+        loadData()
+    }, [])
 
     // Search filters for stations
     const stationFilters = [
@@ -53,7 +77,7 @@ export default function StationMap() {
     ]
 
     // Filter stations based on search
-    const filteredStations = STATIONS.filter(station => {
+    const filteredStations = stations.filter(station => {
         const matchesSearch = searchQuery === '' || 
             station.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             station.code.toLowerCase().includes(searchQuery.toLowerCase())
@@ -64,7 +88,7 @@ export default function StationMap() {
             case 'major':
                 return station.name.includes('Delhi') || station.name.includes('Mumbai') || station.name.includes('Howrah')
             case 'available':
-                return COOLIES.filter(c => c.station === station.name && c.status === 'available').length > 0
+                return coolies.filter(c => c.station === station.name && c.status === 'available').length > 0
             case 'busy':
                 return station.traffic === 'high'
             default:
@@ -95,15 +119,17 @@ export default function StationMap() {
                 </div>
 
                 {/* Station Selector */}
-                <div className="flex gap-2 mb-4 flex-wrap">
-                    {filteredStations.slice(0, 4).map(s => (
-                        <button key={s.id} onClick={() => setSelectedStation(s)}
-                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${selectedStation.id === s.id ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                                }`}>
+                {selectedStation && (
+                    <div className="flex gap-2 mb-4 flex-wrap">
+                        {filteredStations.slice(0, 4).map(s => (
+                            <button key={s.id} onClick={() => setSelectedStation(s)}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${selectedStation.id === s.id ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                    }`}>
                             {s.name.split(' ')[0]}...
                         </button>
                     ))}
                 </div>
+                )}
 
                 {/* Tab Toggle */}
                 <div className="flex gap-2 mb-4">
@@ -115,7 +141,7 @@ export default function StationMap() {
                     </button>
                 </div>
 
-                {tab === 'map' ? (
+                {tab === 'map' ? (selectedStation &&
                     <div className="grid lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2 card overflow-hidden" style={{ height: 480 }}>
                             <MapContainer center={[selectedStation.lat, selectedStation.lng]} zoom={17} style={{ height: '100%', width: '100%' }}>
@@ -133,7 +159,7 @@ export default function StationMap() {
                                 ))}
 
                                 {/* Coolie markers */}
-                                {COOLIES.filter(c => c.stationId === selectedStation.id).map(c => (
+                                {coolies.filter(c => c.station === selectedStation.name).map(c => (
                                     <Marker key={c.id} position={[c.lat, c.lng]} icon={makeCoolieIcon(c.status)}>
                                         <Popup>
                                             <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 140 }}>
@@ -175,7 +201,7 @@ export default function StationMap() {
                                     Coolies at {selectedStation.name.split(' ')[0]}
                                 </h3>
                                 <div className="space-y-2">
-                                    {COOLIES.filter(c => c.stationId === selectedStation.id).map(c => (
+                                    {coolies.filter(c => c.station === selectedStation.name).map(c => (
                                         <div key={c.id} className="flex items-center gap-2 py-2 border-b border-slate-700/50 last:border-0">
                                             <div className={`w-2 h-2 rounded-full ${c.status === 'available' ? 'bg-green-500' : c.status === 'busy' ? 'bg-yellow-500' : 'bg-red-500'}`} />
                                             <div className="flex-1">
@@ -203,7 +229,7 @@ export default function StationMap() {
                                         i % 3 === 0 && <div key={i} className="text-xs text-slate-500 w-6 text-center">{h.slice(0, 2)}</div>
                                     ))}
                                 </div>
-                                {BUSY_HOURS.map((row, di) => (
+                                {busyHours.map((row, di) => (
                                     <div key={di} className="flex items-center gap-1 mb-1">
                                         <div className="w-10 text-xs text-slate-400 font-medium">{DAYS[di]}</div>
                                         {row.map((val, hi) => (

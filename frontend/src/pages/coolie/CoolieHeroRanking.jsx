@@ -50,7 +50,7 @@ const LEADERBOARD = [
     { rank: 3,  name: 'Arjun Patil',   id: 'CHL-2298', weeklyXP: 1720, league: 'Gold',    tier: 1, isMe: false },
     { rank: 4,  name: 'Mohan Das',     id: 'CHL-3310', weeklyXP: 1540, league: 'Gold',    tier: 2, isMe: false },
     { rank: 5,  name: 'Ravi Sharma',   id: 'CHL-4102', weeklyXP: 1420, league: 'Gold',    tier: 3, isMe: false },
-    { rank: 6,  name: 'Ramesh Kumar',  id: 'CHL-4821', weeklyXP: 820,  league: 'Gold',    tier: 2, isMe: true  },
+    { rank: 6,  name: 'You',           id: 'CHL-4821', weeklyXP: 820,  league: 'Gold',    tier: 2, isMe: true  },
     { rank: 7,  name: 'Dinesh Rao',    id: 'CHL-5533', weeklyXP: 790,  league: 'Silver',  tier: 1, isMe: false },
     { rank: 8,  name: 'Kishan Mehta',  id: 'CHL-6144', weeklyXP: 650,  league: 'Silver',  tier: 2, isMe: false },
     { rank: 9,  name: 'Prakash Iyer',  id: 'CHL-7821', weeklyXP: 580,  league: 'Silver',  tier: 3, isMe: false },
@@ -61,7 +61,7 @@ const PRIZES = { 1: '₹500 bonus', 2: '₹300 bonus', 3: '₹200 bonus' }
 
 // ─── MOCK COOLIE DATA ─────────────────────────────────────────────────────────
 const MOCK = {
-    name: 'Ramesh Kumar', id: 'CHL-4821', league: 'Gold', tier: 2,
+    name: 'You', id: 'CHL-4821', league: 'Gold', tier: 2,
     lifetimeXP: 4350, weeklyXP: 820, trips: 127, rating: 4.8,
     totalTips: 3200, totalIncome: 18400, streak: 12,
     memberSince: 'Jan 2024', fiveStars: 31, luggageKg: 370,

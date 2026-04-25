@@ -9,6 +9,7 @@ import SearchBar from '../../components/ui/SearchBar'
 import useGeolocation from '../../hooks/useGeolocation'
 import { useGlobalSocket } from '../../context/SocketContext'
 import LocationPermissionModal from '../../components/location/LocationPermissionModal'
+import { useApp } from '../../context/AppContext'
 
 /* ── Mock Data ───────────────────────────────────────────────── */
 const INITIAL_REQUESTS = [
@@ -165,7 +166,8 @@ export default function CoolieDashboard() {
     const { location, permission, startWatching, stopWatching } = useGeolocation()
     const { socket, connected } = useGlobalSocket()
     const [showLocationModal, setShowLocationModal] = useState(false)
-    const coolieId = 'dummy-coolie-123' // Replace with actual coolie ID from auth context
+    const { user } = useApp()
+    const coolieId = user?.coolie_id || user?.id || 'pending-id'
 
     // Handle Location Updates
     useEffect(() => {
@@ -317,11 +319,11 @@ export default function CoolieDashboard() {
                                     <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1">
                                         <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> Active Duty
                                     </span>
-                                    <span className="text-[#6B6188] text-[11px] font-mono">#CL-1042</span>
+                                    <span className="text-[#6B6188] text-[11px] font-mono">#{user?.coolie_id || 'PENDING'}</span>
                                 </div>
-                                <h1 className="text-white text-3xl font-black leading-tight">Ramesh Kumar</h1>
+                                <h1 className="text-white text-3xl font-black leading-tight">{user?.name || 'Coolie'}</h1>
                                 <p className="text-[#6B6188] text-sm flex items-center gap-1 mt-1">
-                                    <MapPin size={12} /> New Delhi Railway Station
+                                    <MapPin size={12} /> {user?.station_name || 'New Delhi Railway Station'}
                                 </p>
                             </div>
                             <div className="text-right">
@@ -398,13 +400,13 @@ export default function CoolieDashboard() {
                             <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5 text-center">
                                 <div className="relative inline-block mb-3">
                                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#3a2060] to-[#1E1A40] flex items-center justify-center text-white font-black text-2xl border-2 border-[#7B2FFF]/30">
-                                        R
+                                        {user?.name?.[0] || 'C'}
                                     </div>
                                     <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center border-2 border-[#0E0C1E]">
                                         <CheckCircle size={10} className="text-white" />
                                     </div>
                                 </div>
-                                <p className="text-white font-bold">Ramesh Kumar</p>
+                                <p className="text-white font-bold">{user?.name || 'Coolie'}</p>
                                 <p className="text-[#6B6188] text-[11px] uppercase tracking-widest mt-0.5">Gold Tier Partner</p>
 
                                 <div className="grid grid-cols-2 gap-3 mt-4">

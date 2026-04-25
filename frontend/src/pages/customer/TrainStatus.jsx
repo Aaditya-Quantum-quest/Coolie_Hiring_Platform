@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import Sidebar from '../../components/Sidebar'
-import { TRAINS } from '../../data/mockData'
+import axios from 'axios'
 import { Train, Search, Clock, AlertTriangle, CheckCircle, RefreshCw, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 // 2D Train Diagram
-function TrainDiagram({ trainNo }) {
-    const train = TRAINS.find(t => t.no === trainNo)
+function TrainDiagram({ trainNo, trainsList }) {
+    const train = trainsList.find(t => t.no === trainNo)
     if (!train) return null
 
     const coaches = ['Loco', 'A1', 'A2', 'B1', 'B2', 'B3', 'S1', 'S2', 'S3', 'S4', 'S5', 'GN', 'GN', 'Pantry']
@@ -69,26 +69,43 @@ function TrainDiagram({ trainNo }) {
 export default function TrainStatus() {
     const [searchNo, setSearchNo] = useState('')
     const [searched, setSearched] = useState(null)
-    const [trains, setTrains] = useState(TRAINS)
+    const [trains, setTrains] = useState([])
     const [loading, setLoading] = useState(false)
     const [lastUpdated, setLastUpdated] = useState(new Date())
+
+    const fetchTrains = async () => {
+        setLoading(true)
+        try {
+            const res = await axios.get('http://localhost:5000/api/config/trains')
+            if (res.data.success) {
+                setTrains(res.data.trains)
+                setLastUpdated(new Date())
+            }
+        } catch (error) {
+            console.error('Error fetching trains:', error)
+            toast.error('Failed to load train data')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchTrains()
+    }, [])
 
     const search = async () => {
         if (!searchNo.trim()) return
         setLoading(true)
         await new Promise(r => setTimeout(r, 800))
-        const found = TRAINS.find(t => t.no === searchNo.trim() || t.name.toLowerCase().includes(searchNo.toLowerCase()))
+        const found = trains.find(t => t.no === searchNo.trim() || t.name.toLowerCase().includes(searchNo.toLowerCase()))
         setSearched(found || null)
         if (!found) toast.error('Train not found. Try: 12301, 12001, 12951')
         setLoading(false)
     }
 
     const refresh = async () => {
-        setLoading(true)
-        await new Promise(r => setTimeout(r, 600))
-        setLastUpdated(new Date())
+        await fetchTrains()
         toast.success('Train data refreshed!')
-        setLoading(false)
     }
 
     const getStatusColor = (s) => s === 'On Time' ? 'text-green-400' : 'text-red-400'
@@ -163,7 +180,7 @@ export default function TrainStatus() {
                                 <p className="text-yellow-300 text-sm">⚠️ Train is delayed by {searched.delay} minutes. Your coolie booking has been auto-rescheduled.</p>
                             </div>
                         )}
-                        <TrainDiagram trainNo={searched.no} />
+                        <TrainDiagram trainNo={searched.no} trainsList={trains} />
                         <button onClick={() => { setSearched(null); toast.success(`Coolies at Platform ${searched.platform} shown!`) }} className="btn-primary w-full py-2 text-sm flex items-center justify-center gap-2">
                             <MapPin size={14} /> Find Coolies at Platform {searched.platform}
                         </button>

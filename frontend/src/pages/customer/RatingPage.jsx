@@ -9,12 +9,12 @@ import toast from 'react-hot-toast'
 import Confetti from 'react-confetti'
 
 const COOLIE = {
-    name: 'Ramesh Kumar',
-    id: 'CL-1042',
+    name: 'Your Coolie',
+    id: 'N/A',
     image: null,
     totalRatings: 234,
     avgRating: 4.8,
-    badge: 'Star of the Week 🌟',
+    badge: '',
     bookingId: 'BK-2024-1847',
     date: 'Today, 4:15 PM',
     amount: '₹90',

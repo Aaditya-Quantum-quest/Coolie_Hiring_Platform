@@ -6,7 +6,7 @@ import {
     TrendingUp, Mic, Navigation, Train, Zap, Map, ClipboardList, X
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
-import { COOLIES, BOOKINGS, STATIONS } from '../../data/mockData'
+import axios from 'axios'
 import toast from 'react-hot-toast'
 import SearchBar from '../../components/ui/SearchBar'
 
@@ -98,29 +98,51 @@ export default function CustomerDashboard() {
     const navigate = useNavigate()
     const [detectedStation, setDetectedStation] = useState(null)
     const [detecting, setDetecting] = useState(false)
-    const [availCoolies, setAvailCoolies] = useState(COOLIES.filter(c => c.status === 'available'))
+    const [stations, setStations] = useState([])
+    const [coolies, setCoolies] = useState([])
+    const [bookings, setBookings] = useState([])
     const [firstBookingOffer, setFirstBookingOffer] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [searchFilter, setSearchFilter] = useState('all')
+
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const [statRes, coolRes, bookRes] = await Promise.all([
+                    axios.get('http://localhost:5000/api/customer/stations'),
+                    axios.get('http://localhost:5000/api/customer/coolies'),
+                    axios.get('http://localhost:5000/api/bookings/my-bookings')
+                ])
+                if (statRes.data.success) setStations(statRes.data.stations)
+                if (coolRes.data.success) setCoolies(coolRes.data.coolies)
+                if (bookRes.data.success) setBookings(bookRes.data.bookings)
+            } catch (err) {
+                console.error(err)
+            }
+        }
+        loadData()
+    }, [])
 
     const detectStation = () => {
         setDetecting(true)
         navigator.geolocation?.getCurrentPosition(
             (pos) => {
                 // Mock: find nearest station
-                setDetectedStation(STATIONS[0])
-                toast.success('📍 Station detected: New Delhi Railway Station!')
+                const s = stations.length > 0 ? stations[0] : { name: 'New Delhi Railway Station' }
+                setDetectedStation(s)
+                toast.success(`📍 Station detected: ${s.name}!`)
                 setDetecting(false)
             },
             () => {
-                setDetectedStation(STATIONS[0])
-                toast.success('📍 Station detected: New Delhi Railway Station (Mock)')
+                const s = stations.length > 0 ? stations[0] : { name: 'New Delhi Railway Station' }
+                setDetectedStation(s)
+                toast.success(`📍 Station detected: ${s.name} (Mock)`)
                 setDetecting(false)
             }
         )
     }
 
-    useEffect(() => { detectStation() }, [])
+    useEffect(() => { if (stations.length > 0 && !detectedStation) detectStation() }, [stations])
 
     // Search filters for coolies
     const coolieFilters = [
@@ -131,11 +153,11 @@ export default function CustomerDashboard() {
     ]
 
     // Filter coolies based on search
-    const filteredCoolies = availCoolies.filter(coolie => {
+    const filteredCoolies = coolies.filter(coolie => coolie.status === 'available').filter(coolie => {
         const matchesSearch = searchQuery === '' || 
-            coolie.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            coolie.badge.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            coolie.platform.toLowerCase().includes(searchQuery.toLowerCase())
+            coolie.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            coolie.badge?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            coolie.station?.toLowerCase().includes(searchQuery.toLowerCase())
         
         if (!matchesSearch) return false
 
@@ -152,7 +174,7 @@ export default function CustomerDashboard() {
     })
 
     // Filter bookings based on search
-    const filteredBookings = BOOKINGS.filter(booking => {
+    const filteredBookings = bookings.filter(booking => {
         return searchQuery === '' ||
             booking.coolieName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             booking.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -222,7 +244,7 @@ export default function CustomerDashboard() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <StatCard icon={<Clock size={18} />} label="Total Bookings" value={BOOKINGS.length} color="from-orange-500 to-amber-500" sub="+2 this week" />
+                    <StatCard icon={<Clock size={18} />} label="Total Bookings" value={bookings.length} color="from-orange-500 to-amber-500" sub="+2 this week" />
                     <StatCard icon={<Star size={18} />} label="Avg Rating Given" value="4.8★" color="from-yellow-500 to-orange-500" />
                     <StatCard icon={<TrendingUp size={18} />} label="Total Spent" value="₹310" color="from-green-500 to-emerald-500" sub="This month" />
                     <StatCard icon={<MapPin size={18} />} label="Stations Used" value="2" color="from-blue-500 to-cyan-500" />
@@ -251,7 +273,7 @@ export default function CustomerDashboard() {
                                         <div className="flex items-center gap-3 text-xs text-slate-400 mt-1 flex-wrap">
                                             <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400" />{coolie.rating}</span>
                                             <span>{coolie.totalBookings} trips</span>
-                                            <span><MapPin size={10} className="inline" /> {coolie.platform}</span>
+                                            <span><MapPin size={10} className="inline" /> {coolie.station}</span>
                                         </div>
                                         <div className="flex items-center gap-2 mt-2">
                                             <span className="status-available">🟢 Available</span>

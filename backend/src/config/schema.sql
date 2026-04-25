@@ -66,8 +66,8 @@ CREATE TABLE IF NOT EXISTS coolies (
     station_code            VARCHAR(20),
     working_platforms       TEXT[],
 
-    -- Experience & Skills
-    experience_years        INTEGER DEFAULT 0,
+    -- Age & Skills
+    age                     INTEGER DEFAULT 18,
     languages_spoken        TEXT[],
 
     -- ✅ Encrypted Identity Documents (AES-256 encrypted)
@@ -196,12 +196,15 @@ RETURNS TRIGGER AS $$
 BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS set_customers_updated_at ON customers;
 CREATE TRIGGER set_customers_updated_at BEFORE UPDATE ON customers
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_coolies_updated_at ON coolies;
 CREATE TRIGGER set_coolies_updated_at BEFORE UPDATE ON coolies
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_bookings_updated_at ON bookings;
 CREATE TRIGGER set_bookings_updated_at BEFORE UPDATE ON bookings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -414,12 +417,74 @@ CREATE INDEX IF NOT EXISTS idx_dishes_business ON dishes(business_id);
 CREATE INDEX IF NOT EXISTS idx_business_reviews_business ON business_reviews(business_id);
 
 -- Triggers for businesses, dishes, room_types
-CREATE TRIGGER IF NOT EXISTS set_businesses_updated_at BEFORE UPDATE ON businesses
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER IF NOT EXISTS set_dishes_updated_at BEFORE UPDATE ON dishes
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER IF NOT EXISTS set_room_types_updated_at BEFORE UPDATE ON room_types
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS set_businesses_updated_at ON businesses;
+CREATE TRIGGER set_businesses_updated_at
+BEFORE UPDATE ON businesses
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS set_dishes_updated_at ON dishes;
+CREATE TRIGGER set_dishes_updated_at
+BEFORE UPDATE ON dishes
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS set_room_types_updated_at ON room_types;
+CREATE TRIGGER set_room_types_updated_at
+BEFORE UPDATE ON room_types
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================
+-- TRAINS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS trains (
+    id          SERIAL PRIMARY KEY,
+    train_no    VARCHAR(20) UNIQUE NOT NULL,
+    name        VARCHAR(150) NOT NULL,
+    from_station VARCHAR(150),
+    to_station   VARCHAR(150),
+    platform    INTEGER,
+    status      VARCHAR(50),
+    arrival_time TIME,
+    delay_minutes INTEGER DEFAULT 0,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- PRICE TIERS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS price_tiers (
+    id          SERIAL PRIMARY KEY,
+    size        VARCHAR(20) UNIQUE NOT NULL, -- small, medium, large, heavy
+    label       VARCHAR(100) NOT NULL,
+    base_price  INTEGER NOT NULL,
+    max_discount INTEGER DEFAULT 0,
+    floor_price  INTEGER NOT NULL,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- FESTIVAL SURGES TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS festival_surges (
+    id          SERIAL PRIMARY KEY,
+    festival_name VARCHAR(100) UNIQUE NOT NULL,
+    surge_percentage INTEGER NOT NULL,
+    is_active   BOOLEAN DEFAULT FALSE,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- BUSY HOURS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS busy_hours (
+    id          SERIAL PRIMARY KEY,
+    day_of_week INTEGER CHECK (day_of_week BETWEEN 0 AND 6), -- 0=Mon, 6=Sun
+    hour_of_day INTEGER CHECK (hour_of_day BETWEEN 0 AND 23),
+    busy_level  INTEGER CHECK (busy_level BETWEEN 0 AND 4),
+    UNIQUE(day_of_week, hour_of_day)
+);
 
 -- ============================================================
 -- DEFAULT SUPER ADMIN (change password immediately!)

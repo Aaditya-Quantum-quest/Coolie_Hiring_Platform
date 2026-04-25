@@ -146,7 +146,7 @@ const createCoolie = async (data, files) => {
     const {
         name, email, password, phone, alt_phone,
         date_of_birth, gender, address, city, state, pincode,
-        station_name, station_code, experience_years,
+        station_name, station_code, age,
         aadhaar_number, secondary_doc_type, secondary_doc_number,
         bank_name, account_number, ifsc_code, upi_id,
         working_platforms, languages_spoken,
@@ -178,7 +178,7 @@ const createCoolie = async (data, files) => {
         `INSERT INTO coolies (
             name, email, password_hash, phone, alt_phone,
             date_of_birth, gender, address, city, state, pincode,
-            station_name, station_code, working_platforms, experience_years, languages_spoken,
+            station_name, station_code, working_platforms, age, languages_spoken,
             aadhaar_number_hash, aadhaar_number_enc, aadhaar_front_url, aadhaar_back_url,
             secondary_doc_type, secondary_doc_number_enc, secondary_doc_url,
             passport_photo_url,
@@ -198,7 +198,7 @@ const createCoolie = async (data, files) => {
         [
             name, email, password_hash, phone, alt_phone || null,
             date_of_birth, gender, address, city, state, pincode,
-            station_name, station_code || null, platforms, experience_years || 0, languages,
+            station_name, station_code || null, platforms, age || 18, languages,
             aadhaar_number_hash, aadhaar_number_enc, aadhaar_front_url, aadhaar_back_url,
             secondary_doc_type, secondary_doc_number_enc, secondary_doc_url,
             passport_photo_url,
@@ -212,7 +212,7 @@ const createCoolie = async (data, files) => {
 const getCoolieById = async (id) => {
     const r = await pool.query(
         `SELECT id, coolie_id, name, email, phone, alt_phone, station_name, station_code,
-                passport_photo_url, qr_code_url, experience_years, languages_spoken,
+                passport_photo_url, qr_code_url, age, languages_spoken,
                 working_platforms, rating_avg, total_trips, badge,
                 verification_status, is_verified, is_active, is_suspended, created_at
          FROM coolies WHERE id=$1`,
@@ -265,7 +265,7 @@ const getPendingCoolies = async () => {
                 passport_photo_url, aadhaar_front_url, aadhaar_back_url,
                 secondary_doc_type, secondary_doc_url,
                 verification_status, verification_level,
-                experience_years, date_of_birth, gender, address, state, pincode,
+                age, date_of_birth, gender, address, state, pincode,
                 created_at
          FROM coolies
          WHERE verification_status IN ('pending','level1_approved','under_review')
@@ -278,7 +278,7 @@ const getCoolieForAdmin = async (id) => {
     const r = await pool.query(
         `SELECT id, coolie_id, name, email, phone, alt_phone,
                 date_of_birth, gender, address, city, state, pincode,
-                station_name, station_code, working_platforms, experience_years, languages_spoken,
+                station_name, station_code, working_platforms, age, languages_spoken,
                 passport_photo_url, aadhaar_front_url, aadhaar_back_url,
                 secondary_doc_type, secondary_doc_url,
                 qr_code_url, verification_status, verification_level,

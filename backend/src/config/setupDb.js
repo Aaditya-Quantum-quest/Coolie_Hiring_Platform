@@ -10,6 +10,15 @@ const setupDatabase = async () => {
         console.log('Applying schema to database...');
         await db.query(sql);
         console.log('✅ Database schema successfully applied!');
+        
+        const seedPath = path.join(__dirname, 'seed.sql');
+        if (fs.existsSync(seedPath)) {
+            const seedSql = fs.readFileSync(seedPath, 'utf8');
+            console.log('Applying seed data to database...');
+            await db.query(seedSql);
+            console.log('✅ Database seed data successfully applied!');
+        }
+
         process.exit(0);
     } catch (err) {
         console.error('❌ Error setting up database:', err.message);

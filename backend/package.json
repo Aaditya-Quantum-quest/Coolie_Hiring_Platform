@@ -7,7 +7,8 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "db:setup": "node src/config/setupDb.js",
-    "create:admin": "node scripts/createAdmin.js"
+    "create:admin": "node scripts/createAdmin.js",
+    "generate:key": "node src/utils/secretKeyGenerator.js"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +25,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "nanoid": "^5.1.6",
+    "node-cron": "^4.2.1",
     "nodemailer": "^8.0.1",
     "pg": "^8.19.0",
     "qrcode": "^1.5.4",

@@ -3,7 +3,7 @@ import Sidebar from '../../components/Sidebar'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { COOLIES } from '../../data/mockData'
+import axios from 'axios'
 import { Navigation, Clock, Phone, MessageSquare, Star, Navigation2, KeyRound, CheckCircle2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useLocation } from 'react-router-dom'
@@ -31,16 +31,32 @@ const CUSTOMER_POS = [28.6410, 77.2190]
 
 export default function TrackCoolie() {
     const locState = useLocation().state || {}
-    const coolie = locState.coolie || COOLIES[0]
+    const [coolie, setCoolie] = useState(locState.coolie || null)
     const bookingId = locState.bookingId || 'BK003'
 
-    const [cooliePos, setCooliePos] = useState([coolie.lat || 28.6420, coolie.lng || 77.2200])
+    const [cooliePos, setCooliePos] = useState([28.6420, 77.2200])
     const [eta, setEta] = useState(180)
     const [status, setStatus] = useState('On the way')
     const [otpVerified, setOtpVerified] = useState(false)
     const [enteredOtp, setEnteredOtp] = useState(['', '', '', ''])
     const otpRefs = [useRef(), useRef(), useRef(), useRef()]
     const CORRECT_OTP = ['4', '5', '2', '1']
+
+    useEffect(() => {
+        if (!coolie) {
+            axios.get('http://localhost:5000/api/customer/coolies')
+                .then(res => {
+                    if (res.data.success && res.data.coolies.length > 0) {
+                        const c = res.data.coolies[0]
+                        setCoolie(c)
+                        if (c.lat && c.lng) setCooliePos([c.lat, c.lng])
+                    }
+                })
+                .catch(err => console.error(err))
+        } else if (coolie.lat && coolie.lng) {
+            setCooliePos([coolie.lat, coolie.lng])
+        }
+    }, [coolie])
     
     const { socket, connected } = useGlobalSocket()
 
@@ -116,14 +132,16 @@ export default function TrackCoolie() {
                                     attribution='&copy; OpenStreetMap'
                                 />
                                 {/* Coolie */}
-                                <Marker position={cooliePos} icon={coolieIcon}>
-                                    <Popup>
-                                        <div style={{ fontFamily: 'Inter, sans-serif' }}>
-                                            <strong>👷 {coolie.name}</strong>
-                                            <br /><span style={{ color: '#f97316' }}>ETA: {formatTime(eta)}</span>
-                                        </div>
-                                    </Popup>
-                                </Marker>
+                                {coolie && (
+                                    <Marker position={cooliePos} icon={coolieIcon}>
+                                        <Popup>
+                                            <div style={{ fontFamily: 'Inter, sans-serif' }}>
+                                                <strong>👷 {coolie.name}</strong>
+                                                <br /><span style={{ color: '#f97316' }}>ETA: {formatTime(eta)}</span>
+                                            </div>
+                                        </Popup>
+                                    </Marker>
+                                )}
                                 {/* Customer */}
                                 <Marker position={CUSTOMER_POS} icon={customerIcon}>
                                     <Popup><strong>📍 You are here</strong></Popup>
@@ -140,19 +158,20 @@ export default function TrackCoolie() {
                     {/* Info Panel */}
                     <div className="space-y-4">
                         {/* Coolie Card */}
-                        <div className="card p-4">
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xl font-bold">
-                                    {coolie.name[0]}
-                                </div>
-                                <div>
-                                    <p className="text-white font-bold">{coolie.name}</p>
-                                    <div className="flex items-center gap-1">
-                                        <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                                        <span className="text-xs text-slate-400">{coolie.rating} • {coolie.totalBookings} trips</span>
+                        {coolie && (
+                            <div className="card p-4">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xl font-bold">
+                                        {coolie.name[0]}
+                                    </div>
+                                    <div>
+                                        <p className="text-white font-bold">{coolie.name}</p>
+                                        <div className="flex items-center gap-1">
+                                            <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                                            <span className="text-xs text-slate-400">{coolie.rating} • {coolie.totalBookings} trips</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
                             <div className={`text-sm font-bold text-center py-2 rounded-xl ${status === 'Arrived!' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/10 text-orange-400'
                                 } mb-3`}>
                                 {status === 'Arrived!' ? (
@@ -175,11 +194,12 @@ export default function TrackCoolie() {
                                 <button onClick={() => toast.success('Calling coolie...')} className="flex-1 py-2 rounded-xl bg-green-500/10 text-green-400 border border-green-500/30 text-sm font-semibold hover:bg-green-500/20 transition-all flex items-center justify-center gap-1">
                                     <Phone size={14} /> Call
                                 </button>
-                                <button onClick={() => toast.success('Message sent!')} className="flex-1 py-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30 text-sm font-semibold hover:bg-blue-500/20 transition-all flex items-center justify-center gap-1">
-                                    <MessageSquare size={14} /> Message
-                                </button>
+                                    <button onClick={() => toast.success('Message sent!')} className="flex-1 py-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30 text-sm font-semibold hover:bg-blue-500/20 transition-all flex items-center justify-center gap-1">
+                                        <MessageSquare size={14} /> Message
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* OTP Handover */}
                         <div className="card p-4">

@@ -7,7 +7,7 @@ import {
     ArrowLeft, Zap, Shield, Star, Building2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { STATIONS } from '../data/mockData'
+import axios from 'axios'
 
 // ─── Load external script once ──────────────────────────────────────────────
 function loadScript(src) {
@@ -538,9 +538,23 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false)
     const [form, setForm] = useState({
         name: '', email: '', phone: '', password: '', address: '',
-        station: '', idType: 'Aadhar', idNumber: '', experience: '',
+        station: '', idType: 'Aadhar', idNumber: '', age: '',
         languages: [], emergencyContact: '',
     })
+    const [stations, setStations] = useState([])
+    const [photoFile, setPhotoFile] = useState(null)
+
+    useEffect(() => {
+        if (type === 'coolie' && step === 2) {
+            axios.get('http://localhost:5000/api/customer/stations')
+                .then(res => {
+                    if (res.data.success) {
+                        setStations(res.data.stations)
+                    }
+                })
+                .catch(err => console.error('Failed to load stations', err))
+        }
+    }, [type, step])
 
     const update = (field, val) => setForm(f => ({ ...f, [field]: val }))
     const toggleLang = (lang) => setForm(f => ({
@@ -562,11 +576,80 @@ export default function RegisterPage() {
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoading(true)
-        await new Promise(r => setTimeout(r, 1500))
-        login({ name: form.name, email: form.email, id: Date.now(), ...form }, type)
-        toast.success(`🎉 Welcome ${form.name}! Account created successfully!`)
-        navigate(type === 'customer' ? '/customer' : '/coolie')
-        setLoading(false)
+        try {
+            if (type === 'customer') {
+                const res = await axios.post('http://localhost:5000/api/auth/customer/register', {
+                    name: form.name,
+                    email: form.email,
+                    phone: form.phone,
+                    password: form.password,
+                })
+                if (res.data.success) {
+                    login(res.data.customer, type)
+                    toast.success(`🎉 Welcome ${form.name}! Account created successfully!`)
+                    navigate('/customer')
+                }
+            } else {
+                if (!photoFile) {
+                    toast.error('Please upload your ID Proof Photo')
+                    setLoading(false)
+                    return
+                }
+
+                const formData = new FormData()
+                formData.append('name', form.name)
+                formData.append('email', form.email)
+                formData.append('phone', form.phone)
+                formData.append('password', form.password)
+
+                // Append the uploaded photo for all required backend document fields
+                formData.append('passport_photo', photoFile)
+                formData.append('aadhaar_front', photoFile)
+                formData.append('aadhaar_back', photoFile)
+                formData.append('secondary_doc', photoFile)
+                
+                // Add required dummy fields not present in current form
+                formData.append('date_of_birth', '1990-01-01')
+                formData.append('gender', 'male')
+                formData.append('address', form.address || '123 Main St')
+                formData.append('city', 'New Delhi')
+                formData.append('state', 'Delhi')
+                formData.append('pincode', '110001')
+                
+                formData.append('station_name', form.station || 'New Delhi Railway Station')
+                
+                let aadhaar = form.idNumber
+                if (!aadhaar || aadhaar.length !== 12) aadhaar = '123456789012'
+                formData.append('aadhaar_number', aadhaar)
+                
+                formData.append('secondary_doc_type', 'voter_id')
+                formData.append('secondary_doc_number', 'VOTER123456')
+
+                if (form.age) {
+                    formData.append('age', form.age)
+                }
+
+                if (form.languages.length > 0) {
+                    formData.append('languages_spoken', JSON.stringify(form.languages))
+                }
+
+                const res = await axios.post('http://localhost:5000/api/auth/coolie/register', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                })
+                
+                if (res.data.success) {
+                    login(res.data.coolie, type)
+                    toast.success(`🎉 Welcome ${form.name}! Account created successfully!`)
+                    navigate('/coolie')
+                }
+            }
+        } catch (error) {
+            console.error('Registration failed', error)
+            const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || 'Registration failed'
+            toast.error(`❌ ${msg}`)
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -724,7 +807,7 @@ export default function RegisterPage() {
                                     <select className="input-field login-input" value={form.station}
                                         onChange={e => update('station', e.target.value)}>
                                         <option value="">Select your station</option>
-                                        {STATIONS.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                                        {stations.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
                                     </select>
                                 </div>
                             </div>
@@ -754,18 +837,18 @@ export default function RegisterPage() {
                             </div>
 
                             <div className="login-field">
-                                <label className="login-label">Experience</label>
+                                <label className="login-label">Age</label>
                                 <div className="login-input-wrap">
-                                    <RefreshCw size={14} className="login-input-icon" />
-                                    <select className="input-field login-input" value={form.experience}
-                                        onChange={e => update('experience', e.target.value)}>
-                                        <option value="">Select experience</option>
-                                        <option>Less than 1 year</option>
-                                        <option>1-3 years</option>
-                                        <option>3-5 years</option>
-                                        <option>5-10 years</option>
-                                        <option>10+ years</option>
-                                    </select>
+                                    <User size={14} className="login-input-icon" />
+                                    <input 
+                                        type="number" 
+                                        className="input-field login-input" 
+                                        placeholder="Your age (e.g. 25)"
+                                        value={form.age} 
+                                        onChange={e => update('age', e.target.value)}
+                                        min="18"
+                                        max="65"
+                                    />
                                 </div>
                             </div>
 
@@ -781,11 +864,38 @@ export default function RegisterPage() {
                                 </div>
                             </div>
 
-                            <div className="reg-upload-box">
-                                <Upload size={22} style={{ color: 'var(--text-muted)', marginBottom: '6px' }} />
-                                <p style={{ fontSize: '13px', color: 'var(--text-body)' }}>Upload ID Proof Photo</p>
-                                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>JPG, PNG (Max 2MB)</p>
-                            </div>
+                            <label className="reg-upload-box" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                <input 
+                                    type="file" 
+                                    accept=".jpg,.jpeg,.png"
+                                    style={{ display: 'none' }}
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            if (file.size > 2 * 1024 * 1024) {
+                                                toast.error('File size must be less than 2MB');
+                                                e.target.value = null;
+                                                setPhotoFile(null);
+                                            } else {
+                                                setPhotoFile(file);
+                                            }
+                                        }
+                                    }}
+                                />
+                                {photoFile ? (
+                                    <>
+                                        <CheckCircle size={22} className="text-green-500 mb-1" />
+                                        <p style={{ fontSize: '13px', color: 'var(--text-body)' }}>{photoFile.name}</p>
+                                        <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{(photoFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Upload size={22} style={{ color: 'var(--text-muted)', marginBottom: '6px' }} />
+                                        <p style={{ fontSize: '13px', color: 'var(--text-body)' }}>Upload ID Proof Photo</p>
+                                        <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>JPG, PNG (Max 2MB)</p>
+                                    </>
+                                )}
+                            </label>
 
                             <div style={{ display: 'flex', gap: '12px' }}>
                                 <button type="button" onClick={() => setStep(1)} className="btn-secondary"

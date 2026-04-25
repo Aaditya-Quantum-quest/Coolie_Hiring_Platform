@@ -2,29 +2,37 @@ import React, { useState } from 'react'
 import Sidebar from '../../components/Sidebar'
 import { Star, Award, Trophy, TrendingUp, Medal, MapPin } from 'lucide-react'
 import SearchBar from '../../components/ui/SearchBar'
+import { useApp } from '../../context/AppContext'
 
 const LEADERBOARD_DATA = [
-    { rank: 1, name: 'Ramesh Kumar', id: 'CL-1042', station: 'New Delhi', rating: 4.9, trips: 87, earnings: '₹12,400', badge: '🥇', you: true },
-    { rank: 2, name: 'Suresh Yadav', id: 'CL-2034', station: 'New Delhi', rating: 4.8, trips: 79, earnings: '₹10,800', badge: '🥈' },
-    { rank: 3, name: 'Mohan Lal', id: 'CL-3077', station: 'New Delhi', rating: 4.7, trips: 71, earnings: '₹9,500', badge: '🥉' },
-    { rank: 4, name: 'Raju Singh', id: 'CL-4011', station: 'New Delhi', rating: 4.6, trips: 64, earnings: '₹8,300', badge: '' },
-    { rank: 5, name: 'Santosh P.', id: 'CL-5023', station: 'New Delhi', rating: 4.5, trips: 58, earnings: '₹7,600', badge: '' },
-    { rank: 6, name: 'Dinesh K.', id: 'CL-6044', station: 'New Delhi', rating: 4.4, trips: 52, earnings: '₹6,900', badge: '' },
-    { rank: 7, name: 'Vijay T.', id: 'CL-7055', station: 'New Delhi', rating: 4.3, trips: 47, earnings: '₹6,100', badge: '' },
-    { rank: 8, name: 'Anil M.', id: 'CL-8066', station: 'New Delhi', rating: 4.2, trips: 41, earnings: '₹5,400', badge: '' },
-    { rank: 9, name: 'Rakesh N.', id: 'CL-9078', station: 'New Delhi', rating: 4.1, trips: 36, earnings: '₹4,700', badge: '' },
-    { rank: 10, name: 'Sanjay B.', id: 'CL-0091', station: 'New Delhi', rating: 4.0, trips: 31, earnings: '₹4,000', badge: '' },
+    { rank: 1, name: 'Suresh Yadav', id: 'CL-2034', station: 'New Delhi', rating: 4.9, trips: 87, earnings: '₹12,400', badge: '🥇' },
+    { rank: 2, name: 'Mohan Lal', id: 'CL-3077', station: 'New Delhi', rating: 4.8, trips: 79, earnings: '₹10,800', badge: '🥈' },
+    { rank: 3, name: 'Raju Singh', id: 'CL-4011', station: 'New Delhi', rating: 4.7, trips: 71, earnings: '₹9,500', badge: '🥉' },
+    { rank: 4, name: 'Santosh P.', id: 'CL-5023', station: 'New Delhi', rating: 4.5, trips: 58, earnings: '₹7,600', badge: '' },
+    { rank: 5, name: 'Dinesh K.', id: 'CL-6044', station: 'New Delhi', rating: 4.4, trips: 52, earnings: '₹6,900', badge: '' },
+    { rank: 6, name: 'Vijay T.', id: 'CL-7055', station: 'New Delhi', rating: 4.3, trips: 47, earnings: '₹6,100', badge: '' },
+    { rank: 7, name: 'Anil M.', id: 'CL-8066', station: 'New Delhi', rating: 4.2, trips: 41, earnings: '₹5,400', badge: '' },
+    { rank: 8, name: 'Rakesh N.', id: 'CL-9078', station: 'New Delhi', rating: 4.1, trips: 36, earnings: '₹4,700', badge: '' },
+    { rank: 9, name: 'Sanjay B.', id: 'CL-0091', station: 'New Delhi', rating: 4.0, trips: 31, earnings: '₹4,000', badge: '' },
+    { rank: 10, name: 'Prem D.', id: 'CL-0102', station: 'New Delhi', rating: 3.9, trips: 26, earnings: '₹3,200', badge: '' },
 ]
 
 const STATIONS = ['New Delhi', 'Mumbai CST', 'Chennai Central', 'Howrah', 'Bangalore']
 
 export default function Leaderboard() {
+    const { user } = useApp()
     const [selectedStation, setSelectedStation] = useState('New Delhi')
     const [period, setPeriod] = useState('weekly')
     const [searchQuery, setSearchQuery] = useState('')
     const [searchFilter, setSearchFilter] = useState('all')
 
-    const myRank = LEADERBOARD_DATA.find(d => d.you)
+    // Mark the real logged-in user's entry if their coolie_id matches
+    const leaderboardWithMe = LEADERBOARD_DATA.map(d => ({
+        ...d,
+        you: !!(user?.coolie_id && d.id === user.coolie_id),
+    }))
+
+    const myRank = leaderboardWithMe.find(d => d.you)
 
     // Search filters for coolies
     const coolieFilters = [
@@ -35,12 +43,12 @@ export default function Leaderboard() {
     ]
 
     // Filter coolies based on search
-    const filteredCoolies = LEADERBOARD_DATA.filter(coolie => {
-        const matchesSearch = searchQuery === '' || 
+    const filteredCoolies = leaderboardWithMe.filter(coolie => {
+        const matchesSearch = searchQuery === '' ||
             coolie.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             coolie.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
             coolie.station.toLowerCase().includes(searchQuery.toLowerCase())
-        
+
         if (!matchesSearch) return false
 
         switch (searchFilter) {
@@ -103,7 +111,7 @@ export default function Leaderboard() {
                         </select>
                     </div>
 
-                    {/* My Position Banner */}
+                    {/* My Position Banner — only shown if user is in leaderboard */}
                     {myRank && (
                         <div className="card p-5 mb-6 bg-gradient-to-r from-orange-500/20 to-amber-500/10 border-orange-500/40">
                             <div className="flex items-center gap-4">
@@ -112,7 +120,7 @@ export default function Leaderboard() {
                                 </div>
                                 <div className="flex-1">
                                     <p className="text-orange-400 font-bold text-sm">Your Position This Week</p>
-                                    <p className="text-white font-black text-xl">Rank #{myRank.rank} — Star of the Week!</p>
+                                    <p className="text-white font-black text-xl">Rank #{myRank.rank} — {myRank.badge || 'Keep going!'}</p>
                                     <p className="text-slate-400 text-sm">{myRank.trips} trips • {myRank.earnings} earned • {myRank.rating}⭐</p>
                                 </div>
                                 <div className="text-5xl">{myRank.badge}</div>
@@ -123,13 +131,13 @@ export default function Leaderboard() {
                     {/* Top 3 Podium */}
                     <div className="grid grid-cols-3 gap-4 mb-6">
                         {[1, 0, 2].map(idx => {
-                            const p = LEADERBOARD_DATA[idx]
+                            const p = leaderboardWithMe[idx]
                             const heights = ['h-32', 'h-40', 'h-28']
                             const actualHeights = [heights[1], heights[0], heights[2]]
                             return (
                                 <div key={p.rank} className={`card p-4 text-center flex flex-col items-center justify-end ${actualHeights[idx]} ${p.you ? 'border-orange-500/50 bg-orange-500/5' : ''}`}>
                                     <div className="text-3xl mb-1">{p.badge || `#${p.rank}`}</div>
-                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-xl mb-2 ${idx === 0 ? 'bg-gradient-to-br from-gold-500 to-yellow-400 bg-yellow-500' : idx === 1 ? 'bg-gradient-to-br from-gray-400 to-gray-500' : 'bg-gradient-to-br from-amber-700 to-amber-800'}`}>
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-xl mb-2 ${idx === 0 ? 'bg-yellow-500' : idx === 1 ? 'bg-gradient-to-br from-gray-400 to-gray-500' : 'bg-gradient-to-br from-amber-700 to-amber-800'}`}>
                                         {p.name[0]}
                                     </div>
                                     <p className="text-white font-bold text-xs leading-tight">{p.name}</p>

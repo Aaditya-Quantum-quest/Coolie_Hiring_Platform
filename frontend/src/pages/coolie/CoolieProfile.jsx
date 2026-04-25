@@ -5,34 +5,37 @@ import {
     Check, X, CreditCard, Download, QrCode, Award, Zap, Package
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-
-const INITIAL_PROFILE = {
-    name: 'Ramesh Kumar',
-    id: 'CL-1042',
-    badge: 'Star of the Week',
-    station: 'New Delhi Railway Station (NDLS)',
-    stationZone: 'Zone: Northern Railway',
-    platforms: ['01', '02', '04', '05', '12', '16'],
-    age: 32,
-    languages: ['Hindi', 'English', 'Bengali'],
-    memberSince: '14 March 2016',
-    rating: 4.8,
-    totalTrips: 1248,
-    xp: 2850,
-    level: 12,
-    nextLevelXP: 3000,
-    verified: true,
-    verifiedDate: 'Feb 12, 2024',
-    platformCoverage: 'Authorized access to all 16 platforms with specialized handling for heavy baggage and parcel cargo sections.',
-    bankName: 'State Bank of India',
-    bankBranch: 'Main Branch, New Delhi',
-    bankAccount: '**** **** **** 8291',
-    ifsc: 'SBIN0081234',
-    upiId: 'ramesh.k@okaxis',
-}
+import { useApp } from '../../context/AppContext'
 
 export default function CoolieProfile() {
-    const [profile, setProfile] = useState(INITIAL_PROFILE)
+    const { user } = useApp()
+
+    const [profile, setProfile] = useState({
+        name: user?.name || 'Coolie',
+        id: user?.coolie_id || 'PENDING',
+        badge: user?.badge || 'New Member',
+        station: user?.station_name || 'N/A',
+        stationZone: 'Zone: Indian Railways',
+        platforms: user?.working_platforms || [],
+        age: user?.age || '—',
+        languages: user?.languages_spoken || [],
+        memberSince: user?.created_at
+            ? new Date(user.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+            : '—',
+        rating: user?.rating_avg || 0,
+        totalTrips: user?.total_trips || 0,
+        xp: 0,
+        level: 1,
+        nextLevelXP: 250,
+        verified: user?.is_verified || false,
+        verifiedDate: '—',
+        platformCoverage: 'Platform access is determined based on your registered working platforms.',
+        bankName: '—',
+        bankBranch: '—',
+        bankAccount: '—',
+        ifsc: '—',
+        upiId: '—',
+    })
     const [editingField, setEditingField] = useState(null)
     const [editVal, setEditVal] = useState('')
 

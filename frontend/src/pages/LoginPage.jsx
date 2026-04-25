@@ -1,14 +1,9 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { Eye, EyeOff, User, Briefcase, Shield, Zap, Sparkles, Mail, Lock, ArrowRight, Train, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, User, Briefcase, Shield, Zap, Mail, Lock, ArrowRight, Train, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
-
-const DEMO_ACCOUNTS = {
-    customer: { name: 'Priya Sharma', email: 'customer@demo.com', password: 'demo123' },
-    coolie: { name: 'Ramesh Kumar', email: 'coolie@demo.com', password: 'demo123' },
-    admin: { name: 'Admin User', email: 'admin@demo.com', password: 'admin123' },
-}
+import axios from 'axios'
 
 const ROLE_ICONS = {
     customer: <User size={18} />,
@@ -25,29 +20,44 @@ export default function LoginPage() {
     const [form, setForm] = useState({ email: '', password: '' })
     const [loading, setLoading] = useState(false)
 
-    const handleGoBack = () => {
-        navigate(-1)
-    }
+    const handleGoBack = () => navigate(-1)
 
     const handleLogin = async (e) => {
         e.preventDefault()
-        setLoading(true)
-        await new Promise(r => setTimeout(r, 1000))
-        const demo = DEMO_ACCOUNTS[role]
-        if (form.email && form.password) {
-            login({ name: demo.name, email: form.email, id: Date.now() }, role)
-            toast.success(`Welcome back, ${demo.name}! 🎉`)
-            navigate(role === 'customer' ? '/customer' : role === 'coolie' ? '/coolie' : '/admin')
-        } else {
-            toast.error('Please enter email and password')
+        if (!form.email || !form.password) {
+            toast.error('Please enter your credentials')
+            return
         }
-        setLoading(false)
-    }
+        setLoading(true)
+        try {
+            let res
+            if (role === 'customer') {
+                res = await axios.post('http://localhost:5000/api/auth/customer/login', {
+                    email: form.email,
+                    password: form.password,
+                }, { withCredentials: true })
+            } else if (role === 'coolie') {
+                res = await axios.post('http://localhost:5000/api/auth/coolie/login', {
+                    coolie_id: form.email, // coolies login with their Coolie ID
+                    password: form.password,
+                }, { withCredentials: true })
+            } else {
+                toast.error('Admin login not yet connected to backend')
+                setLoading(false)
+                return
+            }
 
-    const fillDemo = () => {
-        const demo = DEMO_ACCOUNTS[role]
-        setForm({ email: demo.email, password: demo.password })
-        toast.success('Demo credentials filled!')
+            if (res.data.success) {
+                login(res.data.user, role)
+                toast.success(`Welcome back, ${res.data.user.name}! 🎉`)
+                navigate(role === 'customer' ? '/customer' : '/coolie')
+            }
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Login failed. Please try again.'
+            toast.error(`❌ ${msg}`)
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -66,21 +76,16 @@ export default function LoginPage() {
 
             {/* ── Left Visual Panel ── */}
             <div className="login-left-panel">
-                {/* Ambient glow orbs */}
                 <div className="login-orb login-orb-1" />
                 <div className="login-orb login-orb-2" />
                 <div className="login-orb login-orb-3" />
-
-                {/* Grid overlay */}
                 <div className="login-grid-overlay" />
 
-                {/* Logo */}
                 <div className="login-logo">
                     <div className="login-logo-icon">C</div>
                     <span className="login-logo-text">CoolieHire</span>
                 </div>
 
-                {/* Center visual */}
                 <div className="login-center-visual">
                     <div className="login-visual-ring login-ring-1" />
                     <div className="login-visual-ring login-ring-2" />
@@ -90,7 +95,6 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                {/* Bottom tagline */}
                 <div className="login-tagline">
                     <h2 className="login-tagline-heading">
                         Your Station.<br />
@@ -104,8 +108,6 @@ export default function LoginPage() {
 
             {/* ── Right Form Panel ── */}
             <div className="login-right-panel">
-
-                {/* Mobile logo */}
                 <div className="login-mobile-logo">
                     <div className="login-logo-icon" style={{ width: '34px', height: '34px', fontSize: '15px' }}>C</div>
                     <span className="login-logo-text" style={{ fontSize: '17px' }}>CoolieHire</span>
@@ -132,15 +134,17 @@ export default function LoginPage() {
                     {/* ── Form ── */}
                     <form onSubmit={handleLogin} className="login-form">
 
-                        {/* Email */}
+                        {/* Email / Coolie ID */}
                         <div className="login-field">
-                            <label className="login-label">Email Address</label>
+                            <label className="login-label">
+                                {role === 'coolie' ? 'Coolie ID' : 'Email Address'}
+                            </label>
                             <div className="login-input-wrap">
                                 <Mail size={15} className="login-input-icon" />
                                 <input
-                                    type="email"
+                                    type={role === 'coolie' ? 'text' : 'email'}
                                     className="input-field login-input"
-                                    placeholder={DEMO_ACCOUNTS[role].email}
+                                    placeholder={role === 'coolie' ? 'e.g. CL-NDLS-X8F4K2' : 'your@email.com'}
                                     value={form.email}
                                     onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                                     required
@@ -194,33 +198,18 @@ export default function LoginPage() {
                                 </>
                             )}
                         </button>
-
-                        {/* Demo fill */}
-                        <button
-                            type="button"
-                            onClick={fillDemo}
-                            className="login-demo-btn"
-                        >
-                            <Zap size={14} />
-                            Fill Demo Credentials
-                        </button>
                     </form>
 
-                    {/* ── Demo Accounts Info ── */}
-                    <div className="login-demo-panel">
-                        <p className="login-demo-title">
-                            <Sparkles size={11} /> Demo Accounts
-                        </p>
-                        <div className="login-demo-grid">
-                            {Object.entries(DEMO_ACCOUNTS).map(([r, d]) => (
-                                <div key={r} className="login-demo-item">
-                                    <p className="login-demo-role">{r}</p>
-                                    <p className="login-demo-email">{d.email}</p>
-                                    <p className="login-demo-pass">{d.password}</p>
-                                </div>
-                            ))}
+                    {role === 'coolie' && (
+                        <div className="login-demo-panel">
+                            <p className="login-demo-title">
+                                <Zap size={11} /> Coolie Login Info
+                            </p>
+                            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px', lineHeight: 1.6 }}>
+                                Coolies log in with their <strong style={{ color: 'var(--text-body)' }}>Coolie ID</strong> (e.g. CL-NDLS-X8F4K2) which is assigned via email after admin approval.
+                            </p>
                         </div>
-                    </div>
+                    )}
 
                     <p className="login-footer-text">
                         Don't have an account?{' '}

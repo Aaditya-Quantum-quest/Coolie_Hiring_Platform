@@ -113,9 +113,9 @@ const coolieRegisterRules = [
         .trim()
         .isLength({ max: 20 }),
 
-    body('experience_years')
+    body('age')
         .optional({ checkFalsy: true })
-        .isInt({ min: 0, max: 50 }).withMessage('Experience must be between 0 and 50 years'),
+        .isInt({ min: 18, max: 65 }).withMessage('Age must be between 18 and 65 years'),
 
     body('aadhaar_number')
         .trim()

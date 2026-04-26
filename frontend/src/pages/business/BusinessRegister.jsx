@@ -7,7 +7,7 @@ import {
     ArrowRight, Shield, Zap, CheckCircle2, Upload, Plus
 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API = import.meta.env.VITE_API_URL || 'https://coolie-hiring-platform-backend.onrender.com';
 
 // ─── Animated background orbs ────────────────────────────────────────────────
 function BgOrbs() {
@@ -40,7 +40,6 @@ function BgOrbs() {
 
 // ─── Global styles injected once ─────────────────────────────────────────────
 const GLOBAL_STYLES = `
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
     @keyframes orbFloat1 {
         0%, 100% { transform: translate(0,0) scale(1); }
         33% { transform: translate(3%,5%) scale(1.05); }
@@ -611,7 +610,7 @@ export default function BusinessRegister() {
                         Register Your Business
                     </h1>
                     <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 'clamp(0.8rem,2.5vw,0.9rem)', maxWidth: 400, margin: '0 auto' }}>
-                        Join thousands of restaurants & hotels managing growth on CoolieHire
+                        Join thousands of restaurants & hotels managing growth on CoolieSeva
                     </p>
                 </div>
 
@@ -652,7 +651,7 @@ export default function BusinessRegister() {
                 </div>
 
                 <p className="fs-fade3" style={{ textAlign: 'center', marginTop: 18, fontSize: '0.68rem', color: 'rgba(255,255,255,0.18)' }}>
-                    By registering, you agree to CoolieHire's Terms of Service & Privacy Policy
+                    By registering, you agree to CoolieSeva's Terms of Service & Privacy Policy
                 </p>
             </div>
         </div>

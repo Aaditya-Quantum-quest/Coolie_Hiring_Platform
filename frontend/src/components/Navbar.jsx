@@ -53,7 +53,7 @@ export default function Navbar() {
                         {/* Logo */}
                         <Link to="/" className="flex-shrink-0 flex items-center gap-2">
                             <span className="text-xl font-semibold text-white tracking-tight">
-                                CoolieHire
+                                CoolieSeva
                             </span>
                         </Link>
 

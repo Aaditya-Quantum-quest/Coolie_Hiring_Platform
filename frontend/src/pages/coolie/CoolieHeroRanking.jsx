@@ -240,9 +240,7 @@ export default function CoolieHeroRanking() {
 
     return (
         <>
-            {/* Google Font: Orbitron */}
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
                 .hero-rank-page { font-family: 'Rajdhani', sans-serif !important; }
                 .hero-rank-page h1, .hero-rank-page h2, .hero-rank-page .orbitron { font-family: 'Orbitron', sans-serif !important; }
                 .xp-bar-fill { box-shadow: 8px 0 20px currentColor; }
@@ -276,7 +274,7 @@ export default function CoolieHeroRanking() {
                             </div>
                             <div>
                                 <h1 className="orbitron text-xl md:text-2xl font-black text-white leading-tight">Hero Rankings</h1>
-                                <p className="text-xs text-gray-500">Your gamified journey as a CoolieHire porter</p>
+                                <p className="text-xs text-gray-500">Your gamified journey as a CoolieSeva porter</p>
                             </div>
                         </div>
 

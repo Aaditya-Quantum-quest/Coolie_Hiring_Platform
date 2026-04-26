@@ -6,38 +6,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-const DISPUTES = [
-    {
-        id: 'DS-301', bookingId: 'BK-1845', customer: 'Rina Dey', coolie: 'Mohan Lal',
-        station: 'Howrah', issue: 'Overcharging', description: 'Coolie demanded ₹200 instead of agreed ₹110. Refused to give change.',
-        reportedBy: 'customer', date: 'Today, 11:30 AM', status: 'open', priority: 'high',
-        evidence: ['Photo of receipt', 'WhatsApp screenshot'],
-    },
-    {
-        id: 'DS-302', bookingId: 'BK-1839', customer: 'Priya M.', coolie: 'Raju Singh',
-        station: 'New Delhi', issue: 'Rude behavior', description: 'Coolie was rude and used abusive language. I feel unsafe.',
-        reportedBy: 'customer', date: 'Today, 9:15 AM', status: 'under_review', priority: 'high',
-        evidence: ['Customer complaint form'],
-    },
-    {
-        id: 'DS-303', bookingId: 'BK-1831', customer: 'Arun Kumar', coolie: 'Suresh Yadav',
-        station: 'Mumbai CST', issue: 'Damaged luggage', description: 'One of my bags was torn during handling. Needs compensation.',
-        reportedBy: 'customer', date: 'Yesterday, 3:45 PM', status: 'open', priority: 'medium',
-        evidence: ['Photo of damaged bag'],
-    },
-    {
-        id: 'DS-304', bookingId: 'BK-1817', customer: 'Vikram S.', coolie: 'Dinesh K.',
-        station: 'Chennai', issue: 'Customer no-show', description: 'Customer booked and did not show up. I waited 20 minutes.',
-        reportedBy: 'coolie', date: 'Yesterday, 12:00 PM', status: 'resolved', priority: 'low',
-        evidence: ['Location GPS log'],
-    },
-    {
-        id: 'DS-305', bookingId: 'BK-1800', customer: 'Sunita Roy', coolie: 'Vijay T.',
-        station: 'Bangalore', issue: 'Fake OTP', description: 'Coolie marked job completed without actually doing the work.',
-        reportedBy: 'customer', date: '2 days ago', status: 'resolved', priority: 'high',
-        evidence: ['OTP logs', 'GPS track'],
-    },
-]
+import { adminDisputesService } from '../../services/adminService'
 
 const STATUS_STYLE = {
     open: 'bg-red-500/20 text-red-400 border border-red-500',
@@ -58,14 +27,55 @@ const PRIORITY_STYLE = {
 }
 
 export default function AdminDisputes() {
-    const [disputes, setDisputes] = useState(DISPUTES)
+    const [disputes, setDisputes] = useState([])
     const [search, setSearch] = useState('')
     const [filterStatus, setFilterStatus] = useState('all')
     const [selected, setSelected] = useState(null)
     const [resolution, setResolution] = useState('')
+    const [loading, setLoading] = useState(true)
+
+    const fetchDisputes = async () => {
+        try {
+            setLoading(true)
+            const response = await adminDisputesService.getAllDisputes({ status: filterStatus === 'all' ? undefined : filterStatus, search })
+            if (response.success) {
+                const mapped = response.data.map(d => ({
+                    id: d.id,
+                    displayId: 'DS-' + d.id.substring(0, 5).toUpperCase(),
+                    bookingId: d.booking_id,
+                    customer: d.customer_name || 'Unknown',
+                    coolie: d.coolie_name || 'Unknown',
+                    station: d.station_name || 'N/A', // Station name needs join in DB, maybe N/A for now if not joined
+                    issue: 'Issue Reported', // Default issue text
+                    description: d.description,
+                    reportedBy: d.customer_id ? 'customer' : 'coolie', // simplistic assumption
+                    date: new Date(d.created_at).toLocaleDateString(),
+                    status: d.status,
+                    priority: d.priority || 'medium',
+                    evidence: [], // Evidence not fully modeled in DB
+                    dbId: d.id,
+                    resolution: d.resolution || ''
+                }))
+                setDisputes(mapped)
+            }
+        } catch (err) {
+            console.error('Failed to load disputes', err)
+            toast.error('Failed to load disputes')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchDisputes()
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [filterStatus, search])
 
     const filtered = disputes.filter(d => {
-        const matchSearch = d.id.toLowerCase().includes(search.toLowerCase()) ||
+        const matchSearch = search === '' ||
+            d.displayId.toLowerCase().includes(search.toLowerCase()) ||
             d.customer.toLowerCase().includes(search.toLowerCase()) ||
             d.coolie.toLowerCase().includes(search.toLowerCase()) ||
             d.issue.toLowerCase().includes(search.toLowerCase())
@@ -73,13 +83,18 @@ export default function AdminDisputes() {
         return matchSearch && matchStatus
     })
 
-    const updateStatus = (id, newStatus) => {
-        setDisputes(prev => prev.map(d => d.id === id ? { ...d, status: newStatus } : d))
-        toast.success(`Dispute ${newStatus === 'resolved' ? 'resolved ✅' : 'moved to under review'}`)
-        setSelected(null)
+    const updateStatus = async (id, newStatus) => {
+        try {
+            await adminDisputesService.resolveDispute(id, { resolution: resolution || 'Resolved by admin' })
+            toast.success(`Dispute ${newStatus === 'resolved' ? 'resolved ✅' : 'updated'}`)
+            setSelected(null)
+            fetchDisputes()
+        } catch (err) {
+            toast.error('Failed to update dispute')
+        }
     }
 
-    const penalizeCoolie = (id) => {
+    const penalizeCoolie = async (id) => {
         toast('Coolie account temporarily locked and notified 🔒', { icon: '⚠️' })
         updateStatus(id, 'resolved')
     }
@@ -132,7 +147,15 @@ export default function AdminDisputes() {
 
                     {/* Disputes List */}
                     <div className="space-y-3">
-                        {filtered.map((d, i) => (
+                        {loading ? (
+                            <div className="card p-12 text-center text-slate-400">Loading disputes...</div>
+                        ) : filtered.length === 0 ? (
+                            <div className="card p-12 text-center">
+                                <CheckCircle size={48} className="text-green-400 mx-auto mb-3" />
+                                <p className="text-white font-bold">All caught up!</p>
+                                <p className="text-slate-400 text-sm">No disputes found matching your filter.</p>
+                            </div>
+                        ) : filtered.map((d, i) => (
                             <div
                                 key={i}
                                 className={`card p-5 border-l-4 ${d.priority === 'high' ? 'border-l-red-500' : d.priority === 'medium' ? 'border-l-yellow-500' : 'border-l-green-500'}`}
@@ -140,12 +163,12 @@ export default function AdminDisputes() {
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                                            <span className="text-xs font-mono text-slate-500">{d.id}</span>
-                                            <span className={`px-2 py-0.5 rounded-lg text-xs font-bold ${PRIORITY_STYLE[d.priority]}`}>
-                                                {d.priority.toUpperCase()} PRIORITY
+                                            <span className="text-xs font-mono text-slate-500">{d.displayId}</span>
+                                            <span className={`px-2 py-0.5 rounded-lg text-xs font-bold ${PRIORITY_STYLE[d.priority] || PRIORITY_STYLE.medium}`}>
+                                                {(d.priority || 'medium').toUpperCase()} PRIORITY
                                             </span>
-                                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLE[d.status]}`}>
-                                                {STATUS_LABELS[d.status]}
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLE[d.status] || STATUS_STYLE.open}`}>
+                                                {STATUS_LABELS[d.status] || 'Open'}
                                             </span>
                                         </div>
                                         <h3 className="text-white font-bold">{d.issue}</h3>
@@ -158,14 +181,14 @@ export default function AdminDisputes() {
                                     </div>
                                     <div className="flex gap-2 shrink-0">
                                         <button
-                                            onClick={() => setSelected(d)}
+                                            onClick={() => { setSelected(d); setResolution(d.resolution) }}
                                             className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20"
                                         >
                                             <Eye size={16} />
                                         </button>
                                         {d.status !== 'resolved' && (
                                             <button
-                                                onClick={() => updateStatus(d.id, 'resolved')}
+                                                onClick={() => updateStatus(d.dbId, 'resolved')}
                                                 className="w-9 h-9 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center hover:bg-green-500/20"
                                                 title="Mark Resolved"
                                             >
@@ -191,12 +214,12 @@ export default function AdminDisputes() {
                     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                         <div className="card p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-white font-bold">Dispute {selected.id}</h3>
+                                <h3 className="text-white font-bold">Dispute {selected.displayId}</h3>
                                 <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><X size={16} /></button>
                             </div>
 
-                            <div className={`p-3 rounded-xl mb-4 ${STATUS_STYLE[selected.status]}`}>
-                                <p className="font-bold text-sm">{STATUS_LABELS[selected.status]} — {selected.priority.toUpperCase()} Priority</p>
+                            <div className={`p-3 rounded-xl mb-4 ${STATUS_STYLE[selected.status] || STATUS_STYLE.open}`}>
+                                <p className="font-bold text-sm">{STATUS_LABELS[selected.status] || 'Open'} — {(selected.priority || 'medium').toUpperCase()} Priority</p>
                             </div>
 
                             <div className="space-y-3 text-sm mb-4">
@@ -237,22 +260,23 @@ export default function AdminDisputes() {
                                     placeholder="Write your resolution note here..."
                                     value={resolution}
                                     onChange={e => setResolution(e.target.value)}
+                                    disabled={selected.status === 'resolved'}
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 {selected.status !== 'resolved' && (
                                     <>
-                                        <button onClick={() => updateStatus(selected.id, 'resolved')} className="btn-success text-sm py-2.5 flex items-center justify-center gap-1">
+                                        <button onClick={() => updateStatus(selected.dbId, 'resolved')} className="btn-success text-sm py-2.5 flex items-center justify-center gap-1">
                                             <CheckCircle size={14} /> Resolve
                                         </button>
-                                        <button onClick={() => penalizeCoolie(selected.id)} className="btn-danger text-sm py-2.5 flex items-center justify-center gap-1">
+                                        <button onClick={() => penalizeCoolie(selected.dbId)} className="btn-danger text-sm py-2.5 flex items-center justify-center gap-1">
                                             <Shield size={14} /> Penalize Coolie
                                         </button>
                                     </>
                                 )}
                                 {selected.status === 'open' && (
-                                    <button onClick={() => updateStatus(selected.id, 'under_review')} className="btn-secondary text-sm py-2.5 col-span-2 flex items-center justify-center gap-1">
+                                    <button onClick={() => updateStatus(selected.dbId, 'under_review')} className="btn-secondary text-sm py-2.5 col-span-2 flex items-center justify-center gap-1">
                                         <Eye size={14} /> Mark Under Review
                                     </button>
                                 )}

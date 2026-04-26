@@ -427,7 +427,7 @@ function AnimatedLeftPanel() {
                 }}>C</div>
                 <div>
                     <span style={{ fontSize: '22px', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', display: 'block', lineHeight: 1 }}>
-                        CoolieHire
+                        CoolieSeva
                     </span>
                     <span style={{ fontSize: '10px', color: 'rgba(79,172,254,0.7)', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: 600 }}>
                         Railway Assistance
@@ -520,7 +520,7 @@ function AnimatedLeftPanel() {
                     </span>
                 </h2>
                 <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: '280px', fontWeight: 400 }}>
-                    Join thousands who trust CoolieHire for seamless railway luggage assistance across India.
+                    Join thousands who trust CoolieSeva for seamless railway luggage assistance across India.
                 </p>
             </div>
         </div>
@@ -546,7 +546,7 @@ export default function RegisterPage() {
 
     useEffect(() => {
         if (type === 'coolie' && step === 2) {
-            axios.get('http://localhost:5000/api/customer/stations')
+            axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/stations')
                 .then(res => {
                     if (res.data.success) {
                         setStations(res.data.stations)
@@ -578,7 +578,7 @@ export default function RegisterPage() {
         setLoading(true)
         try {
             if (type === 'customer') {
-                const res = await axios.post('http://localhost:5000/api/auth/customer/register', {
+                const res = await axios.post('https://coolie-hiring-platform-backend.onrender.com/api/auth/customer/register', {
                     name: form.name,
                     email: form.email,
                     phone: form.phone,
@@ -607,7 +607,7 @@ export default function RegisterPage() {
                 formData.append('aadhaar_front', photoFile)
                 formData.append('aadhaar_back', photoFile)
                 formData.append('secondary_doc', photoFile)
-                
+
                 // Add required dummy fields not present in current form
                 formData.append('date_of_birth', '1990-01-01')
                 formData.append('gender', 'male')
@@ -615,13 +615,13 @@ export default function RegisterPage() {
                 formData.append('city', 'New Delhi')
                 formData.append('state', 'Delhi')
                 formData.append('pincode', '110001')
-                
+
                 formData.append('station_name', form.station || 'New Delhi Railway Station')
-                
+
                 let aadhaar = form.idNumber
                 if (!aadhaar || aadhaar.length !== 12) aadhaar = '123456789012'
                 formData.append('aadhaar_number', aadhaar)
-                
+
                 formData.append('secondary_doc_type', 'voter_id')
                 formData.append('secondary_doc_number', 'VOTER123456')
 
@@ -633,10 +633,10 @@ export default function RegisterPage() {
                     formData.append('languages_spoken', JSON.stringify(form.languages))
                 }
 
-                const res = await axios.post('http://localhost:5000/api/auth/coolie/register', formData, {
+                const res = await axios.post('https://coolie-hiring-platform-backend.onrender.com/api/auth/coolie/register', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 })
-                
+
                 if (res.data.success) {
                     login(res.data.coolie, type)
                     toast.success(`🎉 Welcome ${form.name}! Account created successfully!`)
@@ -678,12 +678,12 @@ export default function RegisterPage() {
                 {/* Mobile logo */}
                 <div className="lg:hidden flex justify-center mb-6">
                     <div className="login-logo-icon" style={{ width: '40px', height: '40px', fontSize: '18px' }}>C</div>
-                    <span className="login-logo-text" style={{ fontSize: '20px', marginLeft: '8px' }}>CoolieHire</span>
+                    <span className="login-logo-text" style={{ fontSize: '20px', marginLeft: '8px' }}>CoolieSeva</span>
                 </div>
 
                 <div className="login-form-container w-full max-w-md">
                     <h1 className="login-heading text-center lg:text-left">Create Account</h1>
-                    <p className="login-subheading text-center lg:text-left">Join CoolieHire and start your journey</p>
+                    <p className="login-subheading text-center lg:text-left">Join CoolieSeva and start your journey</p>
 
                     {/* Account Type Toggle */}
                     <div className="reg-type-toggle">
@@ -840,11 +840,11 @@ export default function RegisterPage() {
                                 <label className="login-label">Age</label>
                                 <div className="login-input-wrap">
                                     <User size={14} className="login-input-icon" />
-                                    <input 
-                                        type="number" 
-                                        className="input-field login-input" 
+                                    <input
+                                        type="number"
+                                        className="input-field login-input"
                                         placeholder="Your age (e.g. 25)"
-                                        value={form.age} 
+                                        value={form.age}
                                         onChange={e => update('age', e.target.value)}
                                         min="18"
                                         max="65"
@@ -865,8 +865,8 @@ export default function RegisterPage() {
                             </div>
 
                             <label className="reg-upload-box" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                <input 
-                                    type="file" 
+                                <input
+                                    type="file"
                                     accept=".jpg,.jpeg,.png"
                                     style={{ display: 'none' }}
                                     onChange={(e) => {

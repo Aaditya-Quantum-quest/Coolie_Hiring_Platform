@@ -6,20 +6,20 @@ const cookieParser = require('cookie-parser')
 const rateLimit = require('express-rate-limit')
 const path = require('path')
 
-const authRoutes    = require('./routes/auth.routes')
-const adminRoutes   = require('./routes/admin.routes')
+const authRoutes = require('./routes/auth.routes')
+const adminRoutes = require('./routes/admin.routes')
 const rankingRoutes = require('./routes/rankings.routes')
 const locationRoutes = require('./routes/location.routes')
-const coolieRoutes  = require('./routes/coolie.routes')
+const coolieRoutes = require('./routes/coolie.routes')
 const customerRoutes = require('./routes/customer.routes')
 const bookingRoutes = require('./routes/booking.routes')
 const configRoutes = require('./routes/config.routes')
 
 // Business (Hotels & Restaurants) routes
-const businessAuthRoutes   = require('./routes/business/auth.routes')
-const businessOwnerRoutes  = require('./routes/business/owner.routes')
+const businessAuthRoutes = require('./routes/business/auth.routes')
+const businessOwnerRoutes = require('./routes/business/owner.routes')
 const businessPublicRoutes = require('./routes/business/public.routes')
-const businessAdminRoutes  = require('./routes/admin/businessAdmin.routes')
+const businessAdminRoutes = require('./routes/admin/businessAdmin.routes')
 
 const { createServer } = require('http')
 const { Server } = require('socket.io')
@@ -67,10 +67,10 @@ const globalLimiter = rateLimit({
     message: { success: false, message: 'Too many requests. Please try again later.' },
 })
 
-// Strict rate limit for auth routes: 20 requests per 15 minutes per IP
+// Strict rate limit for auth routes: 100 requests per 15 minutes per IP
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 20,
+    max: 100, // Increased for development to prevent false positives
     standardHeaders: true,
     legacyHeaders: false,
     message: { success: false, message: 'Too many login attempts. Please try again in 15 minutes.' },
@@ -85,7 +85,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 app.use(cookieParser())
 
 // ─── STATIC FILE SERVING (Uploaded documents & photos) ─────────────
-// Access uploaded files via: http://localhost:5000/uploads/...
+// Access uploaded files via: https://coolie-hiring-platform-backend.onrender.com/uploads/...
 app.use(
     '/uploads',
     express.static(path.join(__dirname, '../uploads'), {
@@ -96,7 +96,7 @@ app.use(
 
 // ─── ROUTES ────────────────────────────────────────────────────────
 app.use('/api/auth', authLimiter, authRoutes)
-app.use('/api/admin', authLimiter, adminRoutes)
+app.use('/api/v1/admin', adminRoutes) // Removed authLimiter here as it was limiting dashboard polling
 app.use('/api/v1/rankings', rankingRoutes)
 app.use('/api/location', locationRoutes)
 app.use('/api/coolie', coolieRoutes)

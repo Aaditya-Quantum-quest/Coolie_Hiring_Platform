@@ -264,7 +264,469 @@ const banCustomer = async (req, res) => {
         await pool.query('UPDATE customers SET is_banned=$1 WHERE id=$2', [ban, id])
         res.status(200).json({ success: true, message: `Customer ${ban ? 'banned' : 'unbanned'}.` })
     } catch (err) {
+        console.error('banCustomer:', err)
         res.status(500).json({ success: false, message: 'Server error.' })
+    }
+}
+
+// ─── DASHBOARD STATS ─────────────────────────────────────
+
+const getDashboardStats = async (req, res) => {
+    try {
+        // Get total users
+        const customersResult = await pool.query('SELECT COUNT(*) as count FROM customers WHERE is_banned = false')
+        const totalUsers = parseInt(customersResult.rows[0].count)
+
+        // Users created today
+        const usersTodayResult = await pool.query('SELECT COUNT(*) as count FROM customers WHERE DATE(created_at) = CURRENT_DATE')
+        const usersToday = parseInt(usersTodayResult.rows[0].count)
+
+        // Get active coolies (verified and not suspended)
+        const activeCooliesResult = await pool.query(
+            'SELECT COUNT(*) as count FROM coolies WHERE is_verified = true AND is_suspended = false AND is_active = true'
+        )
+        const activeCoolies = parseInt(activeCooliesResult.rows[0].count)
+
+        // Online coolies
+        const onlineCooliesResult = await pool.query('SELECT COUNT(*) as count FROM coolies WHERE is_online = true AND is_suspended = false')
+        const onlineCoolies = parseInt(onlineCooliesResult.rows[0].count)
+
+        // Get today's bookings
+        const todayBookingsResult = await pool.query(
+            'SELECT COUNT(*) as count FROM bookings WHERE DATE(created_at) = CURRENT_DATE'
+        )
+        const todayBookings = parseInt(todayBookingsResult.rows[0].count)
+
+        // Get bookings this hour
+        const hourBookingsResult = await pool.query(
+            "SELECT COUNT(*) as count FROM bookings WHERE created_at >= NOW() - INTERVAL '1 hour'"
+        )
+        const hourBookings = parseInt(hourBookingsResult.rows[0].count)
+
+        // Get today's revenue
+        const todayRevenueResult = await pool.query(
+            'SELECT COALESCE(SUM(amount), 0) as total FROM bookings WHERE DATE(created_at) = CURRENT_DATE AND status = \'completed\''
+        )
+        const todayRevenue = parseInt(todayRevenueResult.rows[0].total)
+
+        // Get yesterday's revenue
+        const yesterdayRevenueResult = await pool.query(
+            "SELECT COALESCE(SUM(amount), 0) as total FROM bookings WHERE DATE(created_at) = CURRENT_DATE - INTERVAL '1 day' AND status = 'completed'"
+        )
+        const yesterdayRevenue = parseInt(yesterdayRevenueResult.rows[0].total)
+        
+        let revenueChange = 0;
+        if (yesterdayRevenue > 0) {
+            revenueChange = Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100);
+        } else if (todayRevenue > 0) {
+            revenueChange = 100;
+        }
+
+        // Get open disputes
+        const openDisputesResult = await pool.query(
+            'SELECT COUNT(*) as count FROM disputes WHERE status = \'open\''
+        )
+        const openDisputes = parseInt(openDisputesResult.rows[0].count)
+
+        // Get urgent disputes
+        const urgentDisputesResult = await pool.query(
+            'SELECT COUNT(*) as count FROM disputes WHERE status = \'open\' AND priority = \'high\''
+        )
+        const urgentDisputes = parseInt(urgentDisputesResult.rows[0].count)
+
+        // Get average rating
+        const avgRatingResult = await pool.query(
+            'SELECT COALESCE(AVG(rating_avg), 0) as avg_rating FROM coolies WHERE rating_avg IS NOT NULL AND rating_avg > 0'
+        )
+        const avgRating = parseFloat(avgRatingResult.rows[0].avg_rating)
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalUsers,
+                usersToday,
+                activeCoolies,
+                onlineCoolies,
+                todayBookings,
+                hourBookings,
+                todayRevenue,
+                revenueChange,
+                openDisputes,
+                urgentDisputes,
+                avgRating
+            }
+        })
+    } catch (err) {
+        console.error('getDashboardStats:', err)
+        res.status(500).json({ success: false, message: 'Server error.' })
+    }
+}
+
+const getLiveBookings = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                b.id,
+                c.name as customer_name,
+                co.name as coolie_name,
+                s.name as station_name,
+                b.status,
+                b.amount,
+                b.created_at
+            FROM bookings b
+            LEFT JOIN customers c ON b.customer_id = c.id
+            LEFT JOIN coolies co ON b.coolie_id = co.id
+            LEFT JOIN stations s ON b.station_id = s.id
+            WHERE DATE(b.created_at) = CURRENT_DATE
+            ORDER BY b.created_at DESC
+            LIMIT 10
+        `)
+        
+        const bookings = result.rows.map(booking => ({
+            id: `BK-${booking.id}`,
+            customer: booking.customer_name ? booking.customer_name.split(' ').map(n => n[0]).join('') + '.' : 'Unknown',
+            coolie: booking.coolie_name ? booking.coolie_name.split(' ').map(n => n[0]).join('') + '.' : 'Unknown',
+            station: booking.station_name || 'Unknown',
+            status: booking.status,
+            amount: booking.amount
+        }))
+        
+        res.status(200).json({ success: true, data: bookings })
+    } catch (err) {
+        console.error('getLiveBookings:', err)
+        res.status(500).json({ success: false, message: 'Server error.' })
+    }
+}
+
+const getRevenueData = async (req, res) => {
+    try {
+        const { period = 'today' } = req.query
+        let query = ''
+        
+        if (period === 'today') {
+            query = `
+                SELECT 
+                    EXTRACT(HOUR FROM created_at) as hour,
+                    COUNT(*) as bookings,
+                    COALESCE(SUM(amount), 0) as revenue
+                FROM bookings 
+                WHERE DATE(created_at) = CURRENT_DATE AND status = 'completed'
+                GROUP BY EXTRACT(HOUR FROM created_at)
+                ORDER BY hour
+            `
+        } else if (period === 'week') {
+            query = `
+                SELECT 
+                    TO_CHAR(created_at, 'Day') as time,
+                    COUNT(*) as bookings,
+                    COALESCE(SUM(amount), 0) as revenue
+                FROM bookings 
+                WHERE created_at >= CURRENT_DATE - INTERVAL '7 days' AND status = 'completed'
+                GROUP BY TO_CHAR(created_at, 'Day')
+                ORDER BY created_at
+            `
+        }
+        
+        const result = await pool.query(query)
+        
+        let chartData = []
+        if (period === 'today') {
+            // Fill missing hours with 0
+            const hourlyData = {}
+            for (let i = 0; i < 24; i++) {
+                hourlyData[i] = { bookings: 0, revenue: 0 }
+            }
+            result.rows.forEach(row => {
+                hourlyData[row.hour] = { bookings: row.bookings, revenue: row.revenue }
+            })
+            
+            chartData = [
+                { time: '12AM', bookings: hourlyData[0].bookings, revenue: hourlyData[0].revenue },
+                { time: '2AM', bookings: hourlyData[2].bookings, revenue: hourlyData[2].revenue },
+                { time: '4AM', bookings: hourlyData[4].bookings, revenue: hourlyData[4].revenue },
+                { time: '6AM', bookings: hourlyData[6].bookings, revenue: hourlyData[6].revenue },
+                { time: '8AM', bookings: hourlyData[8].bookings, revenue: hourlyData[8].revenue },
+                { time: '10AM', bookings: hourlyData[10].bookings, revenue: hourlyData[10].revenue },
+                { time: '12PM', bookings: hourlyData[12].bookings, revenue: hourlyData[12].revenue },
+                { time: '2PM', bookings: hourlyData[14].bookings, revenue: hourlyData[14].revenue },
+                { time: '4PM', bookings: hourlyData[16].bookings, revenue: hourlyData[16].revenue },
+                { time: '6PM', bookings: hourlyData[18].bookings, revenue: hourlyData[18].revenue },
+                { time: '8PM', bookings: hourlyData[20].bookings, revenue: hourlyData[20].revenue },
+                { time: '10PM', bookings: hourlyData[22].bookings, revenue: hourlyData[22].revenue },
+            ]
+        } else {
+            chartData = result.rows.map(row => ({
+                time: row.time,
+                bookings: row.bookings,
+                revenue: row.revenue
+            }))
+        }
+        
+        res.status(200).json({ success: true, data: chartData })
+    } catch (err) {
+        console.error('getRevenueData:', err)
+        res.status(500).json({ success: false, message: 'Server error.' })
+    }
+}
+
+const getStationCoverage = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                s.name as station,
+                COUNT(co.id) as coolies_count,
+                COUNT(co.id) * 100.0 / (SELECT COUNT(*) FROM coolies WHERE is_verified = true) as percentage
+            FROM stations s
+            LEFT JOIN coolies co ON s.id = co.station_id AND co.is_verified = true AND co.is_suspended = false
+            GROUP BY s.id, s.name
+            ORDER BY coolies_count DESC
+            LIMIT 10
+        `)
+        
+        const coverage = result.rows.map(row => ({
+            station: row.station,
+            coolies: row.coolies_count,
+            pct: Math.round(row.percentage)
+        }))
+        
+        res.status(200).json({ success: true, data: coverage })
+    } catch (err) {
+        console.error('getStationCoverage:', err)
+        res.status(500).json({ success: false, message: 'Server error.' })
+    }
+}
+
+const getUrgentDisputes = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT COUNT(*) as count 
+            FROM disputes 
+            WHERE status = 'open' AND priority = 'high'
+        `)
+        
+        const count = parseInt(result.rows[0].count)
+        
+        res.status(200).json({ success: true, data: { count } })
+    } catch (err) {
+        console.error('getUrgentDisputes:', err)
+        res.status(500).json({ success: false, message: 'Server error.' })
+    }
+}
+
+const getAllBookingsAdmin = async (req, res) => {
+    try {
+        const { status, search, page = 1, limit = 50 } = req.query;
+        const offset = (page - 1) * limit;
+        
+        let query = `
+            SELECT b.id, b.booking_ref, b.station_name, b.platform, b.destination, b.luggage_size, 
+                   b.amount, b.status, b.created_at as date, b.otp, b.train_no,
+                   c.name as customer_name, co.name as coolie_name
+            FROM bookings b
+            LEFT JOIN customers c ON b.customer_id = c.id
+            LEFT JOIN coolies co ON b.coolie_id = co.id
+            WHERE 1=1
+        `;
+        const params = [];
+        if (status && status !== 'all') {
+            params.push(status);
+            query += ` AND b.status = $${params.length}`;
+        }
+        if (search) {
+            params.push(`%${search}%`);
+            query += ` AND (b.booking_ref ILIKE $${params.length} OR c.name ILIKE $${params.length} OR co.name ILIKE $${params.length} OR b.station_name ILIKE $${params.length})`;
+        }
+        query += ` ORDER BY b.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        params.push(limit, offset);
+        
+        const result = await pool.query(query, params);
+        
+        const countQuery = `
+            SELECT COUNT(*) FROM bookings b
+            LEFT JOIN customers c ON b.customer_id = c.id
+            LEFT JOIN coolies co ON b.coolie_id = co.id
+            WHERE 1=1
+            ${status && status !== 'all' ? ` AND b.status = '${status}'` : ''}
+            ${search ? ` AND (b.booking_ref ILIKE '%${search}%' OR c.name ILIKE '%${search}%' OR co.name ILIKE '%${search}%' OR b.station_name ILIKE '%${search}%')` : ''}
+        `;
+        const countResult = await pool.query(countQuery);
+        
+        // Map to match frontend expectations
+        const formatted = result.rows.map(b => ({
+            id: b.booking_ref,
+            dbId: b.id,
+            customer: b.customer_name || 'Demo Customer',
+            coolie: b.coolie_name || 'Demo Coolie',
+            station: b.station_name,
+            from: b.platform,
+            to: b.destination,
+            luggage: b.luggage_size,
+            amount: b.amount,
+            status: b.status,
+            date: new Date(b.date).toLocaleString(),
+            payment: 'UPI'
+        }));
+        
+        res.status(200).json({ success: true, data: formatted, total: parseInt(countResult.rows[0].count) });
+    } catch (err) {
+        console.error('getAllBookingsAdmin:', err);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+}
+
+const getBookingDetailAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query(`
+            SELECT b.*, c.name as customer_name, c.phone as customer_phone, co.name as coolie_name, co.phone as coolie_phone 
+            FROM bookings b
+            LEFT JOIN customers c ON b.customer_id = c.id
+            LEFT JOIN coolies co ON b.coolie_id = co.id
+            WHERE b.booking_ref = $1 OR b.id::text = $1
+        `, [id]);
+        
+        if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Booking not found' });
+        
+        res.status(200).json({ success: true, data: result.rows[0] });
+    } catch (err) {
+        console.error('getBookingDetailAdmin:', err);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+}
+
+const updateBookingStatusAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        await pool.query('UPDATE bookings SET status=$1 WHERE booking_ref=$2 OR id::text=$2', [status, id]);
+        res.status(200).json({ success: true, message: `Booking status updated to ${status}.` });
+    } catch (err) {
+        console.error('updateBookingStatusAdmin:', err);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+}
+
+const getAllDisputes = async (req, res) => {
+    try {
+        const { status, page = 1, limit = 20 } = req.query;
+        const offset = (page - 1) * limit;
+        
+        let query = `
+            SELECT d.*, b.booking_ref, c.name as customer_name, co.name as coolie_name
+            FROM disputes d
+            LEFT JOIN bookings b ON d.booking_id = b.id
+            LEFT JOIN customers c ON d.customer_id = c.id
+            LEFT JOIN coolies co ON d.coolie_id = co.id
+            WHERE 1=1
+        `;
+        const params = [];
+        if (status && status !== 'all') {
+            params.push(status);
+            query += ` AND d.status = $${params.length}`;
+        }
+        query += ` ORDER BY d.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        params.push(limit, offset);
+        
+        const result = await pool.query(query, params);
+        res.status(200).json({ success: true, data: result.rows });
+    } catch (err) {
+        console.error('getAllDisputes:', err);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+}
+
+const getDisputeDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query(`
+            SELECT d.*, b.booking_ref, c.name as customer_name, co.name as coolie_name
+            FROM disputes d
+            LEFT JOIN bookings b ON d.booking_id = b.id
+            LEFT JOIN customers c ON d.customer_id = c.id
+            LEFT JOIN coolies co ON d.coolie_id = co.id
+            WHERE d.id = $1
+        `, [id]);
+        if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Dispute not found' });
+        res.status(200).json({ success: true, data: result.rows[0] });
+    } catch (err) {
+        console.error('getDisputeDetails:', err);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+}
+
+const resolveDispute = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { resolution } = req.body;
+        await pool.query('UPDATE disputes SET status=$1, resolution=$2 WHERE id=$3', ['resolved', resolution, id]);
+        res.status(200).json({ success: true, message: 'Dispute resolved.' });
+    } catch (err) {
+        console.error('resolveDispute:', err);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+}
+
+const getAnalyticsData = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM customers) as total_customers,
+                (SELECT COUNT(*) FROM coolies) as total_coolies,
+                (SELECT COUNT(*) FROM bookings) as total_bookings,
+                (SELECT COALESCE(SUM(amount), 0) FROM bookings WHERE status = 'completed') as total_revenue
+        `);
+        res.status(200).json({ success: true, data: result.rows[0] });
+    } catch (err) {
+        console.error('getAnalyticsData:', err);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+}
+
+const getUserGrowth = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM customers
+            WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        `);
+        res.status(200).json({ success: true, data: result.rows });
+    } catch (err) {
+        console.error('getUserGrowth:', err);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+}
+
+const getRevenueAnalytics = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT DATE(created_at) as date, SUM(amount) as revenue
+            FROM bookings
+            WHERE created_at >= CURRENT_DATE - INTERVAL '30 days' AND status = 'completed'
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        `);
+        res.status(200).json({ success: true, data: result.rows });
+    } catch (err) {
+        console.error('getRevenueAnalytics:', err);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+}
+
+const getStationPerformanceAdmin = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT station_name as name, COUNT(*) as bookings, SUM(amount) as revenue
+            FROM bookings
+            WHERE status = 'completed'
+            GROUP BY station_name
+            ORDER BY bookings DESC
+        `);
+        res.status(200).json({ success: true, data: result.rows });
+    } catch (err) {
+        console.error('getStationPerformanceAdmin:', err);
+        res.status(500).json({ success: false, message: 'Server error.' });
     }
 }
 
@@ -274,4 +736,8 @@ module.exports = {
     approveCoolieLevel1, approveCoolieLevel2,
     rejectCoolie, suspendCoolie,
     getAllCustomers, banCustomer,
+    getDashboardStats, getLiveBookings, getRevenueData, getStationCoverage, getUrgentDisputes,
+    getAllBookingsAdmin, getBookingDetailAdmin, updateBookingStatusAdmin,
+    getAllDisputes, getDisputeDetails, resolveDispute,
+    getAnalyticsData, getUserGrowth, getRevenueAnalytics, getStationPerformanceAdmin
 }

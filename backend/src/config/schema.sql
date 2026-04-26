@@ -436,6 +436,23 @@ FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================
+-- DISPUTES TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS disputes (
+    id              SERIAL PRIMARY KEY,
+    booking_id      UUID REFERENCES bookings(id),
+    customer_id     UUID REFERENCES customers(id),
+    coolie_id       UUID REFERENCES coolies(id),
+    priority        VARCHAR(20) DEFAULT 'low' CHECK (priority IN ('low', 'medium', 'high')),
+    status          VARCHAR(20) DEFAULT 'open' CHECK (status IN ('open', 'resolved', 'closed')),
+    issue_type      VARCHAR(100),
+    description     TEXT,
+    resolution      TEXT,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
 -- TRAINS TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS trains (

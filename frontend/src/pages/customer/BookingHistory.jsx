@@ -19,7 +19,7 @@ export default function BookingHistory() {
     const [bookings, setBookings] = useState([])
 
     React.useEffect(() => {
-        axios.get('http://localhost:5000/api/bookings/my-bookings')
+        axios.get('https://coolie-hiring-platform-backend.onrender.com/api/bookings/my-bookings')
             .then(res => {
                 if (res.data.success) setBookings(res.data.bookings)
             })

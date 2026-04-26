@@ -32,25 +32,26 @@ export default function LoginPage() {
         try {
             let res
             if (role === 'customer') {
-                res = await axios.post('http://localhost:5000/api/auth/customer/login', {
+                res = await axios.post('https://coolie-hiring-platform-backend.onrender.com/api/auth/customer/login', {
                     email: form.email,
                     password: form.password,
                 }, { withCredentials: true })
             } else if (role === 'coolie') {
-                res = await axios.post('http://localhost:5000/api/auth/coolie/login', {
+                res = await axios.post('https://coolie-hiring-platform-backend.onrender.com/api/auth/coolie/login', {
                     coolie_id: form.email, // coolies login with their Coolie ID
                     password: form.password,
                 }, { withCredentials: true })
-            } else {
-                toast.error('Admin login not yet connected to backend')
-                setLoading(false)
-                return
+            } else if (role === 'admin') {
+                res = await axios.post('https://coolie-hiring-platform-backend.onrender.com/api/v1/admin/login', {
+                    email: form.email,
+                    password: form.password,
+                }, { withCredentials: true })
             }
 
             if (res.data.success) {
                 login(res.data.user, role)
                 toast.success(`Welcome back, ${res.data.user.name}! 🎉`)
-                navigate(role === 'customer' ? '/customer' : '/coolie')
+                navigate(role === 'customer' ? '/customer' : role === 'coolie' ? '/coolie' : '/admin')
             }
         } catch (err) {
             const msg = err.response?.data?.message || 'Login failed. Please try again.'
@@ -83,7 +84,7 @@ export default function LoginPage() {
 
                 <div className="login-logo">
                     <div className="login-logo-icon">C</div>
-                    <span className="login-logo-text">CoolieHire</span>
+                    <span className="login-logo-text">CoolieSeva</span>
                 </div>
 
                 <div className="login-center-visual">
@@ -110,12 +111,12 @@ export default function LoginPage() {
             <div className="login-right-panel">
                 <div className="login-mobile-logo">
                     <div className="login-logo-icon" style={{ width: '34px', height: '34px', fontSize: '15px' }}>C</div>
-                    <span className="login-logo-text" style={{ fontSize: '17px' }}>CoolieHire</span>
+                    <span className="login-logo-text" style={{ fontSize: '17px' }}>CoolieSeva</span>
                 </div>
 
                 <div className="login-form-container">
                     <h1 className="login-heading">Welcome Back</h1>
-                    <p className="login-subheading">Login to your CoolieHire account</p>
+                    <p className="login-subheading">Login to your CoolieSeva account</p>
 
                     {/* ── Role Selector ── */}
                     <div className="login-role-selector">

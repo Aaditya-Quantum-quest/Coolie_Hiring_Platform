@@ -195,7 +195,13 @@ export default function Preloader({ onComplete }) {
           className="text-xl font-medium tracking-widest"
           style={{ color: "rgba(255,255,255,0.9)" }}
         >
-          A <span style={{ color: "#6366f1" }}>Helping Hand</span> on Every Platform.
+          <span style={{ color: "#6366f1" }}>CoolieSeva</span>
+        </div>
+        <div
+          className="text-sm font-medium tracking-wide"
+          style={{ color: "rgba(255,255,255,0.7)" }}
+        >
+          आपका सामान हमारी जिम्मेदारी
         </div>
 
         {/* Wave bar */}

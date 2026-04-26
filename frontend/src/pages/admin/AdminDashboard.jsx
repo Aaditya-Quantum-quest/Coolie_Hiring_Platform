@@ -8,47 +8,103 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import SearchBar from '../../components/ui/SearchBar'
+import { adminDashboardService } from '../../services/adminService'
+import toast from 'react-hot-toast'
 
-const CHART_DATA = [
-    { time: '6AM', bookings: 12, revenue: 840 },
-    { time: '8AM', bookings: 38, revenue: 2660 },
-    { time: '10AM', bookings: 54, revenue: 3780 },
-    { time: '12PM', bookings: 67, revenue: 4690 },
-    { time: '2PM', bookings: 82, revenue: 5740 },
-    { time: '4PM', bookings: 91, revenue: 6370 },
-    { time: '6PM', bookings: 78, revenue: 5460 },
-    { time: '8PM', bookings: 45, revenue: 3150 },
-]
-
-const LIVE_BOOKINGS = [
-    { id: 'BK-1901', customer: 'Arjun K.', coolie: 'Ramesh K.', station: 'New Delhi', status: 'active', amount: 90 },
-    { id: 'BK-1902', customer: 'Priya M.', coolie: 'Suresh Y.', station: 'Howrah', status: 'pending', amount: 120 },
-    { id: 'BK-1903', customer: 'Deepak T.', coolie: 'Mohan L.', station: 'Mumbai CST', status: 'completed', amount: 150 },
-    { id: 'BK-1904', customer: 'Sunita R.', coolie: 'Raju S.', station: 'Chennai', status: 'active', amount: 80 },
-    { id: 'BK-1905', customer: 'Vikas G.', coolie: 'Dinesh K.', station: 'New Delhi', status: 'pending', amount: 110 },
-]
-
-const STATUS_STYLES = {
-    active: 'status-onduty',
-    pending: 'status-busy',
-    completed: 'status-available',
-}
-
-const STAT_CARDS = [
-    { label: 'Total Users', value: '50,241', change: '+128 today', icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { label: 'Active Coolies', value: '3,421', change: '↑ 87 online now', icon: UserCheck, color: 'text-green-400', bg: 'bg-green-500/10' },
-    { label: "Today's Bookings", value: '1,847', change: '+234 this hour', icon: BookOpen, color: 'text-orange-400', bg: 'bg-orange-500/10' },
-    { label: "Today's Revenue", value: '₹1,28,940', change: '↑ 12% vs yesterday', icon: IndianRupee, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { label: 'Open Disputes', value: '14', change: '3 urgent', icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10' },
-    { label: 'Avg Rating', value: '4.72 ⭐', change: 'Platform-wide', icon: CheckCircle, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-]
 
 export default function AdminDashboard() {
     const navigate = useNavigate()
-    const [liveBookings, setLiveBookings] = useState(LIVE_BOOKINGS)
+    const [liveBookings, setLiveBookings] = useState([])
+    const [chartData, setChartData] = useState([])
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        activeCoolies: 0,
+        todayBookings: 0,
+        todayRevenue: 0,
+        revenueChange: 0,
+        openDisputes: 0,
+        urgentDisputes: 0,
+        avgRating: 0
+    })
+    const [stationCoverage, setStationCoverage] = useState([])
+    const [urgentDisputes, setUrgentDisputes] = useState(0)
+    const [loading, setLoading] = useState(true)
     const [tick, setTick] = useState(0)
     const [searchQuery, setSearchQuery] = useState('')
     const [searchFilter, setSearchFilter] = useState('all')
+
+    // Fetch dashboard data
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                setLoading(true);
+                
+                // Fetch all data in parallel
+                const [statsResponse, bookingsResponse, revenueResponse, coverageResponse, disputesResponse] = await Promise.all([
+                    adminDashboardService.getStats().catch(() => ({ data: {} })),
+                    adminDashboardService.getLiveBookings().catch(() => ({ data: [] })),
+                    adminDashboardService.getRevenueData().catch(() => ({ data: [] })),
+                    adminDashboardService.getStationCoverage().catch(() => ({ data: [] })),
+                    adminDashboardService.getUrgentDisputes().catch(() => ({ data: { count: 0 } }))
+                ]);
+                
+                // Update state with fetched data
+                if (statsResponse.data?.success) {
+                    setStats({
+                        totalUsers: statsResponse.data.data?.totalUsers || 0,
+                        usersToday: statsResponse.data.data?.usersToday || 0,
+                        activeCoolies: statsResponse.data.data?.activeCoolies || 0,
+                        onlineCoolies: statsResponse.data.data?.onlineCoolies || 0,
+                        todayBookings: statsResponse.data.data?.todayBookings || 0,
+                        hourBookings: statsResponse.data.data?.hourBookings || 0,
+                        todayRevenue: statsResponse.data.data?.todayRevenue || 0,
+                        revenueChange: statsResponse.data.data?.revenueChange || 0,
+                        openDisputes: statsResponse.data.data?.openDisputes || 0,
+                        urgentDisputes: statsResponse.data.data?.urgentDisputes || 0,
+                        avgRating: statsResponse.data.data?.avgRating || 0
+                    });
+                }
+                
+                if (bookingsResponse.data?.success) {
+                    setLiveBookings(bookingsResponse.data.data || []);
+                }
+                
+                if (revenueResponse.data?.success) {
+                    setChartData(revenueResponse.data.data || []);
+                }
+                
+                if (coverageResponse.data?.success) {
+                    setStationCoverage(coverageResponse.data.data || []);
+                }
+                
+                if (disputesResponse.data?.success) {
+                    setUrgentDisputes(disputesResponse.data.data?.count || 0);
+                }
+                
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+                toast.error('Failed to load dashboard data');
+                
+                // Set fallback data on error
+                setStats({
+                    totalUsers: 0, usersToday: 0, activeCoolies: 0, onlineCoolies: 0,
+                    todayBookings: 0, hourBookings: 0, todayRevenue: 0, revenueChange: 0,
+                    openDisputes: 0, urgentDisputes: 0, avgRating: 0
+                });
+                setLiveBookings([]);
+                setChartData([]);
+                setStationCoverage([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+        
+        // Set up periodic refresh
+        const interval = setInterval(fetchDashboardData, 30000); // Refresh every 30 seconds
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         const t = setInterval(() => setTick(x => x + 1), 5000)
@@ -85,29 +141,45 @@ export default function AdminDashboard() {
         }
     })
 
+
+    const STAT_CARDS = [
+        { label: 'Total Users', value: stats.totalUsers.toLocaleString(), change: `+${stats.usersToday} today`, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+        { label: 'Active Coolies', value: stats.activeCoolies.toLocaleString(), change: `${stats.onlineCoolies > 0 ? '↑' : '•'} ${stats.onlineCoolies} online now`, icon: UserCheck, color: 'text-green-400', bg: 'bg-green-500/10' },
+        { label: "Today's Bookings", value: stats.todayBookings.toLocaleString(), change: `+${stats.hourBookings} this hour`, icon: BookOpen, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+        { label: "Today's Revenue", value: `₹${stats.todayRevenue.toLocaleString()}`, change: `${stats.revenueChange >= 0 ? '↑' : '↓'} ${Math.abs(stats.revenueChange)}% vs yesterday`, icon: IndianRupee, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+        { label: 'Open Disputes', value: stats.openDisputes, change: `${stats.urgentDisputes} urgent`, icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10' },
+        { label: 'Avg Rating', value: `${stats.avgRating.toFixed(2)} ⭐`, change: 'Platform-wide', icon: CheckCircle, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+    ]
+
     return (
         <div className="flex">
             <Sidebar role="admin" />
             <div className="ml-0 md:ml-64 flex-1 min-h-screen p-6">
                 <div className="max-w-7xl mx-auto">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h1 className="text-2xl font-black text-white">Admin Dashboard</h1>
-                            <p className="text-slate-400 text-sm flex items-center gap-2">
-                                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse inline-block" />
-                                Live — All systems operational
-                            </p>
+                    {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7B2FFF]"></div>
                         </div>
-                        <div className="flex gap-3">
-                            <button className="btn-secondary flex items-center gap-2 text-sm">
-                                <Bell size={16} /> Alerts (3)
-                            </button>
-                            <button className="btn-primary flex items-center gap-2 text-sm">
-                                <Shield size={16} /> System Health
-                            </button>
-                        </div>
-                    </div>
+                    ) : (
+                        <>
+                            {/* Header */}
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h1 className="text-2xl font-black text-white">Admin Dashboard</h1>
+                                    <p className="text-slate-400 text-sm flex items-center gap-2">
+                                        <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse inline-block" />
+                                        Live — All systems operational
+                                    </p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button className="btn-secondary flex items-center gap-2 text-sm">
+                                        <Bell size={16} /> Alerts ({stats.openDisputes})
+                                    </button>
+                                    <button className="btn-primary flex items-center gap-2 text-sm">
+                                        <Shield size={16} /> System Health
+                                    </button>
+                                </div>
+                            </div>
 
                     {/* Search Bar */}
                     <div className="mb-6">
@@ -144,7 +216,7 @@ export default function AdminDashboard() {
                                 <span className="badge text-xs">LIVE</span>
                             </div>
                             <ResponsiveContainer width="100%" height={220}>
-                                <AreaChart data={CHART_DATA}>
+                                <AreaChart data={chartData.length > 0 ? chartData : []}>
                                     <defs>
                                         <linearGradient id="adminGrad" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
@@ -167,17 +239,13 @@ export default function AdminDashboard() {
                         <div className="space-y-3">
                             <div className="card p-4">
                                 <p className="text-slate-400 text-xs mb-1">Platform Commission (Today)</p>
-                                <p className="text-3xl font-black gradient-text">₹12,894</p>
-                                <p className="text-green-400 text-xs mt-1">↑ 18% vs yesterday</p>
+                                <p className="text-3xl font-black gradient-text">₹{Math.round(stats.todayRevenue * 0.15).toLocaleString()}</p>
+                                <p className="text-green-400 text-xs mt-1">{stats.revenueChange >= 0 ? '↑' : '↓'} {Math.abs(stats.revenueChange)}% vs yesterday</p>
                             </div>
                             <div className="card p-4">
                                 <p className="text-slate-400 text-xs mb-2">Station Coverage</p>
                                 <div className="space-y-2">
-                                    {[
-                                        { station: 'New Delhi', coolies: 847, pct: 90 },
-                                        { station: 'Mumbai CST', coolies: 612, pct: 72 },
-                                        { station: 'Howrah', coolies: 411, pct: 54 },
-                                    ].map(s => (
+                                    {stationCoverage.length > 0 ? stationCoverage : [].map(s => (
                                         <div key={s.station}>
                                             <div className="flex justify-between text-xs mb-1">
                                                 <span className="text-slate-300">{s.station}</span>
@@ -195,7 +263,7 @@ export default function AdminDashboard() {
                                     <AlertTriangle size={16} className="text-red-400" />
                                     <p className="text-red-400 font-bold text-sm">Urgent Disputes</p>
                                 </div>
-                                <p className="text-2xl font-black text-white">3</p>
+                                <p className="text-2xl font-black text-white">{stats.urgentDisputes}</p>
                                 <button onClick={() => navigate('/admin/disputes')} className="text-xs text-orange-400 mt-2 flex items-center gap-1 hover:text-orange-300">
                                     Review now <ChevronRight size={12} />
                                 </button>
@@ -226,20 +294,32 @@ export default function AdminDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredBookings.map((b, i) => (
+                                    {liveBookings.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="6" className="py-8 text-center text-slate-400">
+                                                No live bookings found
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        filteredBookings.map((b, i) => (
                                         <tr key={i} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
                                             <td className="py-3 font-mono text-slate-400 text-xs">{b.id}</td>
                                             <td className="py-3 text-slate-200 font-medium">{b.customer}</td>
                                             <td className="py-3 text-slate-300">{b.coolie}</td>
                                             <td className="py-3 text-slate-400 flex items-center gap-1"><MapPin size={12} />{b.station}</td>
                                             <td className="py-3">
-                                                <span className={STATUS_STYLES[b.status]}>
+                                                <span className={`badge ${
+                                                    b.status === 'active' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                                                    b.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                                                    'bg-green-500/20 text-green-400 border-green-500/30'
+                                                }`}>
                                                     {b.status === 'active' ? '🔴 Active' : b.status === 'pending' ? '🟡 Pending' : '🟢 Done'}
                                                 </span>
                                             </td>
                                             <td className="py-3 text-right text-green-400 font-bold">₹{b.amount}</td>
                                         </tr>
-                                    ))}
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -265,6 +345,8 @@ export default function AdminDashboard() {
                             </button>
                         ))}
                     </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

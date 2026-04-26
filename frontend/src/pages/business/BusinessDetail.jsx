@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { MapPin, Clock, Navigation } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API = import.meta.env.VITE_API_URL || 'https://coolie-hiring-platform-backend.onrender.com';
 
 export default function BusinessDetail() {
     const { businessId } = useParams();

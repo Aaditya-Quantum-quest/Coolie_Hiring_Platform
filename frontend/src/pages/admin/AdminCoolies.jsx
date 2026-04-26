@@ -3,15 +3,7 @@ import Sidebar from '../../components/Sidebar'
 import { Search, UserX, UserCheck, Eye, Shield, Star, Download, CheckCircle, XCircle, MapPin, X, Award } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-const COOLIES = [
-    { id: 'CL-1042', name: 'Ramesh Kumar', phone: '9876543210', station: 'New Delhi', rating: 4.9, trips: 1248, status: 'active', verified: true, joined: '5 Jan 2019', weekRank: 1, badge: 'Star of Week', today: 7 },
-    { id: 'CL-2034', name: 'Suresh Yadav', phone: '9812345678', station: 'New Delhi', rating: 4.8, trips: 1102, status: 'active', verified: true, joined: '20 Mar 2019', weekRank: 2, badge: null, today: 5 },
-    { id: 'CL-3077', name: 'Mohan Lal', phone: '9023456789', station: 'Mumbai CST', rating: 4.7, trips: 987, status: 'active', verified: true, joined: '12 Jun 2020', weekRank: 3, badge: null, today: 4 },
-    { id: 'CL-4011', name: 'Raju Singh', phone: '8734567890', station: 'Howrah', rating: 3.9, trips: 421, status: 'active', verified: true, joined: '7 Sep 2020', weekRank: null, badge: null, today: 2 },
-    { id: 'CL-5023', name: 'Santosh P.', phone: '9645678901', station: 'Chennai Central', rating: 4.5, trips: 678, status: 'suspended', verified: false, joined: '18 Dec 2020', weekRank: null, badge: null, today: 0 },
-    { id: 'CL-6044', name: 'Dinesh Kumar', phone: '9756789012', station: 'New Delhi', rating: 4.4, trips: 543, status: 'active', verified: true, joined: '3 Feb 2021', weekRank: null, badge: null, today: 6 },
-    { id: 'CL-7055', name: 'Vijay T.', phone: '9867890123', station: 'Bangalore', rating: 4.2, trips: 312, status: 'pending_verification', verified: false, joined: '22 May 2021', weekRank: null, badge: null, today: 0 },
-]
+import { adminUsersService } from '../../services/adminService'
 
 const STATUS_STYLE = {
     active: 'status-available',
@@ -26,32 +18,76 @@ const STATUS_LABEL = {
 }
 
 export default function AdminCoolies() {
-    const [coolies, setCoolies] = useState(COOLIES)
+    const [coolies, setCoolies] = useState([])
     const [search, setSearch] = useState('')
     const [filterStatus, setFilterStatus] = useState('all')
     const [selected, setSelected] = useState(null)
+    const [loading, setLoading] = useState(true)
 
-    const filtered = coolies.filter(c => {
-        const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
-            c.id.toLowerCase().includes(search.toLowerCase()) ||
-            c.station.toLowerCase().includes(search.toLowerCase())
-        const matchStatus = filterStatus === 'all' || c.status === filterStatus
-        return matchSearch && matchStatus
-    })
-
-    const verifyKYC = (id) => {
-        setCoolies(prev => prev.map(c => c.id === id ? { ...c, verified: true, status: 'active' } : c))
-        toast.success('KYC Verified! Coolie is now Active ✅')
-        setSelected(null)
+    const fetchCoolies = async () => {
+        try {
+            setLoading(true)
+            const response = await adminUsersService.getAllCoolies({ status: filterStatus === 'all' ? undefined : filterStatus, station: search })
+            if (response.success) {
+                const mapped = response.data.map(c => ({
+                    id: c.id,
+                    displayId: c.coolie_id || 'CL-PENDING',
+                    name: c.name,
+                    phone: c.phone,
+                    station: c.station_name,
+                    rating: parseFloat(c.rating_avg) || 0,
+                    trips: c.total_trips || 0,
+                    status: c.is_suspended ? 'suspended' : (c.verification_status === 'approved' ? 'active' : c.verification_status),
+                    verified: c.is_verified,
+                    joined: new Date(c.created_at).toLocaleDateString(),
+                    badge: c.badge,
+                    today: 0,
+                    dbId: c.id
+                }))
+                setCoolies(mapped)
+            }
+        } catch (error) {
+            console.error('Failed to load coolies', error)
+            toast.error('Failed to load coolies')
+        } finally {
+            setLoading(false)
+        }
     }
 
-    const toggleSuspend = (id) => {
-        setCoolies(prev => prev.map(c => {
-            if (c.id !== id) return c
-            const newStatus = c.status === 'suspended' ? 'active' : 'suspended'
-            toast(newStatus === 'suspended' ? 'Coolie suspended' : 'Coolie reinstated', { icon: newStatus === 'suspended' ? '🔒' : '✅' })
-            return { ...c, status: newStatus }
-        }))
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchCoolies()
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [filterStatus, search])
+
+    const filtered = coolies.filter(c => {
+        const matchSearch = search === '' || 
+            c.name.toLowerCase().includes(search.toLowerCase()) ||
+            c.displayId.toLowerCase().includes(search.toLowerCase()) ||
+            c.station.toLowerCase().includes(search.toLowerCase())
+        return matchSearch
+    })
+
+    const verifyKYC = async (id) => {
+        try {
+            await adminUsersService.approveCoolieLevel1(id)
+            toast.success('KYC Verified! Coolie is now pending final approval ✅')
+            setSelected(null)
+            fetchCoolies()
+        } catch (error) {
+            toast.error('Failed to verify KYC')
+        }
+    }
+
+    const toggleSuspend = async (id) => {
+        try {
+            await adminUsersService.suspendCoolie(id)
+            toast.success('Coolie status updated successfully ✅')
+            fetchCoolies()
+        } catch (error) {
+            toast.error('Failed to update coolie status')
+        }
     }
 
     return (
@@ -109,69 +145,72 @@ export default function AdminCoolies() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filtered.map((c, i) => (
-                                        <tr key={i} className="border-t border-slate-800 hover:bg-slate-800/30 transition-colors">
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="relative shrink-0">
-                                                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
-                                                            {c.name[0]}
-                                                        </div>
-                                                        {c.verified && (
-                                                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                                                                <CheckCircle size={10} className="text-white" />
+                                    {loading ? (
+                                        <tr><td colSpan="7" className="py-12 text-center text-slate-400">Loading coolies...</td></tr>
+                                    ) : filtered.length === 0 ? (
+                                        <tr><td colSpan="7" className="py-12 text-center text-slate-400">No coolies found.</td></tr>
+                                    ) : (
+                                        filtered.map((c, i) => (
+                                            <tr key={i} className="border-t border-slate-800 hover:bg-slate-800/30 transition-colors">
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="relative shrink-0">
+                                                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
+                                                                {c.name[0]}
                                                             </div>
+                                                            {c.verified && (
+                                                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                                                    <CheckCircle size={10} className="text-white" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-1">
+                                                                <p className="text-white font-semibold text-sm leading-tight">{c.name}</p>
+                                                                {c.badge && <Star size={12} className="text-yellow-400 fill-yellow-400" />}
+                                                            </div>
+                                                            <p className="text-slate-500 text-xs font-mono">{c.displayId}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-4 text-slate-400 text-xs hidden sm:table-cell">
+                                                    <div className="flex items-center gap-1"><MapPin size={10} />{c.station}</div>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center gap-1">
+                                                        <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                                                        <span className="text-white font-bold text-sm">{c.rating}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-4 text-slate-200 font-bold hidden lg:table-cell">{c.trips.toLocaleString()}</td>
+                                                <td className="py-3 px-4 text-green-400 font-bold hidden lg:table-cell">{c.today} trips</td>
+                                                <td className="py-3 px-4">
+                                                    <span className={`${STATUS_STYLE[c.status] || 'status-busy'} text-xs whitespace-nowrap`}>
+                                                        {STATUS_LABEL[c.status] || c.status}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button onClick={() => setSelected(c)} className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20">
+                                                            <Eye size={14} />
+                                                        </button>
+                                                        {c.status === 'pending' || c.status === 'pending_verification' ? (
+                                                            <button onClick={() => verifyKYC(c.dbId)} className="w-8 h-8 rounded-lg bg-green-500/10 text-green-400 flex items-center justify-center hover:bg-green-500/20" title="Verify KYC">
+                                                                <Shield size={14} />
+                                                            </button>
+                                                        ) : (
+                                                            <button onClick={() => toggleSuspend(c.dbId)} className={`w-8 h-8 rounded-lg flex items-center justify-center ${c.status === 'suspended' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                                                                {c.status === 'suspended' ? <UserCheck size={14} /> : <UserX size={14} />}
+                                                            </button>
                                                         )}
                                                     </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-1">
-                                                            <p className="text-white font-semibold text-sm leading-tight">{c.name}</p>
-                                                            {c.weekRank === 1 && <Star size={12} className="text-yellow-400 fill-yellow-400" />}
-                                                        </div>
-                                                        <p className="text-slate-500 text-xs font-mono">{c.id}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-3 px-4 text-slate-400 text-xs hidden sm:table-cell">
-                                                <div className="flex items-center gap-1"><MapPin size={10} />{c.station}</div>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-1">
-                                                    <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                                                    <span className="text-white font-bold text-sm">{c.rating}</span>
-                                                </div>
-                                            </td>
-                                            <td className="py-3 px-4 text-slate-200 font-bold hidden lg:table-cell">{c.trips.toLocaleString()}</td>
-                                            <td className="py-3 px-4 text-green-400 font-bold hidden lg:table-cell">{c.today} trips</td>
-                                            <td className="py-3 px-4">
-                                                <span className={`${STATUS_STYLE[c.status]} text-xs whitespace-nowrap`}>
-                                                    {STATUS_LABEL[c.status]}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button onClick={() => setSelected(c)} className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20">
-                                                        <Eye size={14} />
-                                                    </button>
-                                                    {c.status === 'pending_verification' ? (
-                                                        <button onClick={() => verifyKYC(c.id)} className="w-8 h-8 rounded-lg bg-green-500/10 text-green-400 flex items-center justify-center hover:bg-green-500/20" title="Verify KYC">
-                                                            <Shield size={14} />
-                                                        </button>
-                                                    ) : (
-                                                        <button onClick={() => toggleSuspend(c.id)} className={`w-8 h-8 rounded-lg flex items-center justify-center ${c.status === 'suspended' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                                                            {c.status === 'suspended' ? <UserCheck size={14} /> : <UserX size={14} />}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
-                        {filtered.length === 0 && (
-                            <div className="py-12 text-center text-slate-400">No coolies found.</div>
-                        )}
                     </div>
 
                     {/* Detail Modal */}
@@ -187,7 +226,7 @@ export default function AdminCoolies() {
                                         {selected.name[0]}
                                     </div>
                                     <h4 className="text-white font-bold">{selected.name}</h4>
-                                    <p className="text-slate-400 text-xs font-mono">{selected.id}</p>
+                                    <p className="text-slate-400 text-xs font-mono">{selected.displayId}</p>
                                     {selected.verified ? (
                                         <div className="flex items-center justify-center gap-1 mt-1">
                                             <Shield size={12} className="text-blue-400" />
@@ -212,12 +251,12 @@ export default function AdminCoolies() {
                                     ))}
                                 </div>
                                 <div className="flex gap-3 mt-4">
-                                    {selected.status === 'pending_verification' && (
-                                        <button onClick={() => verifyKYC(selected.id)} className="btn-success flex-1 text-sm py-2 flex items-center justify-center gap-1">
+                                    {selected.status === 'pending' || selected.status === 'pending_verification' ? (
+                                        <button onClick={() => verifyKYC(selected.dbId)} className="btn-success flex-1 text-sm py-2 flex items-center justify-center gap-1">
                                             <Shield size={14} /> Verify KYC
                                         </button>
-                                    )}
-                                    <button onClick={() => { toggleSuspend(selected.id); setSelected(null) }} className="btn-danger flex-1 text-sm py-2">
+                                    ) : null}
+                                    <button onClick={() => { toggleSuspend(selected.dbId); setSelected(null) }} className="btn-danger flex-1 text-sm py-2">
                                         {selected.status === 'suspended' ? 'Reinstate' : 'Suspend'}
                                     </button>
                                     <button onClick={() => setSelected(null)} className="btn-secondary flex-1 text-sm py-2">Close</button>

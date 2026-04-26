@@ -1,47 +1,85 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Sidebar from '../../components/Sidebar'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { IndianRupee, TrendingUp, Download, Calendar, Award, Star, Clock, Sun, ThumbsUp, Trophy } from 'lucide-react'
 import toast from 'react-hot-toast'
-
-const WEEKLY_DATA = [
-    { day: 'Mon', earnings: 620, trips: 5 },
-    { day: 'Tue', earnings: 840, trips: 7 },
-    { day: 'Wed', earnings: 400, trips: 3 },
-    { day: 'Thu', earnings: 1100, trips: 9 },
-    { day: 'Fri', earnings: 960, trips: 8 },
-    { day: 'Sat', earnings: 1400, trips: 12 },
-    { day: 'Sun', earnings: 880, trips: 7 },
-]
-
-const MONTHLY_DATA = [
-    { week: 'W1', earnings: 4200 },
-    { week: 'W2', earnings: 5800 },
-    { week: 'W3', earnings: 3900 },
-    { week: 'W4', earnings: 6700 },
-]
-
-const TRANSACTIONS = [
-    { id: 'TXN001', customer: 'Priya S.', amount: 120, date: 'Today, 2:40 PM', method: 'UPI', status: 'credited' },
-    { id: 'TXN002', customer: 'Rajesh G.', amount: 90, date: 'Today, 11:15 AM', method: 'Cash', status: 'credited' },
-    { id: 'TXN003', customer: 'Anita P.', amount: 150, date: 'Today, 9:30 AM', method: 'Card', status: 'credited' },
-    { id: 'TXN004', customer: 'Vikram S.', amount: 80, date: 'Yesterday, 4:00 PM', method: 'UPI', status: 'credited' },
-    { id: 'TXN005', customer: 'Meena D.', amount: 200, date: 'Yesterday, 1:00 PM', method: 'UPI', status: 'credited' },
-    { id: 'TXN006', customer: 'Suresh R.', amount: 60, date: 'Yesterday, 10:00 AM', method: 'Cash', status: 'credited' },
-]
+import { coolieEarningsService } from '../../services/coolieService'
+import { useApp } from '../../context/AppContext'
 
 export default function CoolieEarnings() {
+    const { user } = useApp()
     const [period, setPeriod] = useState('weekly')
+    const [loading, setLoading] = useState(true)
+    const [weeklyData, setWeeklyData] = useState([])
+    const [monthlyData, setMonthlyData] = useState([])
+    const [transactions, setTransactions] = useState([])
+    const [stats, setStats] = useState({
+        totalWeek: 0,
+        totalMonth: 0,
+        totalTrips: 0,
+        todayEarnings: 0,
+        todayTrips: 0,
+        tipsReceived: 0
+    })
 
-    const totalWeek = WEEKLY_DATA.reduce((a, d) => a + d.earnings, 0)
-    const totalMonth = MONTHLY_DATA.reduce((a, d) => a + d.earnings, 0)
-    const totalTrips = WEEKLY_DATA.reduce((a, d) => a + d.trips, 0)
+    // Fetch earnings data
+    useEffect(() => {
+        const fetchEarningsData = async () => {
+            const coolieId = user?.coolie_id || user?.id;
+            if (!coolieId || coolieId === 'pending-id') {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                
+                // Fetch all data in parallel
+                const [weeklyResponse, monthlyResponse, transactionsResponse, summaryResponse] = await Promise.all([
+                    coolieEarningsService.getEarnings(coolieId, 'weekly').catch(() => ({ data: { weeklyData: [], totalWeek: 0, totalTrips: 0 } })),
+                    coolieEarningsService.getEarnings(coolieId, 'monthly').catch(() => ({ data: { monthlyData: [], totalMonth: 0 } })),
+                    coolieEarningsService.getTransactions(coolieId).catch(() => ({ data: [] })),
+                    coolieEarningsService.getWeeklySummary(coolieId).catch(() => ({ data: { todayEarnings: 0, todayTrips: 0, tipsReceived: 0 } }))
+                ]);
+                
+                // Update state with fetched data
+                setWeeklyData(weeklyResponse.data?.weeklyData || []);
+                setMonthlyData(monthlyResponse.data?.monthlyData || []);
+                setTransactions(transactionsResponse.data || []);
+                
+                setStats({
+                    totalWeek: weeklyResponse.data?.totalWeek || 0,
+                    totalMonth: monthlyResponse.data?.totalMonth || 0,
+                    totalTrips: weeklyResponse.data?.totalTrips || 0,
+                    todayEarnings: summaryResponse.data?.todayEarnings || 0,
+                    todayTrips: summaryResponse.data?.todayTrips || 0,
+                    tipsReceived: summaryResponse.data?.tipsReceived || 0
+                });
+                
+            } catch (error) {
+                console.error('Error fetching earnings data:', error);
+                toast.error('Failed to load earnings data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchEarningsData();
+        
+        // Set up periodic refresh
+        const interval = setInterval(fetchEarningsData, 60000); // Refresh every minute
+        return () => clearInterval(interval);
+    }, [user]);
+
+    const totalWeek = stats.totalWeek
+    const totalMonth = stats.totalMonth
+    const totalTrips = stats.totalTrips
 
     const SUMMARY_CARDS = [
         { label: 'This Week', value: `₹${totalWeek.toLocaleString()}`, sub: `${totalTrips} trips`, icon: IndianRupee, color: 'from-green-500 to-emerald-500' },
         { label: 'This Month', value: `₹${totalMonth.toLocaleString()}`, sub: '127 trips', icon: Calendar, color: 'from-blue-500 to-cyan-500' },
-        { label: 'Today', value: '₹840', sub: '7 trips', icon: Sun, color: 'from-orange-500 to-amber-500' },
-        { label: 'Tips Received', value: '₹290', sub: 'This week', icon: ThumbsUp, color: 'from-purple-500 to-violet-500' },
+        { label: 'Today', value: `₹${stats.todayEarnings.toLocaleString()}`, sub: `${stats.todayTrips} trips`, icon: Sun, color: 'from-orange-500 to-amber-500' },
+        { label: 'Tips Received', value: `₹${stats.tipsReceived.toLocaleString()}`, sub: 'This week', icon: ThumbsUp, color: 'from-purple-500 to-violet-500' },
     ]
 
     return (
@@ -49,11 +87,17 @@ export default function CoolieEarnings() {
             <Sidebar role="coolie" />
             <div className="ml-0 md:ml-64 flex-1 min-h-screen p-6">
                 <div className="max-w-5xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h1 className="text-2xl font-black text-white">My Earnings</h1>
-                            <p className="text-slate-400 text-sm">Track your income and transactions</p>
+                    {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7B2FFF]"></div>
                         </div>
+                    ) : (
+                        <>
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h1 className="text-2xl font-black text-white">My Earnings</h1>
+                                    <p className="text-slate-400 text-sm">Track your income and transactions</p>
+                                </div>
                         <button
                             onClick={() => toast('Statement downloaded! 📄', { icon: '📥' })}
                             className="btn-secondary flex items-center gap-2 text-sm"
@@ -94,7 +138,7 @@ export default function CoolieEarnings() {
                                 </div>
                             </div>
                             <ResponsiveContainer width="100%" height={220}>
-                                <AreaChart data={period === 'weekly' ? WEEKLY_DATA : MONTHLY_DATA}>
+                                <AreaChart data={period === 'weekly' ? weeklyData : monthlyData}>
                                     <defs>
                                         <linearGradient id="earnGrad" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
@@ -119,7 +163,7 @@ export default function CoolieEarnings() {
                         <div className="card p-6">
                             <h2 className="text-white font-bold mb-4">Weekly Trips</h2>
                             <ResponsiveContainer width="100%" height={220}>
-                                <BarChart data={WEEKLY_DATA}>
+                                <BarChart data={weeklyData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                                     <XAxis dataKey="day" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} />
                                     <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} />
@@ -166,21 +210,31 @@ export default function CoolieEarnings() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {TRANSACTIONS.map((t, i) => (
-                                        <tr key={i} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                                            <td className="py-3 font-mono text-slate-400 text-xs">{t.id}</td>
-                                            <td className="py-3 text-slate-200">{t.customer}</td>
-                                            <td className="py-3">
-                                                <span className="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-400 text-xs">{t.method}</span>
+                                    {transactions.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" className="py-8 text-center text-slate-400">
+                                                No transactions found
                                             </td>
-                                            <td className="py-3 text-slate-400 text-xs">{t.date}</td>
-                                            <td className="py-3 text-right text-green-400 font-bold">+₹{t.amount}</td>
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        transactions.map((t, i) => (
+                                            <tr key={i} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                                                <td className="py-3 font-mono text-slate-400 text-xs">{t.id || `TXN${String(i + 1).padStart(3, '0')}`}</td>
+                                                <td className="py-3 text-slate-200">{t.customer || 'Customer'}</td>
+                                                <td className="py-3">
+                                                    <span className="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-400 text-xs">{t.method || 'UPI'}</span>
+                                                </td>
+                                                <td className="py-3 text-slate-400 text-xs">{t.date || 'Recent'}</td>
+                                                <td className="py-3 text-right text-green-400 font-bold">+₹{t.amount || 0}</td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
                     </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

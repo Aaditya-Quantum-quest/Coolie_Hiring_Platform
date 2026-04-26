@@ -68,8 +68,8 @@ function VoiceBooking({ onResult }) {
         <button
             onClick={startListening}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${listening
-                    ? 'bg-red-500/20 text-red-400 border border-red-500 animate-pulse'
-                    : 'bg-orange-500/10 text-orange-400 border border-orange-500/30 hover:bg-orange-500/20'
+                ? 'bg-red-500/20 text-red-400 border border-red-500 animate-pulse'
+                : 'bg-orange-500/10 text-orange-400 border border-orange-500/30 hover:bg-orange-500/20'
                 }`}
         >
             <Mic size={16} />
@@ -109,9 +109,9 @@ export default function CustomerDashboard() {
         const loadData = async () => {
             try {
                 const [statRes, coolRes, bookRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/customer/stations'),
-                    axios.get('http://localhost:5000/api/customer/coolies'),
-                    axios.get('http://localhost:5000/api/bookings/my-bookings')
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/stations'),
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/coolies'),
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/bookings/my-bookings')
                 ])
                 if (statRes.data.success) setStations(statRes.data.stations)
                 if (coolRes.data.success) setCoolies(coolRes.data.coolies)
@@ -154,11 +154,11 @@ export default function CustomerDashboard() {
 
     // Filter coolies based on search
     const filteredCoolies = coolies.filter(coolie => coolie.status === 'available').filter(coolie => {
-        const matchesSearch = searchQuery === '' || 
+        const matchesSearch = searchQuery === '' ||
             coolie.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             coolie.badge?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             coolie.station?.toLowerCase().includes(searchQuery.toLowerCase())
-        
+
         if (!matchesSearch) return false
 
         switch (searchFilter) {
@@ -224,23 +224,6 @@ export default function CustomerDashboard() {
                         showFilters={true}
                     />
                 </div>
-
-                {/* First Booking Offer Banner */}
-                {firstBookingOffer && (
-                    <div className="mb-6 bg-gradient-to-r from-orange-500/20 to-amber-500/10 border border-orange-500/30 rounded-2xl p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <span className="text-3xl">🎉</span>
-                            <div>
-                                <p className="text-white font-bold">First Booking Offer!</p>
-                                <p className="text-slate-300 text-sm">Get <span className="text-orange-400 font-bold">₹10 OFF</span> on your first coolie booking!</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => navigate('/customer/book')} className="btn-primary text-sm py-2">Book Now</button>
-                            <button onClick={() => setFirstBookingOffer(false)} className="text-slate-400 hover:text-white p-1"><X size={16} /></button>
-                        </div>
-                    </div>
-                )}
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -324,15 +307,15 @@ export default function CustomerDashboard() {
                                 {myBookings.slice(0, 3).map(b => (
                                     <div key={b.id} className="flex items-center gap-3 py-2 border-b border-slate-700/50 last:border-0">
                                         <div className={`w-2 h-8 rounded-full ${b.status === 'completed' ? 'bg-green-500' :
-                                                b.status === 'confirmed' ? 'bg-blue-500' : 'bg-orange-500'
+                                            b.status === 'confirmed' ? 'bg-blue-500' : 'bg-orange-500'
                                             }`} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-white text-sm font-medium truncate">{b.coolieName}</p>
                                             <p className="text-slate-500 text-xs">{b.date} • ₹{b.amount}</p>
                                         </div>
                                         <span className={`text-xs capitalize px-2 py-0.5 rounded-full font-medium ${b.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                                                b.status === 'confirmed' ? 'bg-blue-500/20 text-blue-400' :
-                                                    'bg-orange-500/20 text-orange-400'
+                                            b.status === 'confirmed' ? 'bg-blue-500/20 text-blue-400' :
+                                                'bg-orange-500/20 text-orange-400'
                                             }`}>{b.status}</span>
                                     </div>
                                 ))}

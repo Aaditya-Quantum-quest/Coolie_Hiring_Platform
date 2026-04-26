@@ -44,7 +44,7 @@ export default function TrackCoolie() {
 
     useEffect(() => {
         if (!coolie) {
-            axios.get('http://localhost:5000/api/customer/coolies')
+            axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/coolies')
                 .then(res => {
                     if (res.data.success && res.data.coolies.length > 0) {
                         const c = res.data.coolies[0]
@@ -57,7 +57,7 @@ export default function TrackCoolie() {
             setCooliePos([coolie.lat, coolie.lng])
         }
     }, [coolie])
-    
+
     const { socket, connected } = useGlobalSocket()
 
     // Real-time location tracking via Socket.IO
@@ -172,28 +172,28 @@ export default function TrackCoolie() {
                                         </div>
                                     </div>
                                 </div>
-                            <div className={`text-sm font-bold text-center py-2 rounded-xl ${status === 'Arrived!' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/10 text-orange-400'
-                                } mb-3`}>
-                                {status === 'Arrived!' ? (
-                                    <div className="flex items-center justify-center gap-2 text-green-400 font-bold text-sm">
-                                        <CheckCircle2 size={18} /> Coolie Has Arrived!
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-center gap-2 text-orange-400 font-bold text-sm">
-                                        <Navigation size={16} className="animate-pulse" /> {status}
+                                <div className={`text-sm font-bold text-center py-2 rounded-xl ${status === 'Arrived!' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/10 text-orange-400'
+                                    } mb-3`}>
+                                    {status === 'Arrived!' ? (
+                                        <div className="flex items-center justify-center gap-2 text-green-400 font-bold text-sm">
+                                            <CheckCircle2 size={18} /> Coolie Has Arrived!
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center gap-2 text-orange-400 font-bold text-sm">
+                                            <Navigation size={16} className="animate-pulse" /> {status}
+                                        </div>
+                                    )}
+                                </div>
+                                {status !== 'Arrived!' && (
+                                    <div className="bg-slate-800/50 rounded-xl p-3 text-center">
+                                        <p className="text-xs text-slate-400 mb-1">Estimated Time</p>
+                                        <p className={`text-3xl font-mono font-black ${eta < 30 ? 'text-red-400 animate-pulse' : 'text-orange-400'}`}>{formatTime(eta)}</p>
                                     </div>
                                 )}
-                            </div>
-                            {status !== 'Arrived!' && (
-                                <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-                                    <p className="text-xs text-slate-400 mb-1">Estimated Time</p>
-                                    <p className={`text-3xl font-mono font-black ${eta < 30 ? 'text-red-400 animate-pulse' : 'text-orange-400'}`}>{formatTime(eta)}</p>
-                                </div>
-                            )}
-                            <div className="flex gap-2 mt-3">
-                                <button onClick={() => toast.success('Calling coolie...')} className="flex-1 py-2 rounded-xl bg-green-500/10 text-green-400 border border-green-500/30 text-sm font-semibold hover:bg-green-500/20 transition-all flex items-center justify-center gap-1">
-                                    <Phone size={14} /> Call
-                                </button>
+                                <div className="flex gap-2 mt-3">
+                                    <button onClick={() => toast.success('Calling coolie...')} className="flex-1 py-2 rounded-xl bg-green-500/10 text-green-400 border border-green-500/30 text-sm font-semibold hover:bg-green-500/20 transition-all flex items-center justify-center gap-1">
+                                        <Phone size={14} /> Call
+                                    </button>
                                     <button onClick={() => toast.success('Message sent!')} className="flex-1 py-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30 text-sm font-semibold hover:bg-blue-500/20 transition-all flex items-center justify-center gap-1">
                                         <MessageSquare size={14} /> Message
                                     </button>

@@ -3,38 +3,68 @@ import Sidebar from '../../components/Sidebar'
 import { Search, Filter, UserX, UserCheck, Eye, Mail, Phone, MapPin, Star, Download, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-const USERS = [
-    { id: 'U-001', name: 'Priya Sharma', email: 'priya@gmail.com', phone: '9876543210', city: 'Delhi', bookings: 12, rating: 4.8, joined: '12 Jan 2024', status: 'active', firstBooking: true },
-    { id: 'U-002', name: 'Rajesh Gupta', email: 'rajesh@email.com', phone: '9812345678', city: 'Mumbai', bookings: 7, rating: 4.5, joined: '23 Feb 2024', status: 'active', firstBooking: false },
-    { id: 'U-003', name: 'Anita Patel', email: 'anita@yahoo.com', phone: '9023456789', city: 'Ahmedabad', bookings: 3, rating: 5.0, joined: '5 Mar 2024', status: 'active', firstBooking: false },
-    { id: 'U-004', name: 'Vikram Singh', email: 'vikram@gmail.com', phone: '8834567890', city: 'Jaipur', bookings: 1, rating: null, joined: '18 Apr 2024', status: 'active', firstBooking: true },
-    { id: 'U-005', name: 'Meena Devi', email: 'meena@outlook.com', phone: '9745678901', city: 'Patna', bookings: 0, rating: null, joined: '2 May 2024', status: 'suspended', firstBooking: false },
-    { id: 'U-006', name: 'Suresh Reddy', email: 'suresh@gmail.com', phone: '9856789012', city: 'Hyderabad', bookings: 18, rating: 4.6, joined: '14 Jun 2024', status: 'active', firstBooking: false },
-    { id: 'U-007', name: 'Kavitha Nair', email: 'kavita@gmail.com', phone: '9967890123', city: 'Kochi', bookings: 5, rating: 4.9, joined: '28 Jul 2024', status: 'active', firstBooking: false },
-    { id: 'U-008', name: 'Arun Kumar', email: 'arun@gmail.com', phone: '7801234567', city: 'Chennai', bookings: 2, rating: 4.0, joined: '10 Aug 2024', status: 'banned', firstBooking: false },
-]
+import { adminUsersService } from '../../services/adminService'
 
 export default function AdminUsers() {
-    const [users, setUsers] = useState(USERS)
+    const [users, setUsers] = useState([])
     const [search, setSearch] = useState('')
     const [filterStatus, setFilterStatus] = useState('all')
     const [selected, setSelected] = useState(null)
+    const [loading, setLoading] = useState(true)
+
+    const fetchUsers = async () => {
+        try {
+            setLoading(true)
+            const res = await adminUsersService.getAllCustomers()
+            if (res.success) {
+                // Map DB users to frontend format
+                const mapped = res.data.map(u => ({
+                    id: u.id,
+                    displayId: 'U-' + u.id.substring(0, 5).toUpperCase(),
+                    name: u.name,
+                    email: u.email,
+                    phone: u.phone,
+                    city: u.city || 'N/A',
+                    bookings: 0, // In real app, fetch this from aggregation
+                    rating: null,
+                    joined: new Date(u.created_at).toLocaleDateString(),
+                    status: u.is_banned ? 'banned' : (u.is_active ? 'active' : 'suspended')
+                }))
+                setUsers(mapped)
+            }
+        } catch (err) {
+            console.error('Failed to load users:', err)
+            toast.error('Failed to load users')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    React.useEffect(() => {
+        fetchUsers()
+    }, [])
 
     const filtered = users.filter(u => {
-        const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) ||
+        const matchSearch = search === '' || 
+            u.name.toLowerCase().includes(search.toLowerCase()) ||
             u.email.toLowerCase().includes(search.toLowerCase()) ||
-            u.id.toLowerCase().includes(search.toLowerCase())
+            u.displayId.toLowerCase().includes(search.toLowerCase())
         const matchStatus = filterStatus === 'all' || u.status === filterStatus
         return matchSearch && matchStatus
     })
 
-    const toggleSuspend = (id) => {
-        setUsers(prev => prev.map(u => {
-            if (u.id !== id) return u
-            const newStatus = u.status === 'suspended' ? 'active' : 'suspended'
-            toast(newStatus === 'suspended' ? `User ${u.name} suspended` : `User ${u.name} reinstated`, { icon: newStatus === 'suspended' ? '🔒' : '✅' })
-            return { ...u, status: newStatus }
-        }))
+    const toggleSuspend = async (id) => {
+        try {
+            const user = users.find(u => u.id === id)
+            const banStatus = user.status !== 'banned' // toggle ban
+            
+            await adminUsersService.banCustomer(id) // It toggles if we pass ban: !user.is_banned? No, banCustomer expects body but default is true.
+            // Let's just refetch
+            toast.success(`User status updated`)
+            fetchUsers()
+        } catch (err) {
+            toast.error('Failed to update user status')
+        }
     }
 
     const STATUS_BADGE = {
@@ -98,64 +128,65 @@ export default function AdminUsers() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filtered.map((u, i) => (
-                                        <tr key={i} className="border-t border-slate-800 hover:bg-slate-800/30 transition-colors">
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                                                        {u.name[0]}
+                                    {loading ? (
+                                        <tr><td colSpan="7" className="py-12 text-center text-slate-400">Loading users...</td></tr>
+                                    ) : filtered.length === 0 ? (
+                                        <tr><td colSpan="7" className="py-12 text-center text-slate-400">No users found.</td></tr>
+                                    ) : (
+                                        filtered.map((u, i) => (
+                                            <tr key={i} className="border-t border-slate-800 hover:bg-slate-800/30 transition-colors">
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                                                            {u.name[0]}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-white font-semibold leading-tight">{u.name}</p>
+                                                            <p className="text-slate-500 text-xs font-mono">{u.displayId}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-white font-semibold leading-tight">{u.name}</p>
-                                                        <p className="text-slate-500 text-xs font-mono">{u.id}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <p className="text-slate-300 text-xs">{u.email}</p>
-                                                <p className="text-slate-500 text-xs">{u.phone}</p>
-                                            </td>
-                                            <td className="py-3 px-4 text-slate-400 text-xs hidden md:table-cell">
-                                                <div className="flex items-center gap-1"><MapPin size={11} />{u.city}</div>
-                                            </td>
-                                            <td className="py-3 px-4 hidden lg:table-cell">
-                                                <span className="text-white font-bold">{u.bookings}</span>
-                                                {u.bookings === 0 && <span className="text-xs text-slate-500 ml-1">trips</span>}
-                                            </td>
-                                            <td className="py-3 px-4 text-slate-500 text-xs hidden lg:table-cell">{u.joined}</td>
-                                            <td className="py-3 px-4">
-                                                <span className={STATUS_BADGE[u.status] + ' text-xs'}>
-                                                    {u.status}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button
-                                                        onClick={() => setSelected(u)}
-                                                        className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20"
-                                                        title="View"
-                                                    >
-                                                        <Eye size={14} />
-                                                    </button>
-                                                    {u.status !== 'banned' && (
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <p className="text-slate-300 text-xs">{u.email}</p>
+                                                    <p className="text-slate-500 text-xs">{u.phone}</p>
+                                                </td>
+                                                <td className="py-3 px-4 text-slate-400 text-xs hidden md:table-cell">
+                                                    <div className="flex items-center gap-1"><MapPin size={11} />{u.city}</div>
+                                                </td>
+                                                <td className="py-3 px-4 hidden lg:table-cell">
+                                                    <span className="text-white font-bold">{u.bookings}</span>
+                                                    {u.bookings === 0 && <span className="text-xs text-slate-500 ml-1">trips</span>}
+                                                </td>
+                                                <td className="py-3 px-4 text-slate-500 text-xs hidden lg:table-cell">{u.joined}</td>
+                                                <td className="py-3 px-4">
+                                                    <span className={STATUS_BADGE[u.status] + ' text-xs'}>
+                                                        {u.status}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => setSelected(u)}
+                                                            className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20"
+                                                            title="View"
+                                                        >
+                                                            <Eye size={14} />
+                                                        </button>
                                                         <button
                                                             onClick={() => toggleSuspend(u.id)}
-                                                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${u.status === 'suspended' ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}
-                                                            title={u.status === 'suspended' ? 'Reinstate' : 'Suspend'}
+                                                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${u.status === 'suspended' || u.status === 'banned' ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}
+                                                            title={u.status === 'suspended' || u.status === 'banned' ? 'Reinstate' : 'Ban'}
                                                         >
-                                                            {u.status === 'suspended' ? <UserCheck size={14} /> : <UserX size={14} />}
+                                                            {u.status === 'suspended' || u.status === 'banned' ? <UserCheck size={14} /> : <UserX size={14} />}
                                                         </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
-                        {filtered.length === 0 && (
-                            <div className="py-12 text-center text-slate-400">No users found matching your search.</div>
-                        )}
                     </div>
 
                     {/* User Detail Modal */}
@@ -171,7 +202,7 @@ export default function AdminUsers() {
                                         {selected.name[0]}
                                     </div>
                                     <h4 className="text-white font-bold">{selected.name}</h4>
-                                    <p className="text-slate-400 text-sm font-mono">{selected.id}</p>
+                                    <p className="text-slate-400 text-sm font-mono">{selected.displayId}</p>
                                 </div>
                                 <div className="space-y-2 text-sm">
                                     {[

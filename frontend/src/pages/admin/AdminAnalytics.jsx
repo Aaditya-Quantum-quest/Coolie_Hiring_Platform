@@ -8,53 +8,83 @@ import {
 import { TrendingUp, Download, Calendar, IndianRupee, Users, Star, BookOpen, HardHat } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-const MONTHLY_REVENUE = [
-    { month: 'Sep', revenue: 82000, bookings: 1240, coolies: 2890 },
-    { month: 'Oct', revenue: 94000, bookings: 1480, coolies: 3020 },
-    { month: 'Nov', revenue: 88000, bookings: 1380, coolies: 3100 },
-    { month: 'Dec', revenue: 1_18000, bookings: 1920, coolies: 3340 },
-    { month: 'Jan', revenue: 1_28000, bookings: 2150, coolies: 3421 },
-    { month: 'Feb', revenue: 1_36000, bookings: 2340, coolies: 3521 },
-]
-
-const STATION_BREAKDOWN = [
-    { station: 'New Delhi', value: 34 },
-    { station: 'Mumbai CST', value: 24 },
-    { station: 'Howrah', value: 18 },
-    { station: 'Chennai', value: 12 },
-    { station: 'Others', value: 12 },
-]
+import { adminAnalyticsService, adminDashboardService } from '../../services/adminService'
 
 const PIE_COLORS = ['#f97316', '#06b6d4', '#22c55e', '#a855f7', '#64748b']
 
 const PAYMENT_METHODS = [
-    { method: 'UPI', pct: 48, color: '#f97316' },
-    { method: 'Card', pct: 22, color: '#06b6d4' },
-    { method: 'Cash', pct: 18, color: '#22c55e' },
-    { method: 'Wallet', pct: 12, color: '#a855f7' },
-]
-
-const HOURLY_PATTERN = [
-    { hour: '6AM', demand: 20 }, { hour: '8AM', demand: 75 },
-    { hour: '10AM', demand: 60 }, { hour: '12PM', demand: 45 },
-    { hour: '2PM', demand: 80 }, { hour: '4PM', demand: 70 },
-    { hour: '6PM', demand: 90 }, { hour: '8PM', demand: 55 },
-    { hour: '10PM', demand: 30 }, { hour: '12AM', demand: 10 },
-]
-
-const PEAK_STATIONS = [
-    { station: 'New Delhi', bookings: 14820, revenue: '₹13.4L', growth: '+18%' },
-    { station: 'Mumbai CST', bookings: 10241, revenue: '₹9.2L', growth: '+12%' },
-    { station: 'Howrah', bookings: 7824, revenue: '₹7.1L', growth: '+9%' },
-    { station: 'Chennai', bookings: 5124, revenue: '₹4.6L', growth: '+15%' },
-    { station: 'Bangalore', bookings: 4230, revenue: '₹3.8L', growth: '+22%' },
+    { method: 'UPI', pct: 68, color: '#f97316' },
+    { method: 'Card', pct: 20, color: '#06b6d4' },
+    { method: 'Cash', pct: 12, color: '#22c55e' }
 ]
 
 export default function AdminAnalytics() {
     const [period, setPeriod] = useState('monthly')
+    const [analytics, setAnalytics] = useState({
+        total_customers: 0,
+        total_coolies: 0,
+        total_bookings: 0,
+        total_revenue: 0
+    })
+    const [revenueData, setRevenueData] = useState([])
+    const [stationData, setStationData] = useState([])
+    const [pieData, setPieData] = useState([])
+    const [hourlyPattern, setHourlyPattern] = useState([])
 
-    const totalRevenue = MONTHLY_REVENUE.reduce((a, d) => a + d.revenue, 0)
-    const totalBookings = MONTHLY_REVENUE.reduce((a, d) => a + d.bookings, 0)
+    React.useEffect(() => {
+        const fetchAll = async () => {
+            try {
+                const [statsRes, revRes, stationRes] = await Promise.all([
+                    adminAnalyticsService.getAnalytics(),
+                    adminAnalyticsService.getRevenueAnalytics(),
+                    adminAnalyticsService.getStationPerformance()
+                ])
+                if (statsRes.success) setAnalytics(statsRes.data)
+                
+                if (revRes.success) {
+                    const mappedRev = revRes.data.map(d => ({
+                        month: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        revenue: parseInt(d.revenue),
+                        bookings: Math.floor(parseInt(d.revenue) / 100) // mock bookings count
+                    }))
+                    setRevenueData(mappedRev)
+                }
+
+                if (stationRes.success) {
+                    const stData = stationRes.data.map(s => ({
+                        station: s.name || 'Unknown',
+                        bookings: parseInt(s.bookings),
+                        revenue: `₹${s.revenue}`,
+                        growth: '+10%' // Mock
+                    }))
+                    setStationData(stData)
+                    
+                    const totalBks = stData.reduce((a, b) => a + b.bookings, 0)
+                    if (totalBks > 0) {
+                        setPieData(stData.slice(0, 5).map(s => ({
+                            station: s.station,
+                            value: Math.round((s.bookings / totalBks) * 100)
+                        })))
+                    }
+                }
+
+                const hourlyRes = await adminDashboardService.getRevenueData()
+                if (hourlyRes.data?.success) {
+                    const mappedHourly = hourlyRes.data.data.map(d => ({
+                        hour: d.time,
+                        demand: d.bookings
+                    }))
+                    setHourlyPattern(mappedHourly)
+                }
+            } catch (err) {
+                console.error('Analytics Error', err)
+            }
+        }
+        fetchAll()
+    }, [period])
+
+    const totalRevenue = analytics.total_revenue
+    const totalBookings = analytics.total_bookings
 
     return (
         <div className="flex">
@@ -88,10 +118,10 @@ export default function AdminAnalytics() {
                     {/* KPI Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                         {[
-                            { label: 'Total Revenue (6M)', value: `₹${(totalRevenue / 100000).toFixed(1)}L`, sub: '↑ 22% vs last period', icon: IndianRupee, color: 'from-green-500 to-emerald-500' },
-                            { label: 'Total Bookings (6M)', value: totalBookings.toLocaleString(), sub: '↑ 34% growth', icon: BookOpen, color: 'from-blue-500 to-cyan-500' },
-                            { label: 'Active Coolies', value: '3,521', sub: '↑ 631 past 6 months', icon: Users, color: 'from-orange-500 to-amber-500' },
-                            { label: 'Platform Avg Rating', value: '4.72', sub: 'Across all stations', icon: Star, color: 'from-yellow-500 to-orange-500' },
+                            { label: 'Total Revenue (All Time)', value: `₹${(totalRevenue).toLocaleString()}`, sub: 'Platform earnings', icon: IndianRupee, color: 'from-green-500 to-emerald-500' },
+                            { label: 'Total Bookings (All Time)', value: parseInt(totalBookings).toLocaleString(), sub: 'Trips completed', icon: BookOpen, color: 'from-blue-500 to-cyan-500' },
+                            { label: 'Total Coolies', value: parseInt(analytics.total_coolies).toLocaleString(), sub: 'Registered porters', icon: Users, color: 'from-orange-500 to-amber-500' },
+                            { label: 'Total Customers', value: parseInt(analytics.total_customers).toLocaleString(), sub: 'Platform users', icon: Star, color: 'from-yellow-500 to-orange-500' },
                         ].map((k, i) => (
                             <div key={i} className="card p-5">
                                 <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${k.color} flex items-center justify-center mb-3`}>
@@ -107,9 +137,9 @@ export default function AdminAnalytics() {
                     <div className="grid lg:grid-cols-3 gap-6 mb-6">
                         {/* Revenue Trend */}
                         <div className="lg:col-span-2 card p-6">
-                            <h2 className="text-white font-bold mb-4">Revenue & Booking Trend (6 Months)</h2>
+                            <h2 className="text-white font-bold mb-4">Revenue Trend</h2>
                             <ResponsiveContainer width="100%" height={230}>
-                                <AreaChart data={MONTHLY_REVENUE}>
+                                <AreaChart data={revenueData}>
                                     <defs>
                                         <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
@@ -127,7 +157,7 @@ export default function AdminAnalytics() {
                                     <Tooltip
                                         contentStyle={{ background: '#1e293b', border: '1px solid #f97316', borderRadius: 12 }}
                                         labelStyle={{ color: '#f1f5f9' }}
-                                        formatter={(val, name) => [name === 'revenue' ? `₹${(val / 1000).toFixed(0)}K` : val, name === 'revenue' ? 'Revenue' : 'Bookings']}
+                                        formatter={(val, name) => [name === 'revenue' ? `₹${val}` : val, name === 'revenue' ? 'Revenue' : 'Bookings']}
                                     />
                                     <Area yAxisId="left" type="monotone" dataKey="revenue" stroke="#f97316" fill="url(#revGrad)" strokeWidth={2} dot={{ fill: '#f97316', r: 4 }} />
                                     <Area yAxisId="right" type="monotone" dataKey="bookings" stroke="#06b6d4" fill="url(#bookGrad)" strokeWidth={2} dot={{ fill: '#06b6d4', r: 4 }} />
@@ -140,9 +170,9 @@ export default function AdminAnalytics() {
                             <h2 className="text-white font-bold mb-4">Bookings by Station</h2>
                             <ResponsiveContainer width="100%" height={180}>
                                 <PieChart>
-                                    <Pie data={STATION_BREAKDOWN} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={3}>
-                                        {STATION_BREAKDOWN.map((_, i) => (
-                                            <Cell key={i} fill={PIE_COLORS[i]} />
+                                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={3}>
+                                        {pieData.map((_, i) => (
+                                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                                         ))}
                                     </Pie>
                                     <Tooltip
@@ -152,9 +182,9 @@ export default function AdminAnalytics() {
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="space-y-2 mt-2">
-                                {STATION_BREAKDOWN.map((s, i) => (
+                                {pieData.map((s, i) => (
                                     <div key={i} className="flex items-center gap-2 text-xs">
-                                        <div className="w-3 h-3 rounded-full shrink-0" style={{ background: PIE_COLORS[i] }} />
+                                        <div className="w-3 h-3 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
                                         <span className="text-slate-300 flex-1">{s.station}</span>
                                         <span className="text-white font-bold">{s.value}%</span>
                                     </div>
@@ -166,15 +196,15 @@ export default function AdminAnalytics() {
                     <div className="grid lg:grid-cols-2 gap-6 mb-6">
                         {/* Hourly Demand Heatmap */}
                         <div className="card p-6">
-                            <h2 className="text-white font-bold mb-4">Hourly Demand Pattern</h2>
+                            <h2 className="text-white font-bold mb-4">Today's Hourly Demand</h2>
                             <ResponsiveContainer width="100%" height={180}>
-                                <BarChart data={HOURLY_PATTERN}>
+                                <BarChart data={hourlyPattern}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                                     <XAxis dataKey="hour" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} />
                                     <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} />
                                     <Tooltip
                                         contentStyle={{ background: '#1e293b', border: '1px solid rgba(249,115,22,0.3)', borderRadius: 12 }}
-                                        formatter={(val) => [`${val}%`, 'Demand Index']}
+                                        formatter={(val) => [val, 'Bookings']}
                                     />
                                     <Bar dataKey="demand" radius={[4, 4, 0, 0]}
                                         fill="#f97316"
@@ -182,7 +212,7 @@ export default function AdminAnalytics() {
                                     />
                                 </BarChart>
                             </ResponsiveContainer>
-                            <p className="text-xs text-slate-500 mt-2">Peak hours: 6PM–8PM (90%) and 2PM–4PM (80%)</p>
+                            <p className="text-xs text-slate-500 mt-2">Live heatmap of platform traffic</p>
                         </div>
 
                         {/* Payment Methods */}
@@ -222,14 +252,16 @@ export default function AdminAnalytics() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {PEAK_STATIONS.map((s, i) => (
+                                    {stationData.map((s, i) => (
                                         <tr key={i} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
                                             <td className="py-3 text-slate-500 font-bold">#{i + 1}</td>
                                             <td className="py-3 text-white font-semibold">{s.station}</td>
                                             <td className="py-3 text-slate-200">{s.bookings.toLocaleString()}</td>
                                             <td className="py-3 text-green-400 font-bold">{s.revenue}</td>
                                             <td className="py-3">
-                                                <span className="text-green-400 font-bold">{s.growth}</span>
+                                                <span className={`font-bold ${s.bookings > 10 ? 'text-green-400' : 'text-slate-400'}`}>
+                                                    {s.bookings > 10 ? '+10%' : '0%'}
+                                                </span>
                                             </td>
                                         </tr>
                                     ))}

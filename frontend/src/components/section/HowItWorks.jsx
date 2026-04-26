@@ -96,7 +96,7 @@ export default function HowItWorks() {
                                 <Smartphone size={18} />
                             </div>
                             <h3 className="text-base sm:text-lg font-medium text-white mb-2">Open App</h3>
-                            <p className="text-sm text-[#B0A8CC] font-normal">Enter your station and platform details in the CoolieHire app.</p>
+                            <p className="text-sm text-[#B0A8CC] font-normal">Enter your station and platform details in the CoolieSeva app.</p>
                         </div>
                     </div>
                     {/* Card 2 */}

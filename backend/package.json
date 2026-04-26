@@ -8,7 +8,8 @@
     "dev": "nodemon src/index.js",
     "db:setup": "node src/config/setupDb.js",
     "create:admin": "node scripts/createAdmin.js",
-    "generate:key": "node src/utils/secretKeyGenerator.js"
+    "generate:key": "node src/utils/secretKeyGenerator.js",
+    "create:admin:noninteractive": "node scripts/createAdmin.js --name \"Aaditya\" --email \"aaditya@admin.com\" --password \"Aaditya@123\" --role admin"
   },
   "keywords": [],
   "author": "",

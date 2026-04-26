@@ -51,9 +51,9 @@ export default function StationMap() {
         const loadData = async () => {
             try {
                 const [statRes, coolRes, busyRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/customer/stations'),
-                    axios.get('http://localhost:5000/api/customer/coolies'),
-                    axios.get('http://localhost:5000/api/config/busy-hours')
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/stations'),
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/coolies'),
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/config/busy-hours')
                 ])
                 if (statRes.data.success) {
                     setStations(statRes.data.stations)
@@ -78,10 +78,10 @@ export default function StationMap() {
 
     // Filter stations based on search
     const filteredStations = stations.filter(station => {
-        const matchesSearch = searchQuery === '' || 
+        const matchesSearch = searchQuery === '' ||
             station.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             station.code.toLowerCase().includes(searchQuery.toLowerCase())
-        
+
         if (!matchesSearch) return false
 
         switch (searchFilter) {
@@ -125,10 +125,10 @@ export default function StationMap() {
                             <button key={s.id} onClick={() => setSelectedStation(s)}
                                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${selectedStation.id === s.id ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                                     }`}>
-                            {s.name.split(' ')[0]}...
-                        </button>
-                    ))}
-                </div>
+                                {s.name.split(' ')[0]}...
+                            </button>
+                        ))}
+                    </div>
                 )}
 
                 {/* Tab Toggle */}

@@ -220,7 +220,6 @@ export default function Sidebar({ role = 'customer' }) {
                     position: 'relative',
                 }}>
                     <Zap size={18} color="#fff" fill="#fff" />
-                    {/* ring pulse */}
                     <div style={{
                         position: 'absolute', inset: -4, borderRadius: 16,
                         border: `1px solid ${cfg.accent}`,
@@ -265,7 +264,7 @@ export default function Sidebar({ role = 'customer' }) {
                             {user?.name?.[0] || 'U'}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', truncate: true, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {user?.name || 'User'}
                             </div>
                             <div style={{ fontSize: 10, color: cfg.accent, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
@@ -277,7 +276,6 @@ export default function Sidebar({ role = 'customer' }) {
                             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.05em' }}>{dateStr}</div>
                         </div>
                     </div>
-                    {/* status bar */}
                     <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                         <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e', flexShrink: 0 }} />
                         <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>ONLINE · ACTIVE</div>
@@ -285,21 +283,19 @@ export default function Sidebar({ role = 'customer' }) {
                 </div>
             )}
 
-            {/* ── NAV ITEMS ── */}
+            {/* ── NAV ── */}
             <nav style={{
                 flex: 1, padding: '12px 10px', overflowY: 'auto', overflowX: 'hidden',
                 position: 'relative', zIndex: 2,
                 scrollbarWidth: 'none',
-                height: 'calc(100vh - 200px)',
                 display: 'flex', flexDirection: 'column',
             }}>
                 <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
-          @keyframes ringPulse { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.15);opacity:0.1} }
-          @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-          @keyframes badgePop { 0%{transform:scale(0)} 80%{transform:scale(1.15)} 100%{transform:scale(1)} }
-          nav::-webkit-scrollbar { display:none }
-        `}</style>
+                @keyframes ringPulse { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.15);opacity:0.1} }
+                @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+                @keyframes badgePop { 0%{transform:scale(0)} 80%{transform:scale(1.15)} 100%{transform:scale(1)} }
+                nav::-webkit-scrollbar { display:none }
+            `}</style>
 
                 {items.map((item, i) => {
                     const active = location.pathname === item.path
@@ -332,7 +328,6 @@ export default function Sidebar({ role = 'customer' }) {
                             }}
                             title={collapsed ? item.label : ''}
                         >
-                            {/* shimmer on active */}
                             {active && (
                                 <div style={{
                                     position: 'absolute', inset: 0, pointerEvents: 'none',
@@ -341,8 +336,6 @@ export default function Sidebar({ role = 'customer' }) {
                                     animation: 'shimmer 2.4s linear infinite',
                                 }} />
                             )}
-
-                            {/* active left bar */}
                             {active && (
                                 <div style={{
                                     position: 'absolute', left: 0, top: '20%', bottom: '20%',
@@ -351,21 +344,15 @@ export default function Sidebar({ role = 'customer' }) {
                                     boxShadow: `0 0 10px ${cfg.glow}`,
                                 }} />
                             )}
-
-                            {/* icon */}
                             <div style={{
                                 width: 32, height: 32, borderRadius: 9, flexShrink: 0,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                background: active
-                                    ? `rgba(${cfg.accentRgb},0.2)`
-                                    : 'rgba(255,255,255,0.05)',
+                                background: active ? `rgba(${cfg.accentRgb},0.2)` : 'rgba(255,255,255,0.05)',
                                 transition: 'background 0.2s, box-shadow 0.2s',
                                 boxShadow: active ? `0 0 12px rgba(${cfg.accentRgb},0.4)` : 'none',
                             }}>
                                 <Icon size={15} color={active ? cfg.accent : 'rgba(255,255,255,0.45)'} strokeWidth={active ? 2.2 : 1.8} />
                             </div>
-
-                            {/* label + badge */}
                             {!collapsed && (
                                 <>
                                     <span style={{
@@ -405,7 +392,6 @@ export default function Sidebar({ role = 'customer' }) {
                 padding: '10px', borderTop: '1px solid rgba(255,255,255,0.06)',
                 position: 'relative', zIndex: 2, flexShrink: 0,
             }}>
-                {/* quick stats strip (expanded only) */}
                 {!collapsed && (
                     <div style={{
                         display: 'grid', gridTemplateColumns: '1fr 1fr',

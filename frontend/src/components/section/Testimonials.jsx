@@ -112,7 +112,7 @@ export default function Testimonials() {
                     </div>
                     {/* Testimonial 2 */}
                     <div ref={el => testimonialCardsRef.current[1] = el} className="bg-[#12102A] border border-[#1E1A40] rounded-[14px] p-[28px] flex flex-col justify-between">
-                        <p className="text-[#B0A8CC] text-[15px] italic mb-6">"Travelling with kids and heavy bags is a nightmare. CoolieHire made it so easy. Fixed price meant no arguing and the porter was extremely helpful."</p>
+                        <p className="text-[#B0A8CC] text-[15px] italic mb-6">"Travelling with kids and heavy bags is a nightmare. CoolieSeva made it so easy. Fixed price meant no arguing and the porter was extremely helpful."</p>
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-[#5B1FCC] flex items-center justify-center text-white font-bold">VM</div>
                             <div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Sidebar from '../../components/Sidebar'
 import {
     User, Phone, MapPin, Shield, Star, Edit3, Camera,
@@ -6,10 +6,11 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useApp } from '../../context/AppContext'
+import { coolieProfileService } from '../../services/coolieService'
 
 export default function CoolieProfile() {
     const { user } = useApp()
-
+    const [loading, setLoading] = useState(true)
     const [profile, setProfile] = useState({
         name: user?.name || 'Coolie',
         id: user?.coolie_id || 'PENDING',
@@ -36,6 +37,61 @@ export default function CoolieProfile() {
         ifsc: '—',
         upiId: '—',
     })
+
+    // Fetch profile data on component mount
+    useEffect(() => {
+        const fetchProfileData = async () => {
+            const coolieId = user?.coolie_id || user?.id;
+            if (!coolieId || coolieId === 'pending-id') {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const response = await coolieProfileService.getProfile(coolieId);
+                
+                if (response.success && response.data) {
+                    const data = response.data;
+                    setProfile({
+                        name: data.name || user?.name || 'Coolie',
+                        id: data.coolieCode || user?.coolie_id || 'PENDING',
+                        badge: data.badge || 'New Member',
+                        station: user?.station_name || 'N/A',
+                        stationZone: 'Zone: Indian Railways',
+                        platforms: user?.working_platforms || [],
+                        age: user?.age || '—',
+                        languages: user?.languages_spoken || [],
+                        memberSince: data.joinDate 
+                            ? new Date(data.joinDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+                            : user?.created_at
+                            ? new Date(user.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+                            : '—',
+                        rating: data.avgRating || user?.rating_avg || 0,
+                        totalTrips: data.totalTrips || user?.total_trips || 0,
+                        xp: data.lifetimeXP || 0,
+                        level: data.tier || 1,
+                        nextLevelXP: data.nextTierXP || 250,
+                        verified: user?.is_verified || false,
+                        verifiedDate: '—',
+                        platformCoverage: 'Platform access is determined based on your registered working platforms.',
+                        bankName: '—',
+                        bankBranch: '—',
+                        bankAccount: '—',
+                        ifsc: '—',
+                        upiId: '—',
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching profile data:', error);
+                toast.error('Failed to load profile data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfileData();
+    }, [user]);
     const [editingField, setEditingField] = useState(null)
     const [editVal, setEditVal] = useState('')
 
@@ -44,10 +100,23 @@ export default function CoolieProfile() {
         setEditVal(value)
     }
 
-    const saveEdit = () => {
-        setProfile(p => ({ ...p, [editingField]: editVal }))
-        setEditingField(null)
-        toast.success('Updated successfully!')
+    const saveEdit = async () => {
+        const coolieId = user?.coolie_id || user?.id;
+        if (!coolieId || coolieId === 'pending-id') {
+            toast.error('Invalid coolie ID');
+            return;
+        }
+
+        try {
+            const updateData = { [editingField]: editVal };
+            await coolieProfileService.updateProfile(coolieId, updateData);
+            setProfile(p => ({ ...p, [editingField]: editVal }));
+            setEditingField(null);
+            toast.success('Updated successfully!');
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            toast.error('Failed to update profile');
+        }
     }
 
     const cancelEdit = () => {
@@ -173,9 +242,14 @@ export default function CoolieProfile() {
             <Sidebar role="coolie" />
             <div className="ml-0 md:ml-64 flex-1 p-5 md:p-8">
                 <div className="max-w-5xl mx-auto space-y-5">
-
-                    {/* ── HERO HEADER ── */}
-                    <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-6 flex flex-col md:flex-row gap-6 items-start">
+                    {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7B2FFF]"></div>
+                        </div>
+                    ) : (
+                        <>
+                            {/* ── HERO HEADER ── */}
+                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-6 flex flex-col md:flex-row gap-6 items-start">
                         {/* Avatar + Info */}
                         <div className="flex gap-5 flex-1 items-start">
                             <div className="relative shrink-0">
@@ -201,10 +275,10 @@ export default function CoolieProfile() {
                                 <h1 className="text-white text-2xl font-black leading-tight">{profile.name}</h1>
                                 <p className="text-[#6B6188] text-xs mt-0.5 font-mono">PORTER {profile.id}</p>
 
-                                {/* Stats Row */}
+                                    {/* Stats Row */}
                                 <div className="flex gap-6 mt-3">
                                     <div>
-                                        <p className="text-yellow-400 font-black text-lg leading-none">★ {profile.rating}</p>
+                                        <p className="text-yellow-400 font-black text-lg leading-none">★ {profile.rating.toFixed(1)}</p>
                                         <p className="text-[#6B6188] text-[10px] uppercase tracking-wider mt-0.5">Rating</p>
                                     </div>
                                     <div>
@@ -390,8 +464,10 @@ export default function CoolieProfile() {
                                 </div>
                             </div>
                         </div>
-
                     </div>
+
+                        </>
+                    )}
                 </div>
             </div>
         </div>

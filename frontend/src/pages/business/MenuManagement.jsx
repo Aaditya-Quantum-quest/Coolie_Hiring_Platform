@@ -143,7 +143,7 @@ export default function MenuManagement() {
                     {dishes.map(dish => (
                         <div key={dish.id} className={`bg-white rounded-xl border shadow-sm overflow-hidden flex ${!dish.is_available ? 'opacity-70' : 'border-[#E5EEFF]'}`}
                             style={{ borderLeft: `4px solid ${dish.food_type === 'veg' ? '#22c55e' : dish.food_type === 'egg' ? '#f59e0b' : '#ef4444'}` }}>
-                            {dish.photo_url && <img src={`http://localhost:5000${dish.photo_url}`} alt={dish.dish_name} className="w-24 h-full object-cover shrink-0" />}
+                            {dish.photo_url && <img src={`https://coolie-hiring-platform-backend.onrender.com${dish.photo_url}`} alt={dish.dish_name} className="w-24 h-full object-cover shrink-0" />}
                             <div className="flex-1 p-4">
                                 <div className="flex items-start justify-between gap-2">
                                     <div>

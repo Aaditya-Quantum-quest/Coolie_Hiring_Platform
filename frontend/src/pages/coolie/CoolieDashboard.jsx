@@ -10,6 +10,7 @@ import useGeolocation from '../../hooks/useGeolocation'
 import { useGlobalSocket } from '../../context/SocketContext'
 import LocationPermissionModal from '../../components/location/LocationPermissionModal'
 import { useApp } from '../../context/AppContext'
+import { coolieDashboardService, coolieStatusService } from '../../services/coolieService'
 
 /* ── Mock Data ───────────────────────────────────────────────── */
 const INITIAL_REQUESTS = [
@@ -155,12 +156,19 @@ function ActiveJobCard({ job, onComplete }) {
 /* ── Main Dashboard ──────────────────────────────────────────── */
 export default function CoolieDashboard() {
     const [status, setStatus] = useState('available')
-    const [requests, setRequests] = useState(INITIAL_REQUESTS)
+    const [requests, setRequests] = useState([])
     const [activeJob, setActiveJob] = useState(null)
-    const [completedToday, setCompletedToday] = useState(COMPLETED)
-    const [shiftSeconds, setShiftSeconds] = useState(6 * 3600 + 42 * 60 + 15)
+    const [completedToday, setCompletedToday] = useState([])
+    const [shiftSeconds, setShiftSeconds] = useState(0)
     const [searchQuery, setSearchQuery] = useState('')
     const [searchFilter, setSearchFilter] = useState('all')
+    const [stats, setStats] = useState({
+        totalEarnings: 0,
+        tripsToday: 0,
+        avgRating: 0,
+        pending: 0
+    })
+    const [loading, setLoading] = useState(true)
 
     // Live Tracking Hooks
     const { location, permission, startWatching, stopWatching } = useGeolocation()
@@ -181,6 +189,53 @@ export default function CoolieDashboard() {
         }
     }, [location, status, socket, connected, activeJob])
 
+    // Fetch dashboard data
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            if (!coolieId || coolieId === 'pending-id') return;
+            
+            try {
+                setLoading(true);
+                
+                // Fetch all data in parallel
+                const [statsData, activeJobsData, completedData, requestsData, statusData] = await Promise.all([
+                    coolieDashboardService.getStats(coolieId).catch(() => ({ data: { totalEarnings: 0, tripsToday: 0, avgRating: 0, pending: 0 } })),
+                    coolieDashboardService.getActiveJobs(coolieId).catch(() => ({ data: [] })),
+                    coolieDashboardService.getCompletedToday(coolieId).catch(() => ({ data: [] })),
+                    coolieDashboardService.getUpcomingRequests(coolieId).catch(() => ({ data: [] })),
+                    coolieStatusService.getStatus(coolieId).catch(() => ({ data: { is_online: false } }))
+                ]);
+                
+                // Update state with fetched data
+                if (statsData.data) {
+                    setStats({
+                        totalEarnings: statsData.data.totalEarnings || 0,
+                        tripsToday: statsData.data.tripsToday || 0,
+                        avgRating: statsData.data.avgRating || 0,
+                        pending: statsData.data.pending || 0
+                    });
+                }
+                
+                setActiveJob(activeJobsData.data?.[0] || null);
+                setCompletedToday(completedData.data || []);
+                setRequests(requestsData.data || []);
+                setStatus(statusData.data?.is_online ? 'available' : 'offline');
+                
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+                toast.error('Failed to load dashboard data');
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchDashboardData();
+        
+        // Set up periodic refresh
+        const interval = setInterval(fetchDashboardData, 30000); // Refresh every 30 seconds
+        return () => clearInterval(interval);
+    }, [coolieId]);
+
     // Shift clock
     useEffect(() => {
         const t = setInterval(() => setShiftSeconds(s => s + 1), 1000)
@@ -194,22 +249,34 @@ export default function CoolieDashboard() {
         return `${h}:${m}:${sec}`
     }
 
-    const toggleStatus = () => {
+    const toggleStatus = async () => {
         if (status === 'available' || status === 'onduty') { 
-            setStatus('offline')
-            stopWatching()
-            if (socket && connected) socket.emit('coolie:go-offline', { coolieId })
-            toast('You are now offline', { icon: '💤' }) 
+            try {
+                await coolieStatusService.goOffline(coolieId);
+                setStatus('offline')
+                stopWatching()
+                if (socket && connected) socket.emit('coolie:go-offline', { coolieId })
+                toast('You are now offline', { icon: '💤' }) 
+            } catch (error) {
+                console.error('Error going offline:', error);
+                toast.error('Failed to go offline');
+            }
         }
         else { 
             // Going online
             if (permission === 'granted') {
-                startWatching()
-                setStatus('available')
-                if (socket && connected && location) {
-                    socket.emit('coolie:go-online', { coolieId, lat: location.lat, lng: location.lng })
+                try {
+                    await coolieStatusService.goOnline(coolieId, location?.lat, location?.lng);
+                    startWatching()
+                    setStatus('available')
+                    if (socket && connected && location) {
+                        socket.emit('coolie:go-online', { coolieId, lat: location.lat, lng: location.lng })
+                    }
+                    toast.success('You are AVAILABLE! 🔔')
+                } catch (error) {
+                    console.error('Error going online:', error);
+                    toast.error('Failed to go online');
                 }
-                toast.success('You are AVAILABLE! 🔔')
             } else {
                 setShowLocationModal(true)
             }
@@ -286,10 +353,10 @@ export default function CoolieDashboard() {
     }
 
     const STATS = [
-        { label: 'TOTAL EARNINGS', value: '₹1,240', icon: '💰', change: '+12%', color: 'text-green-400' },
-        { label: 'TRIPS TODAY',    value: '08',     icon: '🔁', color: 'text-[#A855F7]' },
-        { label: 'AVG RATING',     value: '4.92',   icon: '⭐', color: 'text-yellow-400' },
-        { label: 'PENDING',        value: String(requests.length).padStart(2,'0'), icon: '🕐', color: 'text-[#7B2FFF]' },
+        { label: 'TOTAL EARNINGS', value: `₹${stats.totalEarnings.toLocaleString()}`, icon: '💰', change: '+12%', color: 'text-green-400' },
+        { label: 'TRIPS TODAY',    value: String(stats.tripsToday).padStart(2, '0'), icon: '🔁', color: 'text-[#A855F7]' },
+        { label: 'AVG RATING',     value: stats.avgRating.toFixed(2),   icon: '⭐', color: 'text-yellow-400' },
+        { label: 'PENDING',        value: String(stats.pending).padStart(2,'0'), icon: '🕐', color: 'text-[#7B2FFF]' },
     ]
 
     return (
@@ -313,34 +380,47 @@ export default function CoolieDashboard() {
 
                     {/* ── Hero Header ── */}
                     <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> Active Duty
-                                    </span>
-                                    <span className="text-[#6B6188] text-[11px] font-mono">#{user?.coolie_id || 'PENDING'}</span>
+                        {loading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7B2FFF]"></div>
+                            </div>
+                        ) : (
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 ${
+                                            status === 'available' || status === 'onduty' 
+                                                ? 'bg-green-500/10 text-green-400 border border-green-500/30' 
+                                                : 'bg-red-500/10 text-red-400 border border-red-500/30'
+                                        }`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                                                status === 'available' || status === 'onduty' ? 'bg-green-400' : 'bg-red-400'
+                                            }`} /> 
+                                            {status === 'available' ? 'Available' : status === 'onduty' ? 'On Duty' : 'Offline'}
+                                        </span>
+                                        <span className="text-[#6B6188] text-[11px] font-mono">#{user?.coolie_id || 'PENDING'}</span>
+                                    </div>
+                                    <h1 className="text-white text-3xl font-black leading-tight">{user?.name || 'Coolie'}</h1>
+                                    <p className="text-[#6B6188] text-sm flex items-center gap-1 mt-1">
+                                        <MapPin size={12} /> {user?.station_name || 'New Delhi Railway Station'}
+                                    </p>
                                 </div>
-                                <h1 className="text-white text-3xl font-black leading-tight">{user?.name || 'Coolie'}</h1>
-                                <p className="text-[#6B6188] text-sm flex items-center gap-1 mt-1">
-                                    <MapPin size={12} /> {user?.station_name || 'New Delhi Railway Station'}
-                                </p>
+                                <div className="text-right">
+                                    <p className="text-[#6B6188] text-[10px] uppercase tracking-widest mb-1">Today's Shift</p>
+                                    <p className="text-white font-black text-3xl font-mono tracking-wider">{formatShift(shiftSeconds)}</p>
+                                    <button
+                                        onClick={toggleStatus}
+                                        className={`mt-2 text-[11px] px-3 py-1 rounded-full font-bold border transition-all ${
+                                            status === 'available' || status === 'onduty'
+                                                ? 'bg-green-500/10 text-green-400 border-green-500/30'
+                                                : 'bg-[#1E1A40] text-[#6B6188] border-[#1E1A40] hover:border-[#7B2FFF]'
+                                        }`}
+                                    >
+                                        {status === 'offline' ? '● Go Online' : '● Online — Tap to go offline'}
+                                    </button>
+                                </div>
                             </div>
-                            <div className="text-right">
-                                <p className="text-[#6B6188] text-[10px] uppercase tracking-widest mb-1">Today's Shift</p>
-                                <p className="text-white font-black text-3xl font-mono tracking-wider">{formatShift(shiftSeconds)}</p>
-                                <button
-                                    onClick={toggleStatus}
-                                    className={`mt-2 text-[11px] px-3 py-1 rounded-full font-bold border transition-all ${
-                                        status === 'available' || status === 'onduty'
-                                            ? 'bg-green-500/10 text-green-400 border-green-500/30'
-                                            : 'bg-[#1E1A40] text-[#6B6188] border-[#1E1A40] hover:border-[#7B2FFF]'
-                                    }`}
-                                >
-                                    {status === 'offline' ? '● Go Online' : '● Online — Tap to go offline'}
-                                </button>
-                            </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* ── Stat Cards ── */}
@@ -375,12 +455,17 @@ export default function CoolieDashboard() {
 
                             {filteredRequests.length === 0 && !activeJob && (
                                 <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-10 text-center">
-                                    <div className="text-4xl mb-3">🕐</div>
+                                    <div className="text-4xl mb-3">
+                                        {loading ? (
+                                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7B2FFF] mx-auto"></div>
+                                        ) : '🕐'}
+                                    </div>
                                     <p className="text-[#6B6188]">
-                                        {searchQuery ? 'No requests found matching your search criteria' : 
+                                        {loading ? 'Loading requests...' :
+                                            searchQuery ? 'No requests found matching your search criteria' : 
                                             (status === 'offline' ? 'You are offline. Go online to receive requests.' : 'Waiting for new booking requests...')}
                                     </p>
-                                    {status === 'offline' && !searchQuery && (
+                                    {status === 'offline' && !searchQuery && !loading && (
                                         <button onClick={toggleStatus} className="mt-4 px-6 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-bold text-sm hover:bg-[#5B1FCC]">
                                             Go Online
                                         </button>

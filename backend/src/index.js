@@ -149,7 +149,7 @@ const PORT = process.env.PORT || 5000
 const pool = require('./config/db')
 
 pool.query('SELECT 1').then(() => {
-    httpServer.listen(PORT, () => {
+    httpServer.listen(PORT, "0.0.0.0", () => {
         console.log(`\n🚀 Server & Socket.IO running on http://localhost:${PORT}`)
         console.log(`📁 Environment: ${process.env.NODE_ENV}`)
         console.log(`📂 Uploads served at: http://localhost:${PORT}/uploads`)

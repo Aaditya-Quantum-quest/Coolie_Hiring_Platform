@@ -1,18 +1,20 @@
 require('dotenv').config();
-const { Pool } = require('pg')
+const { Pool } = require('pg');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-})
+    ssl: { rejectUnauthorized: false }, // Required for Render + Supabase
+    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 10000,
+    max: 10,
+});
 
 pool.on('connect', () => {
-    console.log('✅ PostgreSQL connected')
-})
+    console.log('✅ PostgreSQL connected');
+});
 
 pool.on('error', (err) => {
-    console.error('❌ PostgreSQL error:', err.message)
-    process.exit(1)
-})
+    console.error('❌ PostgreSQL pool error:', err.message);
+});
 
-module.exports = pool
+module.exports = pool;

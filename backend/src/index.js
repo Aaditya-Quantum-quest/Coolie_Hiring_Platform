@@ -1,170 +1,268 @@
-require('dotenv').config()
-const express = require('express')
-const helmet = require('helmet')
-const cors = require('cors')
-const cookieParser = require('cookie-parser')
-const rateLimit = require('express-rate-limit')
-const path = require('path')
+require('dotenv').config();
 
-const authRoutes = require('./routes/auth.routes')
-const adminRoutes = require('./routes/admin.routes')
-const rankingRoutes = require('./routes/rankings.routes')
-const locationRoutes = require('./routes/location.routes')
-const coolieRoutes = require('./routes/coolie.routes')
-const customerRoutes = require('./routes/customer.routes')
-const bookingRoutes = require('./routes/booking.routes')
-const configRoutes = require('./routes/config.routes')
+const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
+const path = require('path');
+const compression = require('compression');
 
-// Business (Hotels & Restaurants) routes
-const businessAuthRoutes = require('./routes/business/auth.routes')
-const businessOwnerRoutes = require('./routes/business/owner.routes')
-const businessPublicRoutes = require('./routes/business/public.routes')
-const businessAdminRoutes = require('./routes/admin/businessAdmin.routes')
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 
-const { createServer } = require('http')
-const { Server } = require('socket.io')
-const setupSocketHandlers = require('./socket/socketHandler')
+const pool = require('./config/db');
+const setupSocketHandlers = require('./socket/socketHandler');
 
-const app = express()
-const httpServer = createServer(app)
+// ─────────────────────────────────────────────────────────────
+// ROUTES
+// ─────────────────────────────────────────────────────────────
+const authRoutes = require('./routes/auth.routes');
+const adminRoutes = require('./routes/admin.routes');
+const rankingRoutes = require('./routes/rankings.routes');
+const locationRoutes = require('./routes/location.routes');
+const coolieRoutes = require('./routes/coolie.routes');
+const customerRoutes = require('./routes/customer.routes');
+const bookingRoutes = require('./routes/booking.routes');
+const configRoutes = require('./routes/config.routes');
 
-// ─── SOCKET.IO SETUP ───────────────────────────────────────────────
+// Business Modules
+const businessAuthRoutes = require('./routes/business/auth.routes');
+const businessOwnerRoutes = require('./routes/business/owner.routes');
+const businessPublicRoutes = require('./routes/business/public.routes');
+const businessAdminRoutes = require('./routes/admin/businessAdmin.routes');
+
+// ─────────────────────────────────────────────────────────────
+// APP INIT
+// ─────────────────────────────────────────────────────────────
+const app = express();
+const httpServer = createServer(app);
+
+// Render uses dynamic port
+const PORT = process.env.PORT || 10000;
+
+// Frontend domain
+const CLIENT_URL =
+    process.env.CLIENT_URL || 'http://localhost:5173';
+
+// Trust proxy (important for Render / Railway / Heroku)
+app.set('trust proxy', 1);
+
+// ─────────────────────────────────────────────────────────────
+// SOCKET.IO
+// ─────────────────────────────────────────────────────────────
 const io = new Server(httpServer, {
     cors: {
-        origin: process.env.CLIENT_URL || 'http://localhost:5173',
+        origin: CLIENT_URL,
         methods: ['GET', 'POST'],
-        credentials: true
-    }
-})
+        credentials: true,
+    },
+    pingTimeout: 60000,
+    pingInterval: 25000,
+});
 
-// Initialize Socket event handlers
-setupSocketHandlers(io)
+setupSocketHandlers(io);
 
-// ─── SECURITY MIDDLEWARE ────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// SECURITY
+// ─────────────────────────────────────────────────────────────
 app.use(
     helmet({
-        crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow serving static images
+        crossOriginResourcePolicy: {
+            policy: 'cross-origin',
+        },
     })
-)
+);
 
-// ─── CORS ───────────────────────────────────────────────────────────
+app.use(compression());
+
+// ─────────────────────────────────────────────────────────────
+// CORS
+// ─────────────────────────────────────────────────────────────
 app.use(
     cors({
-        origin: process.env.CLIENT_URL || 'http://localhost:5173',
-        credentials: true,         // Allow cookies to be sent cross-origin
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        origin: CLIENT_URL,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
     })
-)
+);
 
-// ─── RATE LIMITERS ──────────────────────────────────────────────────
-// Global rate limit: 200 requests per 15 minutes per IP
+// ─────────────────────────────────────────────────────────────
+// RATE LIMITING
+// ─────────────────────────────────────────────────────────────
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 200,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { success: false, message: 'Too many requests. Please try again later.' },
-})
+    message: {
+        success: false,
+        message: 'Too many requests. Please try again later.',
+    },
+});
 
-// Strict rate limit for auth routes: 100 requests per 15 minutes per IP
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100, // Increased for development to prevent false positives
+    max: 100,
+    skipSuccessfulRequests: true,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { success: false, message: 'Too many login attempts. Please try again in 15 minutes.' },
-    skipSuccessfulRequests: true,   // Don't count successful requests
-})
+    message: {
+        success: false,
+        message: 'Too many login attempts. Try again later.',
+    },
+});
 
-app.use(globalLimiter)
+app.use(globalLimiter);
 
-// ─── BODY PARSERS ──────────────────────────────────────────────────
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true, limit: '10mb' }))
-app.use(cookieParser())
+// ─────────────────────────────────────────────────────────────
+// BODY PARSER
+// ─────────────────────────────────────────────────────────────
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
-// ─── STATIC FILE SERVING (Uploaded documents & photos) ─────────────
-// Access uploaded files via: https://coolie-hiring-platform-backend.onrender.com/uploads/...
+// ─────────────────────────────────────────────────────────────
+// STATIC FILES
+// ─────────────────────────────────────────────────────────────
 app.use(
     '/uploads',
     express.static(path.join(__dirname, '../uploads'), {
-        // Basic security: don't allow directory listing
         index: false,
     })
-)
+);
 
-// ─── ROUTES ────────────────────────────────────────────────────────
-app.use('/api/auth', authLimiter, authRoutes)
-app.use('/api/v1/admin', adminRoutes) // Removed authLimiter here as it was limiting dashboard polling
-app.use('/api/v1/rankings', rankingRoutes)
-app.use('/api/location', locationRoutes)
-app.use('/api/coolie', coolieRoutes)
-app.use('/api/customer', customerRoutes)
-app.use('/api/bookings', bookingRoutes)
-app.use('/api/config', configRoutes)
+// ─────────────────────────────────────────────────────────────
+// API ROUTES
+// ─────────────────────────────────────────────────────────────
 
-// Business (Hotels & Restaurants)
-app.use('/api/v1/business/auth', businessAuthRoutes)
-app.use('/api/v1/owner', businessOwnerRoutes)
-app.use('/api/v1/public', businessPublicRoutes)
-app.use('/api/v1/admin/businesses', businessAdminRoutes)
+// Main Auth
+app.use('/api/auth', authLimiter, authRoutes);
 
-// ─── HEALTH CHECK ──────────────────────────────────────────────────
-app.get('/api/health', (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: 'Coolie Hiring API is running',
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV,
-    })
-})
+// Admin
+app.use('/api/v1/admin', adminRoutes);
 
-// ─── 404 HANDLER ───────────────────────────────────────────────────
+// Rankings / XP / Leaderboard
+app.use('/api/v1/rankings', rankingRoutes);
+
+// GPS / Location
+app.use('/api/location', locationRoutes);
+
+// Coolie
+app.use('/api/coolie', coolieRoutes);
+
+// Customer
+app.use('/api/customer', customerRoutes);
+
+// Bookings
+app.use('/api/bookings', bookingRoutes);
+
+// App Config
+app.use('/api/config', configRoutes);
+
+// Business / Hotels / Restaurants
+app.use('/api/v1/business/auth', businessAuthRoutes);
+app.use('/api/v1/owner', businessOwnerRoutes);
+app.use('/api/v1/public', businessPublicRoutes);
+app.use('/api/v1/admin/businesses', businessAdminRoutes);
+
+// ─────────────────────────────────────────────────────────────
+// HEALTH CHECK
+// ─────────────────────────────────────────────────────────────
+app.get('/api/health', async (req, res) => {
+    try {
+        await pool.query('SELECT 1');
+
+        res.status(200).json({
+            success: true,
+            message: 'Coolie Hiring API Running',
+            environment: process.env.NODE_ENV,
+            database: 'connected',
+            timestamp: new Date().toISOString(),
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: 'Health check failed',
+            database: 'disconnected',
+        });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
+// 404 ROUTE
+// ─────────────────────────────────────────────────────────────
 app.use((req, res) => {
-    res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` })
-})
+    res.status(404).json({
+        success: false,
+        message: `Route ${req.originalUrl} not found`,
+    });
+});
 
-// ─── GLOBAL ERROR HANDLER ──────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// GLOBAL ERROR HANDLER
+// ─────────────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
-    // Multer errors (file too large, wrong type)
+    console.error('❌ Global Error:', err);
+
     if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({ success: false, message: 'File too large. Maximum size is 5MB.' })
-    }
-    if (err.message?.includes('Only JPEG')) {
-        return res.status(415).json({ success: false, message: err.message })
+        return res.status(413).json({
+            success: false,
+            message: 'File too large.',
+        });
     }
 
-    console.error('Unhandled error:', err)
     res.status(500).json({
         success: false,
-        message: process.env.NODE_ENV === 'production' ? 'Internal server error.' : err.message,
-    })
-})
+        message:
+            process.env.NODE_ENV === 'production'
+                ? 'Internal server error'
+                : err.message,
+    });
+});
 
-// ─── START SERVER ──────────────────────────────────────────────────
-const PORT = process.env.PORT || 5000
+// ─────────────────────────────────────────────────────────────
+// START SERVER FIRST (BEST FOR RENDER)
+// ─────────────────────────────────────────────────────────────
+httpServer.listen(PORT, '0.0.0.0', async () => {
+    console.log('────────────────────────────────');
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🌍 Frontend Origin: ${CLIENT_URL}`);
+    console.log(`📁 Environment: ${process.env.NODE_ENV}`);
+    console.log('────────────────────────────────');
 
-// Boot up DB connection then start server
-const pool = require('./config/db')
+    // DB Test
+    try {
+        await pool.query('SELECT 1');
+        console.log('✅ PostgreSQL connected');
+    } catch (err) {
+        console.error('❌ Database failed:', err.message);
+    }
 
-pool.query('SELECT 1').then(() => {
-    httpServer.listen(PORT, "0.0.0.0", () => {
-        console.log(`\n🚀 Server & Socket.IO running on http://localhost:${PORT}`)
-        console.log(`📁 Environment: ${process.env.NODE_ENV}`)
-        console.log(`📂 Uploads served at: http://localhost:${PORT}/uploads`)
-        console.log(`🔐 Auth API at: http://localhost:${PORT}/api/auth`)
-        console.log(`🏆 Rankings API at: http://localhost:${PORT}/api/v1/rankings\n`)
-    })
+    // Cron Jobs
+    try {
+        require('./crons/demotionCron');
+        require('./crons/leaderboardCron');
+        console.log('⏰ Cron jobs started');
+    } catch (err) {
+        console.error('❌ Cron error:', err.message);
+    }
+});
 
-    // Start cron jobs
-    require('./crons/demotionCron')
-    require('./crons/leaderboardCron')
-    console.log('⏰ Cron jobs registered (DemotionCron + LeaderboardCron)')
-}).catch((err) => {
-    console.error('❌ Could not connect to PostgreSQL:', err.message)
-    console.error('💡 Make sure PostgreSQL is running and DATABASE_URL in .env is correct.')
-    process.exit(1)
-})
+// ─────────────────────────────────────────────────────────────
+// GRACEFUL SHUTDOWN
+// ─────────────────────────────────────────────────────────────
+process.on('SIGTERM', async () => {
+    console.log('🛑 SIGTERM received. Closing server...');
+    await pool.end();
+    process.exit(0);
+});
 
-module.exports = app
+process.on('SIGINT', async () => {
+    console.log('🛑 SIGINT received. Closing server...');
+    await pool.end();
+    process.exit(0);
+});
+
+module.exports = app;

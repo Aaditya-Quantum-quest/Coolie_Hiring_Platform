@@ -144,7 +144,7 @@ export default function BookingPage() {
     }, [startWatching]);
 
     useEffect(() => {
-        axios.get('https://coolie-hiring-platform-backend.onrender.com/api/config/pricing')
+        axios.get('https://coolie-hiring-platform.onrender.com/api/config/pricing')
             .then(res => {
                 if (res.data.success) setPriceTable(res.data.priceTable)
             })
@@ -154,8 +154,8 @@ export default function BookingPage() {
     useEffect(() => {
         const fetchCoolies = async () => {
             try {
-                let url = 'https://coolie-hiring-platform-backend.onrender.com/api/customer/coolies';
-                if (geoLoc) url = `https://coolie-hiring-platform-backend.onrender.com/api/location/nearby?lat=${geoLoc.lat}&lng=${geoLoc.lng}`;
+                let url = 'https://coolie-hiring-platform.onrender.com/api/customer/coolies';
+                if (geoLoc) url = `https://coolie-hiring-platform.onrender.com/api/location/nearby?lat=${geoLoc.lat}&lng=${geoLoc.lng}`;
                 const res = await axios.get(url);
                 if (res.data.success) {
                     setAvailCoolies(res.data.coolies.filter(c => c.status === 'available'));
@@ -290,25 +290,25 @@ export default function BookingPage() {
     return (
         <div className="flex bg-[#0A0814] min-h-screen">
             <Sidebar role="customer" />
-            <main className="flex-1 md:ml-64 p-5 md:p-7">
+            <main className="flex-1 md:ml-64 p-5 md:p-7 max-[767px]:p-3 max-[767px]:pb-24">
                 <div className="max-w-6xl mx-auto">
 
                     {/* ── Two-column grid ── */}
-                    <div className="grid lg:grid-cols-[1fr_380px] gap-5">
+                    <div className="grid lg:grid-cols-[1fr_380px] gap-5 max-[767px]:gap-3">
 
                         {/* ══ LEFT COLUMN ════════════════════════════ */}
                         <div className="space-y-5">
 
                             {/* Trip Details */}
-                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
-                                <h2 className="text-white font-bold text-sm flex items-center gap-2 mb-4">
+                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5 max-[767px]:p-4">
+                                <h2 className="text-white font-bold text-sm flex items-center gap-2 mb-4 max-[767px]:text-base">
                                     <span className="w-5 h-5 rounded bg-[#7B2FFF]/20 flex items-center justify-center">
                                         <MapPin size={11} className="text-[#7B2FFF]" />
                                     </span>
                                     Trip Details
                                 </h2>
 
-                                <div className="grid grid-cols-2 gap-3 mb-3">
+                                <div className="grid grid-cols-2 gap-3 mb-3 max-[767px]:grid-cols-1 max-[767px]:gap-4">
                                     {/* Station */}
                                     <div>
                                         <label className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1.5 block">Station Name</label>
@@ -362,19 +362,19 @@ export default function BookingPage() {
                             </div>
 
                             {/* Luggage Inventory */}
-                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-white font-bold text-sm flex items-center gap-2">
+                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5 max-[767px]:p-4">
+                                <div className="flex items-center justify-between mb-4 max-[767px]:flex-col max-[767px]:items-start max-[767px]:gap-1">
+                                    <h2 className="text-white font-bold text-sm flex items-center gap-2 max-[767px]:text-base">
                                         <span className="w-5 h-5 rounded bg-[#7B2FFF]/20 flex items-center justify-center">
                                             <Package size={11} className="text-[#7B2FFF]" />
                                         </span>
                                         Luggage Inventory
                                     </h2>
-                                    <span className="text-[#6B6188] text-[11px]">Select quantity for each type</span>
+                                    <span className="text-[#6B6188] text-[11px] max-[767px]:text-xs">Select quantity for each type</span>
                                 </div>
 
                                 {/* Luggage Type Selector */}
-                                <div className="grid grid-cols-4 gap-2 mb-4">
+                                <div className="grid grid-cols-4 gap-2 mb-4 max-[767px]:grid-cols-2 max-[767px]:gap-3">
                                     {luggageTypes.map(({ key, icon, label, sub }) => (
                                         <button
                                             key={key}
@@ -400,8 +400,8 @@ export default function BookingPage() {
                                 </div>
 
                                 {/* AI Scanner */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl overflow-hidden">
+                                <div className="grid grid-cols-2 gap-3 max-[767px]:grid-cols-1 max-[767px]:gap-4">
+                                    <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl overflow-hidden max-[767px]:h-32">
                                         {preview ? (
                                             <div className="relative h-full min-h-[100px]">
                                                 <img src={preview} alt="luggage" className="w-full h-full object-cover" />
@@ -438,8 +438,8 @@ export default function BookingPage() {
                             </div>
 
                             {/* Custom Amount Section */}
-                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
-                                <h2 className="text-white font-bold text-sm flex items-center gap-2 mb-4">
+                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5 max-[767px]:p-4">
+                                <h2 className="text-white font-bold text-sm flex items-center gap-2 mb-4 max-[767px]:text-base">
                                     <span className="w-5 h-5 rounded bg-[#7B2FFF]/20 flex items-center justify-center">
                                         <Trophy size={11} className="text-[#7B2FFF]" />
                                     </span>
@@ -496,9 +496,9 @@ export default function BookingPage() {
 
                             {/* Available Porters Header */}
                             <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl overflow-hidden">
-                                <div className="flex items-center justify-between px-5 py-4 border-b border-[#1E1A40]">
-                                    <h2 className="text-white font-bold text-sm">Available Porters</h2>
-                                    <span className="flex items-center gap-1.5 text-green-400 text-[11px] font-semibold bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full">
+                                <div className="flex items-center justify-between px-5 py-4 border-b border-[#1E1A40] max-[767px]:px-4 max-[767px]:py-3">
+                                    <h2 className="text-white font-bold text-sm max-[767px]:text-base">Available Porters</h2>
+                                    <span className="flex items-center gap-1.5 text-green-400 text-[11px] font-semibold bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full max-[767px]:text-xs">
                                         <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                                         {availCoolies.length} Online
                                     </span>
@@ -512,22 +512,22 @@ export default function BookingPage() {
                                         return (
                                             <div
                                                 key={c.id}
-                                                className={`flex items-center gap-3 px-4 py-3.5 transition-all ${isSelected ? 'bg-[#7B2FFF]/10' : 'hover:bg-[#12102A]'}`}
+                                                className={`flex items-center gap-3 px-4 py-3.5 max-[767px]:px-3 max-[767px]:py-3 max-[767px]:gap-2 transition-all ${isSelected ? 'bg-[#7B2FFF]/10' : 'hover:bg-[#12102A]'}`}
                                             >
                                                 {/* Avatar */}
-                                                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#3a2060] to-[#1E1A40] flex items-center justify-center text-white font-black text-base border border-[#7B2FFF]/20 shrink-0">
+                                                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#3a2060] to-[#1E1A40] flex items-center justify-center text-white font-black text-base border border-[#7B2FFF]/20 shrink-0 max-[767px]:w-12 max-[767px]:h-12 max-[767px]:text-lg">
                                                     {c.name[0]}
                                                 </div>
 
                                                 {/* Info */}
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-white font-bold text-sm truncate">{c.name}</p>
+                                                    <p className="text-white font-bold text-sm truncate max-[767px]:text-base">{c.name}</p>
                                                     <div className="flex items-center gap-1 text-yellow-400 mb-1">
-                                                        <Star size={10} fill="currentColor" />
-                                                        <span className="text-[11px] font-semibold text-yellow-400">{c.rating}</span>
-                                                        <span className="text-[#6B6188] text-[10px]">({c.totalBookings?.toLocaleString()} trips)</span>
+                                                        <Star size={10} fill="currentColor" className="max-[767px]:w-3 max-[767px]:h-3" />
+                                                        <span className="text-[11px] font-semibold text-yellow-400 max-[767px]:text-xs">{c.rating}</span>
+                                                        <span className="text-[#6B6188] text-[10px] max-[767px]:text-[11px]">({c.totalBookings?.toLocaleString()} trips)</span>
                                                     </div>
-                                                    <div className="flex gap-2 text-[10px] text-[#6B6188]">
+                                                    <div className="flex gap-2 text-[10px] text-[#6B6188] max-[767px]:text-xs">
                                                         <span>EXP<br /><span className="text-white font-semibold">{c.experience}</span></span>
                                                         <span>SPEED<br /><span className="text-white font-semibold">{speedLabel}</span></span>
                                                     </div>
@@ -536,12 +536,12 @@ export default function BookingPage() {
                                                 {/* Price + Select */}
                                                 <div className="flex flex-col items-end gap-2 shrink-0">
                                                     <div className="text-right">
-                                                        <p className="text-[#7B2FFF] font-black text-base">₹{c.basePrice}</p>
-                                                        <p className="text-[#6B6188] text-[9px] uppercase">Base Fare</p>
+                                                        <p className="text-[#7B2FFF] font-black text-base max-[767px]:text-lg">₹{c.basePrice}</p>
+                                                        <p className="text-[#6B6188] text-[9px] uppercase max-[767px]:text-[10px]">Base Fare</p>
                                                     </div>
                                                     <button
                                                         onClick={() => { update('selectedCoolie', c); update('finalPrice', c.basePrice) }}
-                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isSelected
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all max-[767px]:px-4 max-[767px]:py-2 max-[767px]:text-sm max-[767px]:rounded-xl ${isSelected
                                                             ? 'bg-green-500 text-white'
                                                             : 'bg-[#7B2FFF] text-white hover:bg-[#5B1FCC]'
                                                             }`}
@@ -556,26 +556,26 @@ export default function BookingPage() {
 
                                 {/* Confirm / Bargain */}
                                 {form.selectedCoolie && (
-                                    <div className="px-4 py-3 border-t border-[#1E1A40] bg-[#12102A]">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[#6B6188] text-xs">Final Price</span>
-                                            <span className="text-green-400 font-black text-lg">₹{form.finalPrice}</span>
+                                    <div className="px-4 py-3 border-t border-[#1E1A40] bg-[#12102A] max-[767px]:p-4">
+                                        <div className="flex items-center justify-between mb-2 max-[767px]:mb-3">
+                                            <span className="text-[#6B6188] text-xs max-[767px]:text-sm">Final Price</span>
+                                            <span className="text-green-400 font-black text-lg max-[767px]:text-xl">₹{form.finalPrice}</span>
                                         </div>
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 max-[767px]:flex-col">
                                             <button
                                                 onClick={() => setShowBargain(true)}
-                                                className="flex-1 py-2 rounded-xl border border-[#1E1A40] text-[#A855F7] text-xs font-semibold flex items-center justify-center gap-1 hover:border-[#7B2FFF] transition-colors"
+                                                className="flex-1 py-2 rounded-xl border border-[#1E1A40] text-[#A855F7] text-xs font-semibold flex items-center justify-center gap-1 hover:border-[#7B2FFF] transition-colors max-[767px]:py-3 max-[767px]:text-sm"
                                             >
-                                                <TrendingDown size={12} /> Bargain
+                                                <TrendingDown size={14} className="max-[767px]:w-4 max-[767px]:h-4" /> Bargain
                                             </button>
                                             <button
                                                 onClick={handleSubmit}
                                                 disabled={submitting}
-                                                className="flex-1 py-2 rounded-xl bg-[#7B2FFF] text-white text-xs font-bold flex items-center justify-center gap-1 hover:bg-[#5B1FCC] transition-colors disabled:opacity-60"
+                                                className="flex-1 py-2 rounded-xl bg-[#7B2FFF] text-white text-xs font-bold flex items-center justify-center gap-1 hover:bg-[#5B1FCC] transition-colors disabled:opacity-60 max-[767px]:py-3 max-[767px]:text-sm"
                                             >
                                                 {submitting
-                                                    ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                    : <><CheckCircle size={12} /> Confirm Booking</>
+                                                    ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin max-[767px]:w-5 max-[767px]:h-5" />
+                                                    : <><CheckCircle size={14} className="max-[767px]:w-4 max-[767px]:h-4" /> Confirm Booking</>
                                                 }
                                             </button>
                                         </div>

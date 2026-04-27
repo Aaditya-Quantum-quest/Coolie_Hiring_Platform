@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from '../../components/Sidebar'
 import {
     Star, ArrowLeft, CheckCircle, ThumbsUp, ThumbsDown,
@@ -7,19 +7,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Confetti from 'react-confetti'
-
-const COOLIE = {
-    name: 'Your Coolie',
-    id: 'N/A',
-    image: null,
-    totalRatings: 234,
-    avgRating: 4.8,
-    badge: '',
-    bookingId: 'BK-2024-1847',
-    date: 'Today, 4:15 PM',
-    amount: '₹90',
-    station: 'New Delhi Railway Station',
-}
+import axios from 'axios'
 
 const POSITIVE_TAGS = ['Punctual', 'Helpful', 'Strong', 'Honest', 'Polite', 'Careful with luggage', 'Knows station well']
 const NEGATIVE_TAGS = ['Late arrival', 'Rude behavior', 'Careless', 'Overcharged attempt', 'Not helpful']
@@ -50,12 +38,32 @@ const RATING_LABELS = ['', 'Very Bad 😠', 'Bad 😞', 'Okay 😐', 'Good 😊'
 
 export default function RatingPage() {
     const navigate = useNavigate()
+    const locState = useLocation().state || {}
+    const b = locState.booking
+
+    // Provide a fallback mock if navigated directly
+    const COOLIE = b ? {
+        name: b.coolieName,
+        id: b.coolieId || 'N/A',
+        image: null,
+        totalRatings: b.coolieTrips || 0,
+        avgRating: b.coolieRating || 0,
+        badge: b.coolieBadge,
+        bookingId: b.id,
+        date: `${b.date} ${b.time}`,
+        amount: `₹${b.amount}`,
+        station: b.station,
+    } : {
+        name: 'Your Coolie', id: 'N/A', totalRatings: 234, avgRating: 4.8, badge: '', bookingId: 'BK-2024-1847', date: 'Today, 4:15 PM', amount: '₹90', station: 'New Delhi Railway Station'
+    }
+
     const [rating, setRating] = useState(0)
     const [comment, setComment] = useState('')
     const [selectedTags, setSelectedTags] = useState([])
     const [tip, setTip] = useState(0)
     const [submitted, setSubmitted] = useState(false)
     const [showConfetti, setShowConfetti] = useState(false)
+    const [submitting, setSubmitting] = useState(false)
 
     const toggleTag = (tag) => {
         setSelectedTags(prev =>
@@ -63,14 +71,31 @@ export default function RatingPage() {
         )
     }
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (rating === 0) {
             toast.error('Please select a star rating!')
             return
         }
-        setSubmitted(true)
-        setShowConfetti(true)
-        setTimeout(() => setShowConfetti(false), 5000)
+
+        setSubmitting(true)
+        try {
+            if (b && b.id !== 'BK-2024-1847') {
+                const text = selectedTags.length > 0 ? `Tags: ${selectedTags.join(', ')}. ${comment}` : comment
+                await axios.post(`https://coolie-hiring-platform.onrender.com/api/bookings/${b.id}/rate`, {
+                    rating,
+                    review_text: text
+                })
+            } else {
+                await new Promise(r => setTimeout(r, 1000))
+            }
+            setSubmitted(true)
+            setShowConfetti(true)
+            setTimeout(() => setShowConfetti(false), 5000)
+        } catch (error) {
+            toast.error('Failed to submit rating')
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     if (submitted) {

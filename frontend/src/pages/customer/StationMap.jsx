@@ -51,9 +51,9 @@ export default function StationMap() {
         const loadData = async () => {
             try {
                 const [statRes, coolRes, busyRes] = await Promise.all([
-                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/stations'),
-                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/coolies'),
-                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/config/busy-hours')
+                    axios.get('https://coolie-hiring-platform.onrender.com/api/customer/stations'),
+                    axios.get('https://coolie-hiring-platform.onrender.com/api/customer/coolies'),
+                    axios.get('https://coolie-hiring-platform.onrender.com/api/config/busy-hours')
                 ])
                 if (statRes.data.success) {
                     setStations(statRes.data.stations)
@@ -99,10 +99,13 @@ export default function StationMap() {
     return (
         <div className="min-h-screen bg-slate-900 flex">
             <Sidebar role="customer" />
-            <main className="flex-1 md:ml-64 p-6">
-                <div className="pt-12 md:pt-0 mb-6">
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2"><MapPin size={26} className="text-orange-400" /> Station Map & Heatmap</h1>
-                    <p className="text-slate-400 text-sm">Interactive station map with platform guide & busy hour analysis</p>
+            <main className="flex-1 md:ml-64 p-6 max-[767px]:p-3 max-[767px]:pb-24">
+                <div className="pt-12 md:pt-0 mb-6 max-[767px]:mb-4">
+                    <h1 className="text-2xl font-bold text-white flex items-center gap-2 max-[767px]:text-lg max-[767px]:gap-1.5">
+                        <MapPin size={26} className="text-orange-400 max-[767px]:w-[18px] max-[767px]:h-[18px]" />
+                        Station Map & Heatmap
+                    </h1>
+                    <p className="text-slate-400 text-sm max-[767px]:text-xs">Interactive station map with platform guide & busy hour analysis</p>
                 </div>
 
                 {/* Search Bar */}
@@ -120,10 +123,10 @@ export default function StationMap() {
 
                 {/* Station Selector */}
                 {selectedStation && (
-                    <div className="flex gap-2 mb-4 flex-wrap">
+                    <div className="flex gap-2 mb-4 flex-wrap max-[767px]:mb-3 max-[767px]:gap-1.5">
                         {filteredStations.slice(0, 4).map(s => (
                             <button key={s.id} onClick={() => setSelectedStation(s)}
-                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${selectedStation.id === s.id ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all max-[767px]:px-2.5 max-[767px]:py-1.5 max-[767px]:text-[11px] max-[767px]:rounded-lg ${selectedStation.id === s.id ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                                     }`}>
                                 {s.name.split(' ')[0]}...
                             </button>
@@ -132,18 +135,18 @@ export default function StationMap() {
                 )}
 
                 {/* Tab Toggle */}
-                <div className="flex gap-2 mb-4">
-                    <button onClick={() => setTab('map')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${tab === 'map' ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
-                        <Layers size={14} /> Station Map
+                <div className="flex gap-2 mb-4 max-[767px]:mb-3">
+                    <button onClick={() => setTab('map')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all max-[767px]:px-3 max-[767px]:py-1.5 max-[767px]:text-xs max-[767px]:rounded-lg ${tab === 'map' ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+                        <Layers size={14} className="max-[767px]:w-3.5 max-[767px]:h-3.5" /> Station Map
                     </button>
-                    <button onClick={() => setTab('heatmap')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${tab === 'heatmap' ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
-                        <Clock size={14} /> Busy Hour Heatmap
+                    <button onClick={() => setTab('heatmap')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all max-[767px]:px-3 max-[767px]:py-1.5 max-[767px]:text-xs max-[767px]:rounded-lg ${tab === 'heatmap' ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+                        <Clock size={14} className="max-[767px]:w-3.5 max-[767px]:h-3.5" /> Busy Hour Heatmap
                     </button>
                 </div>
 
                 {tab === 'map' ? (selectedStation &&
-                    <div className="grid lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2 card overflow-hidden" style={{ height: 480 }}>
+                    <div className="grid lg:grid-cols-3 gap-6 max-[767px]:gap-3">
+                        <div className="lg:col-span-2 card overflow-hidden h-[480px] max-[767px]:h-[350px]">
                             <MapContainer center={[selectedStation.lat, selectedStation.lng]} zoom={17} style={{ height: '100%', width: '100%' }}>
                                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
 
@@ -178,17 +181,17 @@ export default function StationMap() {
                             </MapContainer>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 max-[767px]:space-y-3">
                             {/* Legend */}
-                            <div className="card p-4">
-                                <h3 className="text-white font-semibold mb-3">Map Legend</h3>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-green-500" /><span className="text-slate-300">Available Coolie</span></div>
-                                    <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-yellow-500" /><span className="text-slate-300">Busy (Request Received)</span></div>
-                                    <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-500" /><span className="text-slate-300">On Duty</span></div>
+                            <div className="card p-4 max-[767px]:p-3">
+                                <h3 className="text-white font-semibold mb-3 max-[767px]:mb-2 max-[767px]:text-sm">Map Legend</h3>
+                                <div className="space-y-2 text-sm max-[767px]:space-y-1.5 max-[767px]:text-xs">
+                                    <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-green-500 max-[767px]:w-3 max-[767px]:h-3" /><span className="text-slate-300">Available Coolie</span></div>
+                                    <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-yellow-500 max-[767px]:w-3 max-[767px]:h-3" /><span className="text-slate-300">Busy (Request Received)</span></div>
+                                    <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-500 max-[767px]:w-3 max-[767px]:h-3" /><span className="text-slate-300">On Duty</span></div>
                                     {PLATFORMS.map(p => (
                                         <div key={p.no} className="flex items-center gap-2">
-                                            <div className="w-4 h-4 rounded-sm" style={{ background: p.color }} />
+                                            <div className="w-4 h-4 rounded-sm max-[767px]:w-3 max-[767px]:h-3" style={{ background: p.color }} />
                                             <span className="text-slate-300">Platform {p.no}</span>
                                         </div>
                                     ))}
@@ -196,19 +199,19 @@ export default function StationMap() {
                             </div>
 
                             {/* Available Coolies */}
-                            <div className="card p-4">
-                                <h3 className="text-white font-semibold mb-3">
+                            <div className="card p-4 max-[767px]:p-3">
+                                <h3 className="text-white font-semibold mb-3 max-[767px]:mb-2 max-[767px]:text-sm">
                                     Coolies at {selectedStation.name.split(' ')[0]}
                                 </h3>
-                                <div className="space-y-2">
+                                <div className="space-y-2 max-[767px]:space-y-1">
                                     {coolies.filter(c => c.station === selectedStation.name).map(c => (
-                                        <div key={c.id} className="flex items-center gap-2 py-2 border-b border-slate-700/50 last:border-0">
+                                        <div key={c.id} className="flex items-center gap-2 py-2 border-b border-slate-700/50 last:border-0 max-[767px]:py-1.5">
                                             <div className={`w-2 h-2 rounded-full ${c.status === 'available' ? 'bg-green-500' : c.status === 'busy' ? 'bg-yellow-500' : 'bg-red-500'}`} />
                                             <div className="flex-1">
-                                                <p className="text-white text-sm font-medium">{c.name}</p>
-                                                <p className="text-xs text-slate-500">⭐{c.rating} • ₹{c.basePrice}</p>
+                                                <p className="text-white text-sm font-medium max-[767px]:text-xs">{c.name}</p>
+                                                <p className="text-xs text-slate-500 max-[767px]:text-[10px]">⭐{c.rating} • ₹{c.basePrice}</p>
                                             </div>
-                                            <span className={`text-xs capitalize ${c.status === 'available' ? 'text-green-400' : c.status === 'busy' ? 'text-yellow-400' : 'text-red-400'}`}>{c.status}</span>
+                                            <span className={`text-xs capitalize max-[767px]:text-[10px] ${c.status === 'available' ? 'text-green-400' : c.status === 'busy' ? 'text-yellow-400' : 'text-red-400'}`}>{c.status}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -217,42 +220,42 @@ export default function StationMap() {
                     </div>
                 ) : (
                     /* Busy Hour Heatmap */
-                    <div className="card p-5">
-                        <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                            <Clock size={18} className="text-orange-400" /> Busy Hour Heatmap — Station Activity
+                    <div className="card p-5 max-[767px]:p-3">
+                        <h3 className="text-white font-bold mb-4 flex items-center gap-2 max-[767px]:text-sm max-[767px]:mb-3">
+                            <Clock size={18} className="text-orange-400 max-[767px]:w-4 max-[767px]:h-4" /> Busy Hour Heatmap — Station Activity
                         </h3>
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto max-[767px]:pb-2">
                             <div className="min-w-max">
                                 <div className="flex gap-1 mb-1">
-                                    <div className="w-10" />
+                                    <div className="w-10 max-[767px]:w-8" />
                                     {HOURS.map((h, i) => (
-                                        i % 3 === 0 && <div key={i} className="text-xs text-slate-500 w-6 text-center">{h.slice(0, 2)}</div>
+                                        i % 3 === 0 && <div key={i} className="text-xs text-slate-500 w-6 text-center max-[767px]:text-[10px] max-[767px]:w-5">{h.slice(0, 2)}</div>
                                     ))}
                                 </div>
                                 {busyHours.map((row, di) => (
                                     <div key={di} className="flex items-center gap-1 mb-1">
-                                        <div className="w-10 text-xs text-slate-400 font-medium">{DAYS[di]}</div>
+                                        <div className="w-10 text-xs text-slate-400 font-medium max-[767px]:text-[10px] max-[767px]:w-8">{DAYS[di]}</div>
                                         {row.map((val, hi) => (
                                             <div
                                                 key={hi}
-                                                className={`w-6 h-6 rounded-sm cursor-pointer transition-transform hover:scale-125 ${heatColor(val)}`}
+                                                className={`w-6 h-6 rounded-sm cursor-pointer transition-transform hover:scale-125 max-[767px]:w-5 max-[767px]:h-5 ${heatColor(val)}`}
                                                 title={`${DAYS[di]} ${HOURS[hi]}: ${['Low', 'Low', 'Medium', 'High', 'Peak'][val]} traffic`}
                                             />
                                         ))}
                                     </div>
                                 ))}
-                                <div className="flex items-center gap-3 mt-4 flex-wrap">
+                                <div className="flex items-center gap-3 mt-4 flex-wrap max-[767px]:gap-2 max-[767px]:mt-3">
                                     {[['Low', 'heat-low'], ['Medium', 'heat-medium'], ['High', 'heat-high'], ['Peak', 'heat-peak'], ['Closed', 'bg-slate-800']].map(([l, c]) => (
                                         <div key={l} className="flex items-center gap-1">
-                                            <div className={`w-4 h-4 rounded-sm ${c}`} />
-                                            <span className="text-xs text-slate-400">{l}</span>
+                                            <div className={`w-4 h-4 rounded-sm max-[767px]:w-3 max-[767px]:h-3 ${c}`} />
+                                            <span className="text-xs text-slate-400 max-[767px]:text-[10px]">{l}</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-xl p-3">
-                            <p className="text-blue-300 text-sm">💡 <strong>Best time to travel:</strong> Weekday mornings (6-8am) and early afternoons (1-3pm) have the most coolies available with shortest wait times.</p>
+                        <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 max-[767px]:mt-3 max-[767px]:p-2.5">
+                            <p className="text-blue-300 text-sm max-[767px]:text-xs max-[767px]:leading-snug">💡 <strong>Best time to travel:</strong> Weekday mornings (6-8am) and early afternoons (1-3pm) have the most coolies available with shortest wait times.</p>
                         </div>
                     </div>
                 )}

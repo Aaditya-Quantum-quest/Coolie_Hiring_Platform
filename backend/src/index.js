@@ -39,7 +39,7 @@ const app = express();
 const httpServer = createServer(app);
 
 // Render uses dynamic port
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 5000;
 
 // Frontend domain
 const CLIENT_URL =

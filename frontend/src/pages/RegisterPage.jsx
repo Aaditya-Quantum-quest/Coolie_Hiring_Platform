@@ -546,7 +546,7 @@ export default function RegisterPage() {
 
     useEffect(() => {
         if (type === 'coolie' && step === 2) {
-            axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/stations')
+            axios.get('https://coolie-hiring-platform.onrender.com/api/customer/stations')
                 .then(res => {
                     if (res.data.success) {
                         setStations(res.data.stations)
@@ -578,7 +578,7 @@ export default function RegisterPage() {
         setLoading(true)
         try {
             if (type === 'customer') {
-                const res = await axios.post('https://coolie-hiring-platform-backend.onrender.com/api/auth/customer/register', {
+                const res = await axios.post('https://coolie-hiring-platform.onrender.com/api/auth/customer/register', {
                     name: form.name,
                     email: form.email,
                     phone: form.phone,
@@ -633,7 +633,7 @@ export default function RegisterPage() {
                     formData.append('languages_spoken', JSON.stringify(form.languages))
                 }
 
-                const res = await axios.post('https://coolie-hiring-platform-backend.onrender.com/api/auth/coolie/register', formData, {
+                const res = await axios.post('https://coolie-hiring-platform.onrender.com/api/auth/coolie/register', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 })
 

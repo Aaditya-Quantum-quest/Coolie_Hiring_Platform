@@ -7,4 +7,24 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      // '/api': {
+      //   target: 'http://localhost:5000',
+      //   changeOrigin: true,
+      // },
+      // '/uploads': {
+      //   target: 'http://localhost:5000',
+      //   changeOrigin: true,
+      // },
+      '/api': {
+        target: 'https://coolie-hiring-platform-backend.onrender.com',
+        changeOrigin: true,
+      },
+      '/uploads': {
+        target: 'https://coolie-hiring-platform-backend.onrender.com',
+        changeOrigin: true,
+      },
+    },
+  },
 })

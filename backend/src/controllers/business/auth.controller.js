@@ -4,7 +4,7 @@ const db = require('../../config/db');
 const { BUSINESS_JWT_SECRET } = require('../../middleware/authBusiness.middleware');
 
 const register = async (req, res) => {
-    const client = await db.getClient();
+    const client = await db.connect();
     try {
         await client.query('BEGIN');
 
@@ -60,11 +60,12 @@ const register = async (req, res) => {
         const business_id = bizResult.rows[0].id;
 
         if (business_type === 'restaurant') {
+            const normalizedFoodType = food_type ? food_type.toLowerCase().replace('-', '') : null;
             await client.query(
                 `INSERT INTO restaurant_details (business_id, cuisine_types, food_type, specialty_dishes,
                  dining_options, avg_cost_for_two, seating_capacity, has_ac, has_parking, has_wifi, has_family_seating, has_private_dining)
                  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-                [business_id, cuisine_types ? JSON.parse(cuisine_types) : null, food_type || null,
+                [business_id, cuisine_types ? JSON.parse(cuisine_types) : null, normalizedFoodType,
                  specialty_dishes ? JSON.parse(specialty_dishes) : null,
                  dining_options ? JSON.parse(dining_options) : null,
                  avg_cost_for_two || null, seating_capacity || null,

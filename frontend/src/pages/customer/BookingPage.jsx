@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useGlobalSocket } from '../../context/SocketContext'
 import useGeolocation from '../../hooks/useGeolocation'
+import { searchTrain, searchStation } from '../../services/irctcService'
 
 /* ─── Bargain Modal ─────────────────────────────────────────── */
 function BargainModal({ coolie, luggageSize, customAmount, onClose, onDone, priceTable }) {
@@ -116,11 +117,14 @@ export default function BookingPage() {
     const preselectedCoolie = location.state?.coolie
 
     const [form, setForm] = useState({
+        initialStation: '',
         station: '',
         platform: '',
         trainNo: '',
+        trainName: '',
         dateTime: '',
         luggageSize: 'medium',
+        luggageImgUrl: '',
         selectedCoolie: preselectedCoolie || null,
         finalPrice: preselectedCoolie?.basePrice || 0,
         customAmount: '',
@@ -129,8 +133,66 @@ export default function BookingPage() {
     const [preview, setPreview] = useState(null)
     const [analyzing, setAnalyzing] = useState(false)
     const [submitting, setSubmitting] = useState(false)
+    const [searchingTrain, setSearchingTrain] = useState(false)
     const [booked, setBooked] = useState(false)
     const [otp] = useState(Math.floor(1000 + Math.random() * 9000))
+
+    // Search Suggestions
+    const [initialStationSuggestions, setInitialStationSuggestions] = useState([])
+    const [stationSuggestions, setStationSuggestions] = useState([])
+    const [trainSuggestions, setTrainSuggestions] = useState([])
+
+    // Debounced Initial Station Search
+    useEffect(() => {
+        if (form.initialStation.length < 2) {
+            setInitialStationSuggestions([])
+            return
+        }
+        const timer = setTimeout(async () => {
+            try {
+                const res = await searchStation(form.initialStation)
+                if (res.status && res.data) setInitialStationSuggestions(res.data)
+            } catch (err) { console.error(err) }
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [form.initialStation])
+
+    // Debounced Destination Station Search
+    useEffect(() => {
+        if (form.station.length < 2) {
+            setStationSuggestions([])
+            return
+        }
+        const timer = setTimeout(async () => {
+            try {
+                const res = await searchStation(form.station)
+                if (res.status && res.data) setStationSuggestions(res.data)
+            } catch (err) { console.error(err) }
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [form.station])
+
+    // Debounced Train Search
+    useEffect(() => {
+        if (form.trainNo.length < 3) {
+            setTrainSuggestions([])
+            return
+        }
+        const timer = setTimeout(async () => {
+            setSearchingTrain(true)
+            try {
+                const res = await searchTrain(form.trainNo)
+                if (res.status && res.data) {
+                    setTrainSuggestions(res.data)
+                    if (res.data.length === 1) {
+                        update('trainName', res.data[0].train_name)
+                    }
+                }
+            } catch (err) { console.error(err) }
+            finally { setSearchingTrain(false) }
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [form.trainNo])
 
     // Real-time coolie fetching
     const [priceTable, setPriceTable] = useState(null)
@@ -139,12 +201,21 @@ export default function BookingPage() {
     const { location: geoLoc, startWatching } = useGeolocation()
 
     useEffect(() => {
-        // Start watching customer location when booking page opens
         startWatching();
+        
+        // Auto-set current date and time
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+        update('dateTime', formattedDateTime);
     }, [startWatching]);
 
     useEffect(() => {
-        axios.get('https://coolie-hiring-platform-backend.onrender.com/api/config/pricing')
+        axios.get('/api/config/pricing', { withCredentials: true })
             .then(res => {
                 if (res.data.success) setPriceTable(res.data.priceTable)
             })
@@ -154,9 +225,9 @@ export default function BookingPage() {
     useEffect(() => {
         const fetchCoolies = async () => {
             try {
-                let url = 'https://coolie-hiring-platform-backend.onrender.com/api/customer/coolies';
-                if (geoLoc) url = `https://coolie-hiring-platform-backend.onrender.com/api/location/nearby?lat=${geoLoc.lat}&lng=${geoLoc.lng}`;
-                const res = await axios.get(url);
+                let url = '/api/customer/coolies';
+                if (geoLoc) url = `/api/location/nearby?lat=${geoLoc.lat}&lng=${geoLoc.lng}`;
+                const res = await axios.get(url, { withCredentials: true });
                 if (res.data.success) {
                     setAvailCoolies(res.data.coolies.filter(c => c.status === 'available'));
                 }
@@ -182,16 +253,36 @@ export default function BookingPage() {
 
     const update = (f, v) => setForm(prev => ({ ...prev, [f]: v }))
 
-    const handlePhoto = (e) => {
+    const handlePhoto = async (e) => {
         const file = e.target.files[0]
         if (!file) return
+
+        // Show preview
         setPreview(URL.createObjectURL(file))
         setAnalyzing(true)
-        setTimeout(() => {
+
+        try {
+            // Upload to backend
+            const formData = new FormData()
+            formData.append('luggage_photo', file)
+
+            const res = await axios.post('/api/bookings/upload-luggage', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                withCredentials: true
+            })
+
+            if (res.data.success) {
+                update('luggageImgUrl', res.data.url)
+                toast.success('Luggage photo uploaded!')
+            }
+        } catch (err) {
+            console.error('Upload failed:', err)
+            toast.error('Failed to upload luggage photo')
+        } finally {
             setAnalyzing(false)
             update('luggageSize', 'medium')
             toast.success('🤖 AI: 3 bags (~18kg) detected — Medium size recommended')
-        }, 2000)
+        }
     }
 
     const handleSubmit = async () => {
@@ -200,57 +291,45 @@ export default function BookingPage() {
             return
         }
 
-        // Validate custom amount if provided
-        if (form.customAmount) {
-            const amount = parseInt(form.customAmount)
-            if (isNaN(amount) || amount <= 0) {
-                toast.error('Please enter a valid amount')
-                return
-            }
-            if (amount > 10000) {
-                toast.error('Amount cannot exceed ₹10,000')
-                return
-            }
-
-            // Update final price with custom amount
-            update('finalPrice', amount)
-        }
+        const finalAmount = form.customAmount ? parseInt(form.customAmount) : form.finalPrice;
 
         setSubmitting(true)
 
-        // Backend integration - send booking data with single amount source
-        const bookingData = {
-            ...form,
-            finalAmount: form.customAmount ? parseInt(form.customAmount) : form.finalPrice,
-            amountSource: form.customAmount ? 'custom' : 'luggage',
-            timestamp: new Date().toISOString(),
-            status: 'pending'
+        try {
+            const bookingData = {
+                coolieId: form.selectedCoolie.id,
+                station: form.station,
+                platform: form.platform,
+                destination: form.station, // user asked for destination station name, defaulting to current station if not provided separately
+                luggageSize: form.luggageSize,
+                amount: finalAmount,
+                trainNo: form.trainNo,
+                trainName: form.trainName,
+                luggageImgUrl: form.luggageImgUrl,
+                dateTime: form.dateTime
+            }
+
+            const res = await axios.post('/api/bookings', bookingData, { withCredentials: true });
+
+            if (res.data.success) {
+                setBooked(true)
+                addNotification(`🎉 Booking confirmed! OTP: ${res.data.booking.otp}`)
+
+                // Store the booking ref for the receipt
+                const bookingRef = res.data.booking.booking_ref;
+
+                // Auto navigate to history after delay
+                setTimeout(() => {
+                    navigate('/customer/history')
+                }, 3000)
+            }
+        } catch (err) {
+            console.error('Booking failed:', err)
+            toast.error(err.response?.data?.message || 'Booking failed. Please try again.')
+        } finally {
+            setSubmitting(false)
         }
-
-        // Let the tracking page know which booking we just created
-        // We'll pass it via navigation state
-        const generatedBookingId = 'BK' + Math.floor(1000 + Math.random() * 9000);
-
-        // Simulate backend API call
-        console.log('Sending booking to backend:', bookingData)
-
-        await new Promise(r => setTimeout(r, 2000))
-        setBooked(true)
-        addNotification(`🎉 Booking confirmed! OTP: ${otp}`)
-        setSubmitting(false)
-
-        // Auto navigate to tracking page
-        setTimeout(() => {
-            navigate('/customer/history')
-        }, 3000)
     }
-
-    const luggageTypes = [
-        { key: 'small', icon: '🧳', label: 'Small', sub: 'Up to 7kg' },
-        { key: 'medium', icon: '🧳', label: 'Medium', sub: 'Up to 15kg' },
-        { key: 'large', icon: '📦', label: 'Large', sub: 'Up to 25kg' },
-        { key: 'heavy', icon: '📦', label: 'Heavy', sub: 'Custom Cargo' },
-    ]
 
     /* ── Booked Success Screen ── */
     if (booked) {
@@ -300,7 +379,7 @@ export default function BookingPage() {
                         <div className="space-y-5">
 
                             {/* Trip Details */}
-                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5 max-[767px]:p-4">
+                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5 mt-16 md:mt-0 max-[767px]:p-4">
                                 <h2 className="text-white font-bold text-sm flex items-center gap-2 mb-4 max-[767px]:text-base">
                                     <span className="w-5 h-5 rounded bg-[#7B2FFF]/20 flex items-center justify-center">
                                         <MapPin size={11} className="text-[#7B2FFF]" />
@@ -309,17 +388,59 @@ export default function BookingPage() {
                                 </h2>
 
                                 <div className="grid grid-cols-2 gap-3 mb-3 max-[767px]:grid-cols-1 max-[767px]:gap-4">
-                                    {/* Station */}
+                                    {/* Initial Station */}
                                     <div>
-                                        <label className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1.5 block">Station Name</label>
+                                        <label className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1.5 block">Current Station</label>
                                         <div className="relative">
-                                            <MapPin size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6188]" />
+                                            <MapPin size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-400" />
                                             <input
                                                 className="w-full bg-[#12102A] border border-[#1E1A40] rounded-xl pl-8 pr-3 py-2.5 text-white text-sm outline-none focus:border-[#7B2FFF] placeholder-[#3a3560] transition-colors"
-                                                placeholder="e.g. Grand Central"
+                                                placeholder="e.g. Rampur"
+                                                value={form.initialStation}
+                                                onChange={e => update('initialStation', e.target.value)}
+                                            />
+                                            {initialStationSuggestions.length > 0 && (
+                                                <div className="absolute top-full left-0 right-0 z-50 bg-[#1E1A40] border border-[#7B2FFF]/30 rounded-xl mt-1 overflow-hidden shadow-2xl">
+                                                    {initialStationSuggestions.map((s, i) => (
+                                                        <div key={i} className="px-3 py-2 hover:bg-[#7B2FFF]/20 cursor-pointer text-white text-xs border-b border-[#1E1A40] last:border-0"
+                                                            onClick={() => {
+                                                                update('initialStation', `${s.station_name} (${s.station_code})`)
+                                                                setInitialStationSuggestions([])
+                                                            }}
+                                                        >
+                                                            <span className="font-bold">{s.station_name}</span> ({s.station_code})
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Destination Station */}
+                                    <div>
+                                        <label className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1.5 block">Destination Station</label>
+                                        <div className="relative">
+                                            <MapPin size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
+                                            <input
+                                                className="w-full bg-[#12102A] border border-[#1E1A40] rounded-xl pl-8 pr-3 py-2.5 text-white text-sm outline-none focus:border-[#7B2FFF] placeholder-[#3a3560] transition-colors"
+                                                placeholder="e.g. Moradabad"
                                                 value={form.station}
                                                 onChange={e => update('station', e.target.value)}
                                             />
+                                            {stationSuggestions.length > 0 && (
+                                                <div className="absolute top-full left-0 right-0 z-50 bg-[#1E1A40] border border-[#7B2FFF]/30 rounded-xl mt-1 overflow-hidden shadow-2xl">
+                                                    {stationSuggestions.map((s, i) => (
+                                                        <div key={i} className="px-3 py-2 hover:bg-[#7B2FFF]/20 cursor-pointer text-white text-xs border-b border-[#1E1A40] last:border-0"
+                                                            onClick={() => {
+                                                                update('station', `${s.station_name} (${s.station_code})`)
+                                                                setStationSuggestions([])
+                                                            }}
+                                                        >
+                                                            <span className="font-bold">{s.station_name}</span> ({s.station_code})
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     {/* Platform */}
@@ -338,11 +459,36 @@ export default function BookingPage() {
                                         <div className="relative">
                                             <Hash size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6188]" />
                                             <input
-                                                className="w-full bg-[#12102A] border border-[#1E1A40] rounded-xl pl-8 pr-3 py-2.5 text-white text-sm outline-none focus:border-[#7B2FFF] placeholder-[#3a3560] transition-colors"
+                                                className="w-full bg-[#12102A] border border-[#1E1A40] rounded-xl pl-8 pr-10 py-2.5 text-white text-sm outline-none focus:border-[#7B2FFF] placeholder-[#3a3560] transition-colors"
                                                 placeholder="ELITE-102"
                                                 value={form.trainNo}
                                                 onChange={e => update('trainNo', e.target.value)}
                                             />
+                                            {searchingTrain && (
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                    <div className="w-4 h-4 border-2 border-[#7B2FFF] border-t-transparent rounded-full animate-spin"></div>
+                                                </div>
+                                            )}
+                                            {form.trainName && (
+                                                <div className="absolute -bottom-5 left-0 text-[10px] text-[#7B2FFF] font-bold truncate w-full px-1">
+                                                    {form.trainName}
+                                                </div>
+                                            )}
+                                            {trainSuggestions.length > 0 && (
+                                                <div className="absolute top-full left-0 right-0 z-50 bg-[#1E1A40] border border-[#7B2FFF]/30 rounded-xl mt-1 overflow-hidden shadow-2xl">
+                                                    {trainSuggestions.map((t, i) => (
+                                                        <div key={i} className="px-3 py-2 hover:bg-[#7B2FFF]/20 cursor-pointer text-white text-xs border-b border-[#1E1A40] last:border-0"
+                                                            onClick={() => {
+                                                                update('trainNo', t.train_number)
+                                                                update('trainName', t.train_name)
+                                                                setTrainSuggestions([])
+                                                            }}
+                                                        >
+                                                            <span className="font-bold">{t.train_name}</span> (#{t.train_number})
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     {/* Date & Time */}
@@ -352,9 +498,9 @@ export default function BookingPage() {
                                             <Clock size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6188]" />
                                             <input
                                                 type="datetime-local"
-                                                className="w-full bg-[#12102A] border border-[#1E1A40] rounded-xl pl-8 pr-3 py-2.5 text-white text-sm outline-none focus:border-[#7B2FFF] transition-colors"
+                                                readOnly
+                                                className="w-full bg-[#12102A]/50 border border-[#1E1A40] rounded-xl pl-8 pr-3 py-2.5 text-[#6B6188] text-sm outline-none cursor-not-allowed transition-colors"
                                                 value={form.dateTime}
-                                                onChange={e => update('dateTime', e.target.value)}
                                             />
                                         </div>
                                     </div>
@@ -362,78 +508,65 @@ export default function BookingPage() {
                             </div>
 
                             {/* Luggage Inventory */}
-                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5 max-[767px]:p-4">
-                                <div className="flex items-center justify-between mb-4 max-[767px]:flex-col max-[767px]:items-start max-[767px]:gap-1">
-                                    <h2 className="text-white font-bold text-sm flex items-center gap-2 max-[767px]:text-base">
-                                        <span className="w-5 h-5 rounded bg-[#7B2FFF]/20 flex items-center justify-center">
-                                            <Package size={11} className="text-[#7B2FFF]" />
+                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-xl p-3">
+                                {/* Header */}
+                                <div className="flex items-center justify-between mb-3">
+                                    <h2 className="text-white font-bold text-xs flex items-center gap-1.5">
+                                        <span className="w-4 h-4 rounded bg-[#7B2FFF]/20 flex items-center justify-center flex-shrink-0">
+                                            <Package size={9} className="text-[#7B2FFF]" />
                                         </span>
                                         Luggage Inventory
                                     </h2>
-                                    <span className="text-[#6B6188] text-[11px] max-[767px]:text-xs">Select quantity for each type</span>
+                                    <span className="text-[#6B6188] text-[10px] hidden sm:block">Select quantity for each type</span>
                                 </div>
 
-                                {/* Luggage Type Selector */}
-                                <div className="grid grid-cols-4 gap-2 mb-4 max-[767px]:grid-cols-2 max-[767px]:gap-3">
-                                    {luggageTypes.map(({ key, icon, label, sub }) => (
-                                        <button
-                                            key={key}
-                                            onClick={() => {
-                                                update('luggageSize', key);
-                                                if (!form.customAmount && priceTable) {
-                                                    update('finalPrice', priceTable[key]?.base || 0);
-                                                }
-                                            }}
-                                            className={`p-3 rounded-xl border text-center transition-all ${form.luggageSize === key
-                                                ? 'border-[#7B2FFF] bg-[#7B2FFF]/10'
-                                                : 'border-[#1E1A40] bg-[#12102A] hover:border-[#7B2FFF]/40'
-                                                }`}
-                                        >
-                                            <div className={`text-xl mb-1 ${form.luggageSize === key ? '' : 'grayscale opacity-60'}`}>{icon}</div>
-                                            <p className={`text-xs font-semibold ${form.luggageSize === key ? 'text-white' : 'text-[#6B6188]'}`}>{label}</p>
-                                            <p className="text-[10px] text-[#6B6188] mt-0.5">{sub}</p>
-                                            {form.luggageSize === key && !form.customAmount && priceTable && (
-                                                <p className="text-[#7B2FFF] text-[11px] font-bold mt-1">₹{priceTable[key]?.base}</p>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
+                                {/* Subtitle visible only on mobile below header */}
+                                <p className="text-[#6B6188] text-[10px] mb-3 sm:hidden">Select quantity for each type</p>
 
                                 {/* AI Scanner */}
-                                <div className="grid grid-cols-2 gap-3 max-[767px]:grid-cols-1 max-[767px]:gap-4">
-                                    <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl overflow-hidden max-[767px]:h-32">
+                                <div className="flex flex-col xs:flex-row gap-2">
+
+                                    {/* Preview Box */}
+                                    <div className="bg-[#12102A] border border-[#1E1A40] rounded-lg overflow-hidden flex-shrink-0
+                    h-28 xs:h-auto xs:w-28 sm:w-32 md:w-36 self-stretch">
                                         {preview ? (
-                                            <div className="relative h-full min-h-[100px]">
+                                            <div className="relative h-full w-full">
                                                 <img src={preview} alt="luggage" className="w-full h-full object-cover" />
                                                 {analyzing && (
                                                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                                        <div className="w-7 h-7 border-2 border-[#7B2FFF] border-t-transparent rounded-full animate-spin" />
+                                                        <div className="w-5 h-5 border-2 border-[#7B2FFF] border-t-transparent rounded-full animate-spin" />
                                                     </div>
                                                 )}
                                             </div>
                                         ) : (
-                                            <label className="flex flex-col items-center justify-center cursor-pointer p-4 h-full min-h-[100px]">
-                                                <Camera size={22} className="text-[#3a3560] mb-1" />
-                                                <span className="text-[#6B6188] text-[10px] text-center">PREVIEW AREA</span>
-                                                <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
+                                            <label className="flex flex-col items-center justify-center cursor-pointer h-full w-full gap-1 min-h-[96px]">
+                                                <Camera size={16} className="text-[#3a3560]" />
+                                                <span className="text-[#6B6188] text-[9px] tracking-wide">PREVIEW AREA</span>
+                                                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhoto} />
                                             </label>
                                         )}
                                     </div>
 
-                                    <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl p-4 flex flex-col justify-between">
+                                    {/* Info + Upload */}
+                                    <div className="bg-[#12102A] border border-[#1E1A40] rounded-lg p-2.5 sm:p-3 flex flex-col justify-between flex-1 min-w-0 gap-2">
                                         <div>
-                                            <p className="text-white text-xs font-bold flex items-center gap-1.5 mb-1">
-                                                <Zap size={12} className="text-[#7B2FFF]" /> AI Luggage Scanner
+                                            <p className="text-white text-[10px] font-bold flex items-center gap-1 mb-1">
+                                                <Zap size={10} className="text-[#7B2FFF] flex-shrink-0" />
+                                                AI Luggage Scanner
                                             </p>
-                                            <p className="text-[#6B6188] text-[11px] leading-relaxed">
-                                                Not sure about weights? Take a quick photo of your bags and our AI will estimate the best porter tier for you instantly.
+                                            <p className="text-[#6B6188] text-[9px] leading-relaxed">
+                                                Not sure about weights? Upload a photo and AI will estimate the best porter tier instantly.
                                             </p>
                                         </div>
-                                        <label className="mt-3 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-[#7B2FFF]/40 text-[#A855F7] text-xs font-semibold cursor-pointer hover:bg-[#7B2FFF]/10 transition-colors">
-                                            <Camera size={12} /> Take/Upload Photo
-                                            <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
+                                        <label className="flex items-center justify-center gap-1 py-1.5 rounded-md border border-[#7B2FFF]/40
+                        text-[#A855F7] text-[10px] font-semibold cursor-pointer
+                        hover:bg-[#7B2FFF]/10 active:bg-[#7B2FFF]/20 transition-colors">
+                                            <Camera size={10} className="flex-shrink-0" />
+                                            <span>Take / Upload Photo</span>
+                                            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhoto} />
                                         </label>
                                     </div>
+
                                 </div>
                             </div>
 

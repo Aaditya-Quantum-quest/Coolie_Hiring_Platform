@@ -7,7 +7,7 @@ const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 15 * 60 * 1000,
+    maxAge: 60 * 60 * 1000, // 1 hour
 }
 const refreshCookieOptions = {
     ...cookieOptions,
@@ -275,7 +275,7 @@ const refreshAccessToken = async (req, res) => {
 
         let decoded
         try {
-            decoded = require('jsonwebtoken').verify(refresh_token_cookie, process.env.JWT_SECRET)
+            decoded = require('jsonwebtoken').verify(refresh_token_cookie, process.env.JWT_REFRESH_SECRET)
         } catch {
             return res.status(401).json({ success: false, message: 'Invalid or expired refresh token.' })
         }

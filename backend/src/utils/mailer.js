@@ -56,10 +56,39 @@ const sendLockoutEmail = async (to, name) => {
 }
 
 /**
+ * Send registration confirmation to coolie immediately after signing up.
+ */
+const sendRegistrationReceivedEmail = async (to, name) => {
+    if (!process.env.SMTP_USER || process.env.SMTP_USER === 'your_mailtrap_username') {
+        console.log(`[MAILER] Would send registration received email to ${to}`)
+        return
+    }
+
+    const transporter = getTransporter()
+    await transporter.sendMail({
+        from: process.env.SMTP_FROM || '"Coolie Hire" <noreply@cooliehire.in>',
+        to,
+        subject: '📝 Registration Received — Coolie Hiring Platform',
+        html: `
+        <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:16px">
+          <h2 style="color:#f97316;margin-top:0">📝 Registration Received</h2>
+          <p>Hi <strong>${name}</strong>,</p>
+          <p>Thank you for registering on the <strong>Coolie Hiring Platform</strong>.</p>
+          <div style="background:#1e293b;border-left:4px solid #f97316;padding:16px;border-radius:8px;margin:20px 0">
+            <p style="margin:0;color:#cbd5e1">Your documents have been submitted for verification. It will take <strong>two or three days</strong> to confirm your registration.</p>
+          </div>
+          <p>Once approved, you will receive another email containing your unique <strong>Coolie ID</strong> which you can use to log in and start working.</p>
+          <p style="color:#64748b;font-size:13px;margin-top:32px">© Coolie Hire Platform</p>
+        </div>
+        `
+    })
+}
+
+/**
  * Send approval notification to coolie after admin verification.
  */
-const sendApprovalEmail = async (to, name, coolieId) => {
-    if (!process.env.SMTP_USER) {
+const sendApprovalEmail = async (to, name, coolieId, password) => {
+    if (!process.env.SMTP_USER || process.env.SMTP_USER === 'your_mailtrap_username') {
         console.log(`[MAILER] Would send approval email to ${to}. Coolie ID: ${coolieId}`)
         return
     }
@@ -75,15 +104,14 @@ const sendApprovalEmail = async (to, name, coolieId) => {
           <p>Hi <strong>${name}</strong>,</p>
           <p>Your coolie account has been <strong>verified and approved</strong> by our admin team.</p>
           <div style="background:#1e293b;border:1px solid #f97316;padding:20px;border-radius:12px;margin:20px 0;text-align:center">
-            <p style="margin:0;font-size:13px;color:#94a3b8">Your Coolie ID</p>
+            <p style="margin:0;font-size:13px;color:#94a3b8">Your Unique Coolie ID</p>
             <h1 style="margin:8px 0;color:#f97316;font-size:28px;font-family:monospace;letter-spacing:2px">${coolieId}</h1>
-            <p style="margin:0;font-size:12px;color:#64748b">Use this ID to log in to the platform</p>
           </div>
-          <p>You can now log in using:</p>
-          <ul>
-            <li><strong>Coolie ID:</strong> ${coolieId}</li>
-            <li><strong>Password:</strong> (the password you set during registration)</li>
-          </ul>
+          <p>You can now log in using these credentials:</p>
+          <div style="background:#1e293b;padding:16px;border-radius:8px;margin:16px 0">
+            <p style="margin:4px 0"><strong>Coolie ID:</strong> ${coolieId}</p>
+            <p style="margin:4px 0"><strong>Password:</strong> ${password || '(the password you set during registration)'}</p>
+          </div>
           <p style="color:#64748b;font-size:13px;margin-top:32px">© Coolie Hire Platform</p>
         </div>
         `
@@ -117,4 +145,9 @@ const sendRejectionEmail = async (to, name, reason) => {
     })
 }
 
-module.exports = { sendLockoutEmail, sendApprovalEmail, sendRejectionEmail }
+module.exports = { 
+    sendLockoutEmail, 
+    sendApprovalEmail, 
+    sendRejectionEmail,
+    sendRegistrationReceivedEmail
+}

@@ -68,4 +68,11 @@ const customerPhotoUpload = multer({
     limits,
 }).single('profile_photo')
 
-module.exports = { coolieUpload, customerPhotoUpload }
+// Luggage photo upload
+const luggagePhotoUpload = multer({
+    storage: createStorage('luggage_photos'),
+    fileFilter,
+    limits,
+}).single('luggage_photo')
+
+module.exports = { coolieUpload, customerPhotoUpload, luggagePhotoUpload }

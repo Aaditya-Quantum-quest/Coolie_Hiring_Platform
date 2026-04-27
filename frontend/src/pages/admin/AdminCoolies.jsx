@@ -7,14 +7,20 @@ import { adminUsersService } from '../../services/adminService'
 
 const STATUS_STYLE = {
     active: 'status-available',
+    approved: 'status-available',
     suspended: 'status-busy',
-    pending_verification: 'status-onduty',
+    pending: 'status-onduty',
+    level1_approved: 'status-available',
+    under_review: 'status-onduty',
 }
 
 const STATUS_LABEL = {
     active: 'Active',
+    approved: 'Approved',
     suspended: 'Suspended',
-    pending_verification: 'Pending KYC',
+    pending: 'Pending Docs',
+    level1_approved: 'KYC Verified',
+    under_review: 'Reviewing',
 }
 
 export default function AdminCoolies() {
@@ -72,11 +78,22 @@ export default function AdminCoolies() {
     const verifyKYC = async (id) => {
         try {
             await adminUsersService.approveCoolieLevel1(id)
-            toast.success('KYC Verified! Coolie is now pending final approval ✅')
+            toast.success('KYC Verified! Ready for Level 2 (Final Approval) ✅')
             setSelected(null)
             fetchCoolies()
         } catch (error) {
             toast.error('Failed to verify KYC')
+        }
+    }
+
+    const finalApprove = async (id) => {
+        try {
+            const res = await adminUsersService.approveCoolieLevel2(id)
+            toast.success(`🎉 Approved! Coolie ID ${res.coolie_id} generated and emailed.`, { duration: 5000 })
+            setSelected(null)
+            fetchCoolies()
+        } catch (error) {
+            toast.error('Final approval failed')
         }
     }
 
@@ -102,10 +119,14 @@ export default function AdminCoolies() {
                         </div>
                         <div className="flex gap-3">
                             <div className="card px-4 py-2 text-center">
-                                <p className="text-orange-400 font-black text-lg">{coolies.filter(c => c.status === 'pending_verification').length}</p>
-                                <p className="text-xs text-slate-400">Pending KYC</p>
+                                <p className="text-orange-400 font-black text-lg">{coolies.filter(c => c.status === 'pending').length}</p>
+                                <p className="text-xs text-slate-400">New Requests</p>
                             </div>
-                            <button onClick={() => toast('Exporting...', { icon: '📥' })} className="btn-secondary flex items-center gap-2 text-sm">
+                            <div className="card px-4 py-2 text-center">
+                                <p className="text-blue-400 font-black text-lg">{coolies.filter(c => c.status === 'level1_approved').length}</p>
+                                <p className="text-xs text-slate-400">Verified KYC</p>
+                            </div>
+                            <button onClick={() => toast('Exporting...', { icon: '📥' })} className="btn-secondary flex items-center gap-2 text-sm hidden lg:flex">
                                 <Download size={16} /> Export
                             </button>
                         </div>
@@ -118,13 +139,13 @@ export default function AdminCoolies() {
                             <input className="input-field pl-10" placeholder="Search by name, ID, station..." value={search} onChange={e => setSearch(e.target.value)} />
                         </div>
                         <div className="flex gap-2 flex-wrap">
-                            {['all', 'active', 'suspended', 'pending_verification'].map(f => (
+                            {['all', 'active', 'suspended', 'pending', 'level1_approved'].map(f => (
                                 <button
                                     key={f}
                                     onClick={() => setFilterStatus(f)}
                                     className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all ${filterStatus === f ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                                 >
-                                    {f === 'pending_verification' ? 'Pending KYC' : f.charAt(0).toUpperCase() + f.slice(1)}
+                                    {STATUS_LABEL[f] || f.charAt(0).toUpperCase() + f.slice(1)}
                                 </button>
                             ))}
                         </div>
@@ -194,9 +215,13 @@ export default function AdminCoolies() {
                                                         <button onClick={() => setSelected(c)} className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20">
                                                             <Eye size={14} />
                                                         </button>
-                                                        {c.status === 'pending' || c.status === 'pending_verification' ? (
-                                                            <button onClick={() => verifyKYC(c.dbId)} className="w-8 h-8 rounded-lg bg-green-500/10 text-green-400 flex items-center justify-center hover:bg-green-500/20" title="Verify KYC">
+                                                        {c.status === 'pending' || c.status === 'under_review' ? (
+                                                            <button onClick={() => verifyKYC(c.dbId)} className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20" title="Verify KYC">
                                                                 <Shield size={14} />
+                                                            </button>
+                                                        ) : c.status === 'level1_approved' ? (
+                                                            <button onClick={() => finalApprove(c.dbId)} className="w-8 h-8 rounded-lg bg-green-500/10 text-green-400 flex items-center justify-center hover:bg-green-500/20" title="Final Approval">
+                                                                <Award size={14} />
                                                             </button>
                                                         ) : (
                                                             <button onClick={() => toggleSuspend(c.dbId)} className={`w-8 h-8 rounded-lg flex items-center justify-center ${c.status === 'suspended' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
@@ -251,9 +276,13 @@ export default function AdminCoolies() {
                                     ))}
                                 </div>
                                 <div className="flex gap-3 mt-4">
-                                    {selected.status === 'pending' || selected.status === 'pending_verification' ? (
-                                        <button onClick={() => verifyKYC(selected.dbId)} className="btn-success flex-1 text-sm py-2 flex items-center justify-center gap-1">
+                                    {selected.status === 'pending' || selected.status === 'under_review' ? (
+                                        <button onClick={() => verifyKYC(selected.dbId)} className="btn-primary flex-1 text-sm py-2 flex items-center justify-center gap-1">
                                             <Shield size={14} /> Verify KYC
+                                        </button>
+                                    ) : selected.status === 'level1_approved' ? (
+                                        <button onClick={() => finalApprove(selected.dbId)} className="btn-success flex-1 text-sm py-2 flex items-center justify-center gap-1">
+                                            <Award size={14} /> Final Approve
                                         </button>
                                     ) : null}
                                     <button onClick={() => { toggleSuspend(selected.dbId); setSelected(null) }} className="btn-danger flex-1 text-sm py-2">

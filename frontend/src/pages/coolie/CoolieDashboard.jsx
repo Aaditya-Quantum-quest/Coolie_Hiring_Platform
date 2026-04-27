@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Sidebar from '../../components/Sidebar'
 import {
     CheckCircle, XCircle, Clock, Star, Package,
-    MapPin, Activity, AlertTriangle, Luggage, User
+    MapPin, Activity, AlertTriangle, Luggage, User, Train
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import SearchBar from '../../components/ui/SearchBar'
@@ -11,6 +11,7 @@ import { useGlobalSocket } from '../../context/SocketContext'
 import LocationPermissionModal from '../../components/location/LocationPermissionModal'
 import { useApp } from '../../context/AppContext'
 import { coolieDashboardService, coolieStatusService } from '../../services/coolieService'
+import { getLiveStation } from '../../services/irctcService'
 
 /* ── Mock Data ───────────────────────────────────────────────── */
 const INITIAL_REQUESTS = [
@@ -169,6 +170,8 @@ export default function CoolieDashboard() {
         pending: 0
     })
     const [loading, setLoading] = useState(true)
+    const [stationBoard, setStationBoard] = useState([])
+    const [loadingBoard, setLoadingBoard] = useState(false)
 
     // Live Tracking Hooks
     const { location, permission, startWatching, stopWatching } = useGeolocation()
@@ -231,10 +234,28 @@ export default function CoolieDashboard() {
         
         fetchDashboardData();
         
+        // Fetch station board
+        const fetchBoard = async () => {
+            const stationCode = user?.station_code || 'NDLS';
+            setLoadingBoard(true);
+            try {
+                const res = await getLiveStation(stationCode, 2);
+                if (res.status) setStationBoard(res.data.trains || []);
+            } catch (err) {
+                console.error('Error fetching station board:', err);
+            } finally {
+                setLoadingBoard(false);
+            }
+        };
+        fetchBoard();
+        
         // Set up periodic refresh
-        const interval = setInterval(fetchDashboardData, 30000); // Refresh every 30 seconds
+        const interval = setInterval(() => {
+            fetchDashboardData();
+            fetchBoard();
+        }, 30000); // Refresh every 30 seconds
         return () => clearInterval(interval);
-    }, [coolieId]);
+    }, [coolieId, user?.station_code]);
 
     // Shift clock
     useEffect(() => {
@@ -476,6 +497,46 @@ export default function CoolieDashboard() {
                             {filteredRequests.map(req => (
                                 <RequestCard key={req.id} req={req} onAccept={handleAccept} onReject={handleReject} />
                             ))}
+
+                            {/* ── Station Live Board ── */}
+                            <div className="pt-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-white font-bold text-lg">Station Arrivals (Next 2h)</h2>
+                                    <span className="text-[10px] text-[#6B6188] uppercase tracking-widest font-bold">{user?.station_name || 'New Delhi'}</span>
+                                </div>
+                                {loadingBoard ? (
+                                    <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-8 text-center">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7B2FFF] mx-auto"></div>
+                                    </div>
+                                ) : stationBoard.length === 0 ? (
+                                    <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-8 text-center text-[#6B6188] text-sm">
+                                        No trains scheduled in the next 2 hours.
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-3">
+                                        {stationBoard.slice(0, 5).map((t, i) => (
+                                            <div key={i} className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-4 flex items-center gap-4 hover:border-[#7B2FFF]/30 transition-all">
+                                                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                                                    <Train size={18} className="text-orange-400" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-white font-bold text-sm truncate">{t.train_name}</p>
+                                                    <p className="text-[#6B6188] text-[10px] font-mono">#{t.train_number} • {t.sta || '--:--'}</p>
+                                                </div>
+                                                <div className="text-right shrink-0">
+                                                    <p className="text-[#6B6188] text-[9px] uppercase font-bold mb-0.5">Platform</p>
+                                                    <p className="text-orange-400 font-black text-lg">{t.platform || 'TBA'}</p>
+                                                </div>
+                                                <div className="shrink-0 pl-2">
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${t.delay > 0 ? 'bg-red-500/10 text-red-400 border-red-500/30' : 'bg-green-500/10 text-green-400 border-green-500/30'}`}>
+                                                        {t.delay > 0 ? `+${t.delay}m` : 'On Time'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* ══ RIGHT PANEL ══ */}

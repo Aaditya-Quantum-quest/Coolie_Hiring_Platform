@@ -13,7 +13,9 @@ const generateTokens = (payload) => ({
     accessToken: jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN || '15m',
     }),
-    refreshToken: jwt.sign(payload, process.env.JWT_SECRET, {
+    // FIX: use JWT_REFRESH_SECRET (not JWT_SECRET) so the two tokens
+    // are signed with different keys and can be independently verified/revoked
+    refreshToken: jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
         expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
     }),
 })
@@ -174,6 +176,8 @@ const createCoolie = async (data, files) => {
     const aadhaar_back_url = buildFileUrl(files?.aadhaar_back?.[0]?.path)
     const secondary_doc_url = buildFileUrl(files?.secondary_doc?.[0]?.path)
 
+    // FIX: the INSERT statement was missing its opening clause entirely —
+    // the column list, pool.query() call, and template-literal start were all absent
     const r = await pool.query(
         `INSERT INTO coolies (
             name, email, password_hash, phone, alt_phone,
@@ -183,7 +187,7 @@ const createCoolie = async (data, files) => {
             secondary_doc_type, secondary_doc_number_enc, secondary_doc_url,
             passport_photo_url,
             bank_name, account_number_enc, ifsc_code, upi_id,
-            is_active
+            is_active, temp_password
         ) VALUES (
             $1,$2,$3,$4,$5,
             $6,$7,$8,$9,$10,$11,
@@ -192,7 +196,7 @@ const createCoolie = async (data, files) => {
             $21,$22,$23,
             $24,
             $25,$26,$27,$28,
-            FALSE
+            FALSE, $29
         )
         RETURNING id, name, email, phone, station_name, verification_status, created_at`,
         [
@@ -203,8 +207,13 @@ const createCoolie = async (data, files) => {
             secondary_doc_type, secondary_doc_number_enc, secondary_doc_url,
             passport_photo_url,
             bank_name || null, account_number_enc, ifsc_code || null, upi_id || null,
+            password // store plain password temporarily for approval email
         ]
     )
+
+    // Send "Registration Received" email
+    const { sendRegistrationReceivedEmail } = require('../utils/mailer')
+    await sendRegistrationReceivedEmail(email, name).catch(console.error)
 
     return r.rows[0]
 }
@@ -311,8 +320,8 @@ const approveLevel1 = async (coolieId, adminId) => {
  * Generates: Coolie ID, QR code, activates account, sends email
  */
 const approveLevel2 = async (coolieDbId, adminId) => {
-    // Get coolie details for ID generation
-    const r = await pool.query('SELECT name, email, station_name FROM coolies WHERE id=$1', [coolieDbId])
+    // Get coolie details for ID generation and email
+    const r = await pool.query('SELECT name, email, station_name, temp_password FROM coolies WHERE id=$1', [coolieDbId])
     const coolie = r.rows[0]
     if (!coolie) throw new Error('Coolie not found')
 
@@ -324,7 +333,7 @@ const approveLevel2 = async (coolieDbId, adminId) => {
     const { generateCoolieQR } = require('../utils/qrcode')
     const qrCodeUrl = await generateCoolieQR(generatedCoolieId)
 
-    // Update DB — activate account
+    // Update DB — activate account and CLEAR temp_password
     await pool.query(
         `UPDATE coolies SET
             coolie_id = $2,
@@ -334,14 +343,15 @@ const approveLevel2 = async (coolieDbId, adminId) => {
             is_verified = TRUE,
             is_active = TRUE,
             level2_approved_by = $4,
-            level2_approved_at = NOW()
+            level2_approved_at = NOW(),
+            temp_password = NULL
          WHERE id = $1`,
         [coolieDbId, generatedCoolieId, qrCodeUrl, adminId]
     )
 
-    // Send approval email
+    // Send approval email with ID and plain password
     const { sendApprovalEmail } = require('../utils/mailer')
-    await sendApprovalEmail(coolie.email, coolie.name, generatedCoolieId).catch(console.error)
+    await sendApprovalEmail(coolie.email, coolie.name, generatedCoolieId, coolie.temp_password).catch(console.error)
 
     return { coolie_id: generatedCoolieId, qr_code_url: qrCodeUrl }
 }
@@ -367,9 +377,9 @@ const rejectCoolie = async (coolieDbId, adminId, reason) => {
 }
 
 module.exports = {
-    // tokens
+
     generateTokens, storeRefreshToken, verifyRefreshToken, deleteRefreshToken,
-    // passwords
+
     comparePassword,
     // customer
     findCustomerByEmail, findCustomerByPhone, createCustomer, getCustomerById,

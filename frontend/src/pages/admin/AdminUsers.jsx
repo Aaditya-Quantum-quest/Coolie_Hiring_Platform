@@ -16,21 +16,24 @@ export default function AdminUsers() {
         try {
             setLoading(true)
             const res = await adminUsersService.getAllCustomers()
-            if (res.success) {
+            if (res && res.success && Array.isArray(res.data)) {
                 // Map DB users to frontend format
                 const mapped = res.data.map(u => ({
                     id: u.id,
-                    displayId: 'U-' + u.id.substring(0, 5).toUpperCase(),
-                    name: u.name,
-                    email: u.email,
-                    phone: u.phone,
+                    displayId: 'U-' + String(u.id || '').substring(0, 5).toUpperCase(),
+                    name: u.name || 'Unknown User',
+                    email: u.email || 'N/A',
+                    phone: u.phone || 'N/A',
                     city: u.city || 'N/A',
-                    bookings: 0, // In real app, fetch this from aggregation
-                    rating: null,
-                    joined: new Date(u.created_at).toLocaleDateString(),
+                    bookings: u.total_bookings || 0,
+                    rating: u.avg_rating || null,
+                    joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A',
                     status: u.is_banned ? 'banned' : (u.is_active ? 'active' : 'suspended')
                 }))
                 setUsers(mapped)
+            } else {
+                console.warn('Unexpected API response structure:', res);
+                setUsers([])
             }
         } catch (err) {
             console.error('Failed to load users:', err)
@@ -122,6 +125,7 @@ export default function AdminUsers() {
                                         <th className="py-4 px-4 text-left font-semibold">Contact</th>
                                         <th className="py-4 px-4 text-left font-semibold hidden md:table-cell">City</th>
                                         <th className="py-4 px-4 text-left font-semibold hidden lg:table-cell">Bookings</th>
+                                        <th className="py-4 px-4 text-left font-semibold hidden lg:table-cell">Rating</th>
                                         <th className="py-4 px-4 text-left font-semibold hidden lg:table-cell">Joined</th>
                                         <th className="py-4 px-4 text-left font-semibold">Status</th>
                                         <th className="py-4 px-4 text-right font-semibold">Actions</th>
@@ -156,6 +160,12 @@ export default function AdminUsers() {
                                                 <td className="py-3 px-4 hidden lg:table-cell">
                                                     <span className="text-white font-bold">{u.bookings}</span>
                                                     {u.bookings === 0 && <span className="text-xs text-slate-500 ml-1">trips</span>}
+                                                </td>
+                                                <td className="py-3 px-4 hidden lg:table-cell">
+                                                    <div className="flex items-center gap-1 text-yellow-500 font-bold">
+                                                        <Star size={12} fill="currentColor" />
+                                                        {u.rating || '0.0'}
+                                                    </div>
                                                 </td>
                                                 <td className="py-3 px-4 text-slate-500 text-xs hidden lg:table-cell">{u.joined}</td>
                                                 <td className="py-3 px-4">

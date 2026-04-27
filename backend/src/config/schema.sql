@@ -160,7 +160,8 @@ CREATE TABLE IF NOT EXISTS bookings (
     booking_ref         VARCHAR(20) UNIQUE NOT NULL, -- e.g., BK001
     customer_id         UUID REFERENCES customers(id),
     coolie_id           UUID REFERENCES coolies(id),
-    station_name        VARCHAR(200) NOT NULL,
+    initial_station_name VARCHAR(200),
+    destination_station_name VARCHAR(200) NOT NULL,
     platform            VARCHAR(100) NOT NULL,
     train_no            VARCHAR(50),
     destination         VARCHAR(200),

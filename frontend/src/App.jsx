@@ -36,6 +36,8 @@ import BookingHistory from './pages/customer/BookingHistory'
 import RatingPage from './pages/customer/RatingPage'
 import StationMap from './pages/customer/StationMap'
 import TrainStatus from './pages/customer/TrainStatus'
+import CustomerProfile from './pages/customer/CustomerProfile'
+import BookingReceipt from './pages/customer/BookingReceipt'
 
 // Coolie Pages
 import CoolieDashboard from './pages/coolie/CoolieDashboard'
@@ -77,6 +79,8 @@ function AppRoutes() {
       <Route path="/customer/rate" element={<ProtectedRoute allowedRole="customer"><RatingPage /></ProtectedRoute>} />
       <Route path="/customer/map" element={<ProtectedRoute allowedRole="customer"><StationMap /></ProtectedRoute>} />
       <Route path="/customer/trains" element={<ProtectedRoute allowedRole="customer"><TrainStatus /></ProtectedRoute>} />
+      <Route path="/customer/profile" element={<ProtectedRoute allowedRole="customer"><CustomerProfile /></ProtectedRoute>} />
+      <Route path="/customer/receipt/:id" element={<ProtectedRoute allowedRole="customer"><BookingReceipt /></ProtectedRoute>} />
 
       {/* Coolie */}
       <Route path="/coolie" element={<ProtectedRoute allowedRole="coolie"><CoolieDashboard /></ProtectedRoute>} />
@@ -115,6 +119,7 @@ function AppRoutes() {
 
 export default function App() {
   const [loaded, setLoaded] = useState(false);
+  const handlePreloaderComplete = React.useCallback(() => setLoaded(true), []);
   
   return (
     <AppProvider>
@@ -130,7 +135,7 @@ export default function App() {
             duration: 4000,
           }}
         />
-        {loaded ? <AppRoutes /> : <Preloader onComplete={() => setLoaded(true)} />}
+        {loaded ? <AppRoutes /> : <Preloader onComplete={handlePreloaderComplete} />}
       </BrowserRouter>
       </SocketProvider>
       </BusinessAuthProvider>

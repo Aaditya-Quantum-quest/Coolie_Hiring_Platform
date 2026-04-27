@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const BusinessAuthContext = createContext(null);
 
-const API = import.meta.env.VITE_API_URL || 'https://coolie-hiring-platform-backend.onrender.com';
+const API = import.meta.env.VITE_API_URL || '';
 
 export const BusinessAuthProvider = ({ children }) => {
     const [owner, setOwner] = useState(null);

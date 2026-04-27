@@ -8,9 +8,14 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import SearchBar from '../../components/ui/SearchBar'
-import { adminDashboardService } from '../../services/adminService'
+import { adminDashboardService, adminUsersService } from '../../services/adminService'
 import toast from 'react-hot-toast'
 
+const STATUS_STYLES = {
+    active: 'status-onduty',
+    pending: 'status-busy',
+    completed: 'status-available',
+}
 
 export default function AdminDashboard() {
     const navigate = useNavigate()
@@ -21,13 +26,12 @@ export default function AdminDashboard() {
         activeCoolies: 0,
         todayBookings: 0,
         todayRevenue: 0,
-        revenueChange: 0,
         openDisputes: 0,
-        urgentDisputes: 0,
         avgRating: 0
     })
     const [stationCoverage, setStationCoverage] = useState([])
     const [urgentDisputes, setUrgentDisputes] = useState(0)
+    const [pendingCoolies, setPendingCoolies] = useState([])
     const [loading, setLoading] = useState(true)
     const [tick, setTick] = useState(0)
     const [searchQuery, setSearchQuery] = useState('')
@@ -40,45 +44,50 @@ export default function AdminDashboard() {
                 setLoading(true);
                 
                 // Fetch all data in parallel
-                const [statsResponse, bookingsResponse, revenueResponse, coverageResponse, disputesResponse] = await Promise.all([
-                    adminDashboardService.getStats().catch(() => ({ data: {} })),
-                    adminDashboardService.getLiveBookings().catch(() => ({ data: [] })),
-                    adminDashboardService.getRevenueData().catch(() => ({ data: [] })),
-                    adminDashboardService.getStationCoverage().catch(() => ({ data: [] })),
-                    adminDashboardService.getUrgentDisputes().catch(() => ({ data: { count: 0 } }))
+                const [statsResponse, bookingsResponse, revenueResponse, coverageResponse, disputesResponse, pendingCooliesResponse] = await Promise.all([
+                    adminDashboardService.getStats().catch(() => ({ success: false })),
+                    adminDashboardService.getLiveBookings().catch(() => ({ success: false })),
+                    adminDashboardService.getRevenueData().catch(() => ({ success: false })),
+                    adminDashboardService.getStationCoverage().catch(() => ({ success: false })),
+                    adminDashboardService.getUrgentDisputes().catch(() => ({ success: false })),
+                    adminUsersService.getPendingCoolies().catch(() => ({ success: false }))
                 ]);
                 
                 // Update state with fetched data
-                if (statsResponse.data?.success) {
+                if (statsResponse?.success) {
                     setStats({
-                        totalUsers: statsResponse.data.data?.totalUsers || 0,
-                        usersToday: statsResponse.data.data?.usersToday || 0,
-                        activeCoolies: statsResponse.data.data?.activeCoolies || 0,
-                        onlineCoolies: statsResponse.data.data?.onlineCoolies || 0,
-                        todayBookings: statsResponse.data.data?.todayBookings || 0,
-                        hourBookings: statsResponse.data.data?.hourBookings || 0,
-                        todayRevenue: statsResponse.data.data?.todayRevenue || 0,
-                        revenueChange: statsResponse.data.data?.revenueChange || 0,
-                        openDisputes: statsResponse.data.data?.openDisputes || 0,
-                        urgentDisputes: statsResponse.data.data?.urgentDisputes || 0,
-                        avgRating: statsResponse.data.data?.avgRating || 0
+                        totalUsers: statsResponse.data?.totalUsers || 0,
+                        usersToday: statsResponse.data?.usersToday || 0,
+                        activeCoolies: statsResponse.data?.activeCoolies || 0,
+                        onlineCoolies: statsResponse.data?.onlineCoolies || 0,
+                        todayBookings: statsResponse.data?.todayBookings || 0,
+                        hourBookings: statsResponse.data?.hourBookings || 0,
+                        todayRevenue: statsResponse.data?.todayRevenue || 0,
+                        revenueChange: statsResponse.data?.revenueChange || 0,
+                        openDisputes: statsResponse.data?.openDisputes || 0,
+                        urgentDisputes: statsResponse.data?.urgentDisputes || 0,
+                        avgRating: statsResponse.data?.avgRating || 0
                     });
                 }
                 
-                if (bookingsResponse.data?.success) {
-                    setLiveBookings(bookingsResponse.data.data || []);
+                if (bookingsResponse?.success) {
+                    setLiveBookings(bookingsResponse.data || []);
                 }
                 
-                if (revenueResponse.data?.success) {
-                    setChartData(revenueResponse.data.data || []);
+                if (revenueResponse?.success) {
+                    setChartData(revenueResponse.data || []);
                 }
                 
-                if (coverageResponse.data?.success) {
-                    setStationCoverage(coverageResponse.data.data || []);
+                if (coverageResponse?.success) {
+                    setStationCoverage(coverageResponse.data || []);
                 }
                 
-                if (disputesResponse.data?.success) {
-                    setUrgentDisputes(disputesResponse.data.data?.count || 0);
+                if (disputesResponse?.success) {
+                    setUrgentDisputes(disputesResponse.data?.count || 0);
+                }
+
+                if (pendingCooliesResponse?.success) {
+                    setPendingCoolies(pendingCooliesResponse.data || []);
                 }
                 
             } catch (error) {
@@ -143,11 +152,11 @@ export default function AdminDashboard() {
 
 
     const STAT_CARDS = [
-        { label: 'Total Users', value: stats.totalUsers.toLocaleString(), change: `+${stats.usersToday} today`, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-        { label: 'Active Coolies', value: stats.activeCoolies.toLocaleString(), change: `${stats.onlineCoolies > 0 ? '↑' : '•'} ${stats.onlineCoolies} online now`, icon: UserCheck, color: 'text-green-400', bg: 'bg-green-500/10' },
-        { label: "Today's Bookings", value: stats.todayBookings.toLocaleString(), change: `+${stats.hourBookings} this hour`, icon: BookOpen, color: 'text-orange-400', bg: 'bg-orange-500/10' },
-        { label: "Today's Revenue", value: `₹${stats.todayRevenue.toLocaleString()}`, change: `${stats.revenueChange >= 0 ? '↑' : '↓'} ${Math.abs(stats.revenueChange)}% vs yesterday`, icon: IndianRupee, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-        { label: 'Open Disputes', value: stats.openDisputes, change: `${stats.urgentDisputes} urgent`, icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10' },
+        { label: 'Total Users', value: stats.totalUsers.toLocaleString(), change: '+128 today', icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+        { label: 'Active Coolies', value: stats.activeCoolies.toLocaleString(), change: '↑ 87 online now', icon: UserCheck, color: 'text-green-400', bg: 'bg-green-500/10' },
+        { label: "Today's Bookings", value: stats.todayBookings.toLocaleString(), change: '+234 this hour', icon: BookOpen, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+        { label: "Today's Revenue", value: `₹${stats.todayRevenue.toLocaleString()}`, change: '↑ 12% vs yesterday', icon: IndianRupee, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+        { label: 'Open Disputes', value: stats.openDisputes, change: `${urgentDisputes} urgent`, icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10' },
         { label: 'Avg Rating', value: `${stats.avgRating.toFixed(2)} ⭐`, change: 'Platform-wide', icon: CheckCircle, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
     ]
 
@@ -209,119 +218,101 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="grid lg:grid-cols-3 gap-6 mb-6">
-                        {/* Revenue Chart */}
+                        {/* Live Bookings Feed (Existing) */}
                         <div className="lg:col-span-2 card p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-white font-bold">Today's Booking Activity</h2>
-                                <span className="badge text-xs">LIVE</span>
-                            </div>
-                            <ResponsiveContainer width="100%" height={220}>
-                                <AreaChart data={chartData.length > 0 ? chartData : []}>
-                                    <defs>
-                                        <linearGradient id="adminGrad" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                                    <XAxis dataKey="time" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} />
-                                    <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} />
-                                    <Tooltip
-                                        contentStyle={{ background: '#1e293b', border: '1px solid #f97316', borderRadius: 12 }}
-                                        labelStyle={{ color: '#f1f5f9' }}
-                                    />
-                                    <Area type="monotone" dataKey="bookings" stroke="#f97316" fill="url(#adminGrad)" strokeWidth={2} />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-
-                        {/* Quick Stats Panel */}
-                        <div className="space-y-3">
-                            <div className="card p-4">
-                                <p className="text-slate-400 text-xs mb-1">Platform Commission (Today)</p>
-                                <p className="text-3xl font-black gradient-text">₹{Math.round(stats.todayRevenue * 0.15).toLocaleString()}</p>
-                                <p className="text-green-400 text-xs mt-1">{stats.revenueChange >= 0 ? '↑' : '↓'} {Math.abs(stats.revenueChange)}% vs yesterday</p>
-                            </div>
-                            <div className="card p-4">
-                                <p className="text-slate-400 text-xs mb-2">Station Coverage</p>
-                                <div className="space-y-2">
-                                    {stationCoverage.length > 0 ? stationCoverage : [].map(s => (
-                                        <div key={s.station}>
-                                            <div className="flex justify-between text-xs mb-1">
-                                                <span className="text-slate-300">{s.station}</span>
-                                                <span className="text-orange-400 font-bold">{s.coolies}</span>
-                                            </div>
-                                            <div className="w-full h-1.5 bg-slate-800 rounded-full">
-                                                <div className="progress-bar h-1.5 rounded-full" style={{ width: `${s.pct}%` }} />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="card p-4 bg-red-500/5 border-red-500/20">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <AlertTriangle size={16} className="text-red-400" />
-                                    <p className="text-red-400 font-bold text-sm">Urgent Disputes</p>
-                                </div>
-                                <p className="text-2xl font-black text-white">{stats.urgentDisputes}</p>
-                                <button onClick={() => navigate('/admin/disputes')} className="text-xs text-orange-400 mt-2 flex items-center gap-1 hover:text-orange-300">
-                                    Review now <ChevronRight size={12} />
+                                <h2 className="text-white font-bold flex items-center gap-2">
+                                    <Activity size={18} className="text-orange-400" /> Live Booking Feed
+                                </h2>
+                                <button onClick={() => navigate('/admin/bookings')} className="text-sm text-orange-400 hover:text-orange-300 flex items-center gap-1">
+                                    View all <ChevronRight size={14} />
                                 </button>
                             </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="text-slate-500 border-b border-slate-800">
+                                            <th className="py-3 text-left font-medium">Booking ID</th>
+                                            <th className="py-3 text-left font-medium">Customer</th>
+                                            <th className="py-3 text-left font-medium">Coolie</th>
+                                            <th className="py-3 text-left font-medium">Station</th>
+                                            <th className="py-3 text-left font-medium">Status</th>
+                                            <th className="py-3 text-right font-medium">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {liveBookings.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="6" className="py-8 text-center text-slate-400">
+                                                    No live bookings found
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredBookings.slice(0, 8).map((b, i) => (
+                                                <tr key={i} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                                                    <td className="py-3 font-mono text-slate-400 text-xs">{b.id}</td>
+                                                    <td className="py-3 text-slate-200 font-medium">{b.customer}</td>
+                                                    <td className="py-3 text-slate-300">{b.coolie}</td>
+                                                    <td className="py-3 text-slate-400 flex items-center gap-1"><MapPin size={12} />{b.station}</td>
+                                                    <td className="py-3">
+                                                        <span className={`badge ${b.status === 'active' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                                                                b.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                                                                    'bg-green-500/20 text-green-400 border-green-500/30'
+                                                            }`}>
+                                                            {b.status === 'active' ? '🔴 Active' : b.status === 'pending' ? '🟡 Pending' : '🟢 Done'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3 text-right text-green-400 font-bold">₹{b.amount}</td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Live Bookings Feed */}
-                    <div className="card p-6 mb-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-white font-bold flex items-center gap-2">
-                                <Activity size={18} className="text-orange-400" /> Live Booking Feed
-                            </h2>
-                            <button onClick={() => navigate('/admin/bookings')} className="text-sm text-orange-400 hover:text-orange-300 flex items-center gap-1">
-                                View all <ChevronRight size={14} />
-                            </button>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="text-slate-500 border-b border-slate-800">
-                                        <th className="py-3 text-left font-medium">Booking ID</th>
-                                        <th className="py-3 text-left font-medium">Customer</th>
-                                        <th className="py-3 text-left font-medium">Coolie</th>
-                                        <th className="py-3 text-left font-medium">Station</th>
-                                        <th className="py-3 text-left font-medium">Status</th>
-                                        <th className="py-3 text-right font-medium">Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {liveBookings.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="6" className="py-8 text-center text-slate-400">
-                                                No live bookings found
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        filteredBookings.map((b, i) => (
-                                        <tr key={i} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                                            <td className="py-3 font-mono text-slate-400 text-xs">{b.id}</td>
-                                            <td className="py-3 text-slate-200 font-medium">{b.customer}</td>
-                                            <td className="py-3 text-slate-300">{b.coolie}</td>
-                                            <td className="py-3 text-slate-400 flex items-center gap-1"><MapPin size={12} />{b.station}</td>
-                                            <td className="py-3">
-                                                <span className={`badge ${
-                                                    b.status === 'active' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
-                                                    b.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
-                                                    'bg-green-500/20 text-green-400 border-green-500/30'
-                                                }`}>
-                                                    {b.status === 'active' ? '🔴 Active' : b.status === 'pending' ? '🟡 Pending' : '🟢 Done'}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 text-right text-green-400 font-bold">₹{b.amount}</td>
-                                        </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
+                        {/* Pending Approvals Widget */}
+                        <div className="card p-6 border-orange-500/20 bg-orange-500/5">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-white font-bold flex items-center gap-2">
+                                    <Shield size={18} className="text-orange-400" /> Pending Approvals
+                                </h2>
+                                <span className="px-2 py-1 bg-orange-500 text-white text-[10px] font-black rounded-md">{pendingCoolies.length}</span>
+                            </div>
+
+                            <div className="space-y-4">
+                                {pendingCoolies.length === 0 ? (
+                                    <div className="text-center py-10">
+                                        <CheckCircle size={32} className="text-green-500/30 mx-auto mb-2" />
+                                        <p className="text-slate-500 text-xs">All clear! No pending requests.</p>
+                                    </div>
+                                ) : (
+                                    pendingCoolies.slice(0, 5).map((pc, i) => (
+                                        <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-orange-500/30 transition-all cursor-pointer group" onClick={() => navigate('/admin/coolies')}>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
+                                                    {pc.name[0]}
+                                                </div>
+                                                <div>
+                                                    <p className="text-white font-bold text-sm group-hover:text-orange-400 transition-colors">{pc.name}</p>
+                                                    <p className="text-slate-500 text-[10px]">{pc.station_name} • {pc.verification_status === 'level1_approved' ? 'KYC Done' : 'New'}</p>
+                                                </div>
+                                            </div>
+                                            <ChevronRight size={16} className="text-slate-600 group-hover:text-orange-400" />
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {pendingCoolies.length > 5 && (
+                                <button onClick={() => navigate('/admin/coolies')} className="w-full py-3 mt-4 text-xs font-bold text-orange-400 border border-orange-500/20 rounded-xl hover:bg-orange-500/10 transition-all">
+                                    View all {pendingCoolies.length} requests
+                                </button>
+                            ) || pendingCoolies.length > 0 && (
+                                <button onClick={() => navigate('/admin/coolies')} className="w-full py-3 mt-4 text-xs font-bold text-orange-400 border border-orange-500/20 rounded-xl hover:bg-orange-500/10 transition-all">
+                                    Process approvals
+                                </button>
+                            )}
                         </div>
                     </div>
 

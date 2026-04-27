@@ -20,7 +20,7 @@ export default function BookingHistory() {
     const [expanded, setExpanded] = useState(null)
 
     React.useEffect(() => {
-        axios.get('https://coolie-hiring-platform-backend.onrender.com/api/bookings/my-bookings')
+        axios.get('/api/bookings/my-bookings')
             .then(res => {
                 if (res.data.success) setBookings(res.data.bookings)
             })
@@ -171,8 +171,11 @@ export default function BookingHistory() {
                                         <div className="space-y-2 text-sm max-[767px]:space-y-1.5">
                                             {[
                                                 { label: 'Platform', val: b.platform },
+                                                { label: 'Initial Stn.', val: b.initialStation || 'N/A' },
+                                                { label: 'Dest. Stn.', val: b.station || 'N/A' },
                                                 { label: 'Destination', val: b.destination },
                                                 { label: 'Train No.', val: b.trainNo },
+                                                { label: 'Train Name', val: b.trainName || 'N/A' },
                                             ].map(({ label, val }) => (
                                                 <div key={label} className="flex justify-between max-[767px]:text-xs">
                                                     <span className="text-slate-400">{label}</span>
@@ -201,6 +204,14 @@ export default function BookingHistory() {
                                                     className="btn-primary py-2 text-sm flex items-center justify-center gap-2 max-[767px]:py-1.5 max-[767px]:text-xs max-[767px]:gap-1.5"
                                                 >
                                                     <Navigation size={14} className="max-[767px]:w-3 max-[767px]:h-3" /> Track Coolie
+                                                </button>
+                                            )}
+                                            {(b.status === 'completed' || b.status === 'confirmed') && (
+                                                <button
+                                                    onClick={() => navigate(`/customer/receipt/${b.id}`)}
+                                                    className="btn-secondary py-2 text-sm flex items-center justify-center gap-2 max-[767px]:py-1.5 max-[767px]:text-xs max-[767px]:gap-1.5"
+                                                >
+                                                    <Eye size={14} className="max-[767px]:w-3 max-[767px]:h-3" /> View Receipt
                                                 </button>
                                             )}
                                             {b.status === 'completed' && (!b.rating || b.rating === 0) && (

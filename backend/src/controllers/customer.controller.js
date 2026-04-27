@@ -59,3 +59,59 @@ exports.getCoolieProfile = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+exports.getProfile = async (req, res) => {
+    try {
+        const { id } = req.user;
+        const result = await db.query(
+            'SELECT id, name, email, phone, city, profile_photo_url, total_bookings, avg_rating, created_at FROM customers WHERE id = $1',
+            [id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+        
+        res.status(200).json({ success: true, customer: result.rows[0] });
+    } catch (error) {
+        console.error('getProfile error:', error);
+        res.status(500).json({ success: false, message: 'Server error fetching profile.' });
+    }
+};
+
+exports.updateProfile = async (req, res) => {
+    try {
+        const { id } = req.user;
+        const { phone, city } = req.body;
+        let profile_photo_url = req.body.profile_photo_url;
+
+        if (req.file) {
+            // The file is stored in 'uploads/profile_photos/' by multer
+            profile_photo_url = `/uploads/profile_photos/${req.file.filename}`;
+        }
+
+        const result = await db.query(
+            `UPDATE customers 
+             SET phone = COALESCE($1, phone), 
+                 city = COALESCE($2, city), 
+                 profile_photo_url = COALESCE($3, profile_photo_url),
+                 updated_at = NOW()
+             WHERE id = $4
+             RETURNING id, name, email, phone, city, profile_photo_url, total_bookings, avg_rating`,
+            [phone, city, profile_photo_url, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            message: 'Profile updated successfully', 
+            customer: result.rows[0] 
+        });
+    } catch (error) {
+        console.error('updateProfile error:', error);
+        res.status(500).json({ success: false, message: 'Server error updating profile.' });
+    }
+};

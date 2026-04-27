@@ -12,11 +12,12 @@ import {
 
 const CUSTOMER_ITEMS = [
     { path: '/customer', icon: Home, label: 'Dashboard', badge: null },
-    { path: '/customer/book', icon: Search, label: 'Book Coolie', badge: 'New' },
+    { path: '/customer/book', icon: Search, label: 'Book Coolie', badge: null },
     { path: '/customer/track', icon: MapPin, label: 'Track Coolie', badge: null },
     { path: '/customer/trains', icon: Train, label: 'Train Status', badge: null },
     { path: '/customer/map', icon: Map, label: 'Station Map', badge: null },
-    { path: '/customer/history', icon: Clock, label: 'My Bookings', badge: '3' },
+    { path: '/customer/history', icon: Clock, label: 'My Bookings', badge: null },
+    { path: '/customer/profile', icon: User, label: 'My Profile', badge: null },
     { path: '/customer/payment', icon: CreditCard, label: 'Payments', badge: null },
     { path: '/customer/rate', icon: Star, label: 'Rate & Review', badge: null },
 ]
@@ -260,8 +261,13 @@ export default function Sidebar({ role = 'customer' }) {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 14, fontWeight: 700, color: '#fff',
                             boxShadow: `0 0 12px ${cfg.glow}`,
+                            overflow: 'hidden'
                         }}>
-                            {user?.name?.[0] || 'U'}
+                            {user?.profile_photo_url ? (
+                                <img src={user.profile_photo_url} alt="P" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                user?.name?.[0] || 'U'
+                            )}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -398,8 +404,8 @@ export default function Sidebar({ role = 'customer' }) {
                         gap: 6, marginBottom: 10,
                     }}>
                         {[
-                            { label: 'Trips', value: '24' },
-                            { label: 'Rating', value: '4.9★' },
+                            { label: 'Bookings', value: user?.total_bookings || 0 },
+                            { label: 'Rating', value: (user?.avg_rating || '0.0') + '★' },
                         ].map(s => (
                             <div key={s.label} style={{
                                 padding: '8px 10px', borderRadius: 10,

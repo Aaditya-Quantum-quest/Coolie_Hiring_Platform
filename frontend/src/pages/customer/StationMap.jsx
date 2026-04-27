@@ -51,9 +51,9 @@ export default function StationMap() {
         const loadData = async () => {
             try {
                 const [statRes, coolRes, busyRes] = await Promise.all([
-                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/stations'),
-                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/coolies'),
-                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/config/busy-hours')
+                    axios.get('/api/customer/stations', { withCredentials: true }),
+                    axios.get('/api/customer/coolies', { withCredentials: true }),
+                    axios.get('/api/config/busy-hours', { withCredentials: true })
                 ])
                 if (statRes.data.success) {
                     setStations(statRes.data.stations)
@@ -79,14 +79,14 @@ export default function StationMap() {
     // Filter stations based on search
     const filteredStations = stations.filter(station => {
         const matchesSearch = searchQuery === '' ||
-            station.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            station.code.toLowerCase().includes(searchQuery.toLowerCase())
+            (station.name && station.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (station.code && station.code.toLowerCase().includes(searchQuery.toLowerCase()))
 
         if (!matchesSearch) return false
 
         switch (searchFilter) {
             case 'major':
-                return station.name.includes('Delhi') || station.name.includes('Mumbai') || station.name.includes('Howrah')
+                return (station.name && (station.name.includes('Delhi') || station.name.includes('Mumbai') || station.name.includes('Howrah')))
             case 'available':
                 return coolies.filter(c => c.station === station.name && c.status === 'available').length > 0
             case 'busy':
@@ -128,7 +128,7 @@ export default function StationMap() {
                             <button key={s.id} onClick={() => setSelectedStation(s)}
                                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all max-[767px]:px-2.5 max-[767px]:py-1.5 max-[767px]:text-[11px] max-[767px]:rounded-lg ${selectedStation.id === s.id ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                                     }`}>
-                                {s.name.split(' ')[0]}...
+                                {s.name ? s.name.split(' ')[0] : 'Station'}...
                             </button>
                         ))}
                     </div>
@@ -147,7 +147,8 @@ export default function StationMap() {
                 {tab === 'map' ? (selectedStation &&
                     <div className="grid lg:grid-cols-3 gap-6 max-[767px]:gap-3">
                         <div className="lg:col-span-2 card overflow-hidden h-[480px] max-[767px]:h-[350px]">
-                            <MapContainer center={[selectedStation.lat, selectedStation.lng]} zoom={17} style={{ height: '100%', width: '100%' }}>
+                            {selectedStation.lat && selectedStation.lng ? (
+                                <MapContainer center={[selectedStation.lat, selectedStation.lng]} zoom={17} style={{ height: '100%', width: '100%' }}>
                                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
 
                                 {/* Platform overlays */}
@@ -178,7 +179,13 @@ export default function StationMap() {
                                         </Popup>
                                     </Marker>
                                 ))}
-                            </MapContainer>
+                                </MapContainer>
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-500 gap-3">
+                                    <MapPin size={40} className="opacity-20" />
+                                    <p>Coordinates missing for this station</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-4 max-[767px]:space-y-3">
@@ -201,7 +208,7 @@ export default function StationMap() {
                             {/* Available Coolies */}
                             <div className="card p-4 max-[767px]:p-3">
                                 <h3 className="text-white font-semibold mb-3 max-[767px]:mb-2 max-[767px]:text-sm">
-                                    Coolies at {selectedStation.name.split(' ')[0]}
+                                    Coolies at {selectedStation.name ? selectedStation.name.split(' ')[0] : 'Station'}
                                 </h3>
                                 <div className="space-y-2 max-[767px]:space-y-1">
                                     {coolies.filter(c => c.station === selectedStation.name).map(c => (

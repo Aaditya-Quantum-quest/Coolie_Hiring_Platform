@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'https://coolie-hiring-platform-backend.onrender.com';
+const API = import.meta.env.VITE_API_URL || '';
 
 const BusinessCard = ({ biz, onClick }) => (
     <div onClick={onClick} className="bg-white rounded-xl border border-[#E5EEFF] shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all group">

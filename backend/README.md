@@ -29,7 +29,7 @@ npm install
 npm run dev
 ```
 
-Server runs at: **https://coolie-hiring-platform-backend.onrender.com**
+Server runs at: **http://localhost:5000**
 
 ---
 

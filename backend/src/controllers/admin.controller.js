@@ -7,7 +7,7 @@ const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 15 * 60 * 1000,
+    maxAge: 60 * 60 * 1000, // 1 hour
 }
 const refreshCookieOptions = {
     ...cookieOptions,
@@ -239,7 +239,7 @@ const getAllCustomers = async (req, res) => {
         const offset = (page - 1) * limit
 
         const result = await pool.query(
-            `SELECT id, name, email, phone, city, is_active, is_banned, created_at
+            `SELECT id, name, email, phone, city, total_bookings, avg_rating, is_active, is_banned, created_at
              FROM customers ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
             [limit, offset]
         )
@@ -519,7 +519,7 @@ const getAllBookingsAdmin = async (req, res) => {
         const offset = (page - 1) * limit;
         
         let query = `
-            SELECT b.id, b.booking_ref, b.station_name, b.platform, b.destination, b.luggage_size, 
+            SELECT b.id, b.booking_ref, b.initial_station_name, b.destination_station_name, b.platform, b.destination, b.luggage_size, 
                    b.amount, b.status, b.created_at as date, b.otp, b.train_no,
                    c.name as customer_name, co.name as coolie_name
             FROM bookings b
@@ -534,7 +534,7 @@ const getAllBookingsAdmin = async (req, res) => {
         }
         if (search) {
             params.push(`%${search}%`);
-            query += ` AND (b.booking_ref ILIKE $${params.length} OR c.name ILIKE $${params.length} OR co.name ILIKE $${params.length} OR b.station_name ILIKE $${params.length})`;
+            query += ` AND (b.booking_ref ILIKE $${params.length} OR c.name ILIKE $${params.length} OR co.name ILIKE $${params.length} OR b.destination_station_name ILIKE $${params.length} OR b.initial_station_name ILIKE $${params.length})`;
         }
         query += ` ORDER BY b.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
         params.push(limit, offset);
@@ -547,7 +547,7 @@ const getAllBookingsAdmin = async (req, res) => {
             LEFT JOIN coolies co ON b.coolie_id = co.id
             WHERE 1=1
             ${status && status !== 'all' ? ` AND b.status = '${status}'` : ''}
-            ${search ? ` AND (b.booking_ref ILIKE '%${search}%' OR c.name ILIKE '%${search}%' OR co.name ILIKE '%${search}%' OR b.station_name ILIKE '%${search}%')` : ''}
+            ${search ? ` AND (b.booking_ref ILIKE '%${search}%' OR c.name ILIKE '%${search}%' OR co.name ILIKE '%${search}%' OR b.destination_station_name ILIKE '%${search}%' OR b.initial_station_name ILIKE '%${search}%')` : ''}
         `;
         const countResult = await pool.query(countQuery);
         
@@ -557,7 +557,8 @@ const getAllBookingsAdmin = async (req, res) => {
             dbId: b.id,
             customer: b.customer_name || 'Demo Customer',
             coolie: b.coolie_name || 'Demo Coolie',
-            station: b.station_name,
+            initialStation: b.initial_station_name,
+            station: b.destination_station_name,
             from: b.platform,
             to: b.destination,
             luggage: b.luggage_size,

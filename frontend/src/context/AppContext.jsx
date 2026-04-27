@@ -5,10 +5,24 @@ const AppContext = createContext()
 export const useApp = () => useContext(AppContext)
 
 export const AppProvider = ({ children }) => {
-    const [user, setUser] = useState(null)
-    const [role, setRole] = useState(null) // 'customer' | 'coolie' | 'admin'
+    const [user, setUser] = useState(() => {
+        const saved = localStorage.getItem('user')
+        return saved ? JSON.parse(saved) : null
+    })
+    const [role, setRole] = useState(() => localStorage.getItem('role') || null)
     const [notifications, setNotifications] = useState([])
     const [activeSOS, setActiveSOS] = useState(false)
+
+    // Sync to localStorage on change
+    React.useEffect(() => {
+        if (user) localStorage.setItem('user', JSON.stringify(user))
+        else localStorage.removeItem('user')
+    }, [user])
+
+    React.useEffect(() => {
+        if (role) localStorage.setItem('role', role)
+        else localStorage.removeItem('role')
+    }, [role])
 
     const login = (userData, userRole) => {
         setUser(userData)
@@ -22,6 +36,7 @@ export const AppProvider = ({ children }) => {
         setRole(null)
         localStorage.removeItem('user')
         localStorage.removeItem('role')
+        localStorage.removeItem('token') // Also clear the token if stored separately
     }
 
     const addNotification = (msg) => {
@@ -31,7 +46,10 @@ export const AppProvider = ({ children }) => {
     }
 
     return (
-        <AppContext.Provider value={{ user, role, notifications, activeSOS, login, logout, addNotification, setActiveSOS }}>
+        <AppContext.Provider value={{ 
+            user, role, notifications, activeSOS, 
+            setUser, setRole, login, logout, addNotification, setActiveSOS 
+        }}>
             {children}
         </AppContext.Provider>
     )

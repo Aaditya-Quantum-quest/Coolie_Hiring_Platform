@@ -45,7 +45,7 @@ export default function TrackCoolie() {
 
     useEffect(() => {
         if (!coolie) {
-            axios.get('https://coolie-hiring-platform.onrender.com/api/customer/coolies')
+            axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/coolies')
                 .then(res => {
                     if (res.data.success && res.data.coolies.length > 0) {
                         const c = res.data.coolies[0]

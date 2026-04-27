@@ -114,9 +114,9 @@ export default function CustomerDashboard() {
         const loadData = async () => {
             try {
                 const [statRes, coolRes, bookRes] = await Promise.all([
-                    axios.get('https://coolie-hiring-platform.onrender.com/api/customer/stations'),
-                    axios.get('https://coolie-hiring-platform.onrender.com/api/customer/coolies'),
-                    axios.get('https://coolie-hiring-platform.onrender.com/api/bookings/my-bookings')
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/stations'),
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/coolies'),
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/bookings/my-bookings')
                 ])
                 if (statRes.data.success) setStations(statRes.data.stations)
                 if (coolRes.data.success) setCoolies(coolRes.data.coolies)

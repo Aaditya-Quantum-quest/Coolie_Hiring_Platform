@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://coolie-hiring-platform.onrender.com/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://coolie-hiring-platform-backend.onrender.com/api/v1';
 
 // Create axios instance with auth
 const api = axios.create({

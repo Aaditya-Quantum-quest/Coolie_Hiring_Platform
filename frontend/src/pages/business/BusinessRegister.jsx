@@ -7,7 +7,7 @@ import {
     ArrowRight, Shield, Zap, CheckCircle2, Upload, Plus
 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'https://coolie-hiring-platform.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://coolie-hiring-platform-backend.onrender.com';
 
 // ─── Animated background orbs ────────────────────────────────────────────────
 function BgOrbs() {

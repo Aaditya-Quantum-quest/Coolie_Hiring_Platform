@@ -144,7 +144,7 @@ export default function BookingPage() {
     }, [startWatching]);
 
     useEffect(() => {
-        axios.get('https://coolie-hiring-platform.onrender.com/api/config/pricing')
+        axios.get('https://coolie-hiring-platform-backend.onrender.com/api/config/pricing')
             .then(res => {
                 if (res.data.success) setPriceTable(res.data.priceTable)
             })
@@ -154,8 +154,8 @@ export default function BookingPage() {
     useEffect(() => {
         const fetchCoolies = async () => {
             try {
-                let url = 'https://coolie-hiring-platform.onrender.com/api/customer/coolies';
-                if (geoLoc) url = `https://coolie-hiring-platform.onrender.com/api/location/nearby?lat=${geoLoc.lat}&lng=${geoLoc.lng}`;
+                let url = 'https://coolie-hiring-platform-backend.onrender.com/api/customer/coolies';
+                if (geoLoc) url = `https://coolie-hiring-platform-backend.onrender.com/api/location/nearby?lat=${geoLoc.lat}&lng=${geoLoc.lng}`;
                 const res = await axios.get(url);
                 if (res.data.success) {
                     setAvailCoolies(res.data.coolies.filter(c => c.status === 'available'));

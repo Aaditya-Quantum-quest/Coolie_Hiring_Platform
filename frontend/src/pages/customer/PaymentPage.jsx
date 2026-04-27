@@ -107,7 +107,7 @@ export default function PaymentPage() {
         setProcessing(true)
         try {
             if (booking.id !== 'BK-2024-1847') {
-                await axios.post(`https://coolie-hiring-platform.onrender.com/api/bookings/${booking.id}/pay`)
+                await axios.post(`https://coolie-hiring-platform-backend.onrender.com/api/bookings/${booking.id}/pay`)
             } else {
                 await new Promise(r => setTimeout(r, 2000))
             }

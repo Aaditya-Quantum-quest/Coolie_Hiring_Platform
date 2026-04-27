@@ -32,17 +32,17 @@ export default function LoginPage() {
         try {
             let res
             if (role === 'customer') {
-                res = await axios.post('https://coolie-hiring-platform.onrender.com/api/auth/customer/login', {
+                res = await axios.post('https://coolie-hiring-platform-backend.onrender.com/api/auth/customer/login', {
                     email: form.email,
                     password: form.password,
                 }, { withCredentials: true })
             } else if (role === 'coolie') {
-                res = await axios.post('https://coolie-hiring-platform.onrender.com/api/auth/coolie/login', {
+                res = await axios.post('https://coolie-hiring-platform-backend.onrender.com/api/auth/coolie/login', {
                     coolie_id: form.email, // coolies login with their Coolie ID
                     password: form.password,
                 }, { withCredentials: true })
             } else if (role === 'admin') {
-                res = await axios.post('https://coolie-hiring-platform.onrender.com/api/v1/admin/login', {
+                res = await axios.post('https://coolie-hiring-platform-backend.onrender.com/api/v1/admin/login', {
                     email: form.email,
                     password: form.password,
                 }, { withCredentials: true })

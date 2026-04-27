@@ -51,9 +51,9 @@ export default function StationMap() {
         const loadData = async () => {
             try {
                 const [statRes, coolRes, busyRes] = await Promise.all([
-                    axios.get('https://coolie-hiring-platform.onrender.com/api/customer/stations'),
-                    axios.get('https://coolie-hiring-platform.onrender.com/api/customer/coolies'),
-                    axios.get('https://coolie-hiring-platform.onrender.com/api/config/busy-hours')
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/stations'),
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/customer/coolies'),
+                    axios.get('https://coolie-hiring-platform-backend.onrender.com/api/config/busy-hours')
                 ])
                 if (statRes.data.success) {
                     setStations(statRes.data.stations)

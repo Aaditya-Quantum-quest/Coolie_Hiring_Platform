@@ -76,7 +76,7 @@ export default function TrainStatus() {
     const fetchTrains = async () => {
         setLoading(true)
         try {
-            const res = await axios.get('https://coolie-hiring-platform.onrender.com/api/config/trains')
+            const res = await axios.get('https://coolie-hiring-platform-backend.onrender.com/api/config/trains')
             if (res.data.success) {
                 setTrains(res.data.trains)
                 setLastUpdated(new Date())

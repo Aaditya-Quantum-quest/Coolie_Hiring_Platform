@@ -81,7 +81,7 @@ export default function RatingPage() {
         try {
             if (b && b.id !== 'BK-2024-1847') {
                 const text = selectedTags.length > 0 ? `Tags: ${selectedTags.join(', ')}. ${comment}` : comment
-                await axios.post(`https://coolie-hiring-platform.onrender.com/api/bookings/${b.id}/rate`, {
+                await axios.post(`https://coolie-hiring-platform-backend.onrender.com/api/bookings/${b.id}/rate`, {
                     rating,
                     review_text: text
                 })

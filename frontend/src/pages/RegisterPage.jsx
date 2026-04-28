@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
+import { searchStation } from '../services/railApiService'
 
 // ─── Load external script once ──────────────────────────────────────────────
 function loadScript(src) {
@@ -541,20 +542,57 @@ export default function RegisterPage() {
         station: '', idType: 'Aadhar', idNumber: '', age: '',
         languages: [], emergencyContact: '',
     })
-    const [stations, setStations] = useState([])
     const [photoFile, setPhotoFile] = useState(null)
+    const [stationQuery, setStationQuery] = useState('')
+    const [stationSuggestions, setStationSuggestions] = useState([])
+    const [showSuggestions, setShowSuggestions] = useState(false)
+    const [searchingStations, setSearchingStations] = useState(false)
+    const suggestionRef = useRef(null)
+
+    // Handle outside click for station suggestions
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (suggestionRef.current && !suggestionRef.current.contains(e.target)) {
+                setShowSuggestions(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     useEffect(() => {
         if (type === 'coolie' && step === 2) {
-            axios.get('/api/customer/stations')
-                .then(res => {
-                    if (res.data.success) {
-                        setStations(res.data.stations)
-                    }
-                })
-                .catch(err => console.error('Failed to load stations', err))
+            // No longer fetching all stations as we use autocomplete
         }
     }, [type, step])
+
+    const handleStationSearch = async (val) => {
+        update('station', val)
+        setStationQuery(val)
+        if (val.trim().length >= 2) {
+            setSearchingStations(true)
+            try {
+                const res = await searchStation(val)
+                if (res.status && res.data) {
+                    setStationSuggestions(res.data)
+                    setShowSuggestions(true)
+                }
+            } catch (err) {
+                console.error('Station search failed', err)
+            } finally {
+                setSearchingStations(false)
+            }
+        } else {
+            setStationSuggestions([])
+            setShowSuggestions(false)
+        }
+    }
+
+    const selectStation = (s) => {
+        update('station', s.station_name)
+        setStationQuery(s.station_name)
+        setShowSuggestions(false)
+    }
 
     const update = (field, val) => setForm(f => ({ ...f, [field]: val }))
     const toggleLang = (lang) => setForm(f => ({
@@ -799,16 +837,41 @@ export default function RegisterPage() {
                     {step === 2 && type === 'coolie' && (
                         <form onSubmit={handleSubmit} className="login-form">
 
-                            <div className="login-field">
-                                <label className="login-label">Home Station</label>
+                            <div className="login-field relative" ref={suggestionRef}>
+                                <label className="login-label">Home Station *</label>
                                 <div className="login-input-wrap">
                                     <MapPin size={14} className="login-input-icon" />
-                                    <select className="input-field login-input" value={form.station}
-                                        onChange={e => update('station', e.target.value)}>
-                                        <option value="">Select your station</option>
-                                        {stations.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-                                    </select>
+                                    <input
+                                        className="input-field login-input"
+                                        placeholder="Search your station (e.g. RMU, NDLS) Type Jn At The End"
+                                        value={form.station}
+                                        onChange={e => handleStationSearch(e.target.value)}
+                                        onFocus={() => { if (stationSuggestions.length > 0) setShowSuggestions(true) }}
+                                    />
+                                    {searchingStations && (
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                            <div className="w-4 h-4 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
+                                        </div>
+                                    )}
                                 </div>
+                                {showSuggestions && stationSuggestions.length > 0 && (
+                                    <div className="absolute left-0 right-0 top-[100%] mt-1 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden z-[100] shadow-2xl max-h-[220px] overflow-y-auto">
+                                        {stationSuggestions.map((s, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                className="w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors border-b border-slate-800 last:border-none flex items-center justify-between group"
+                                                onClick={() => selectStation(s)}
+                                            >
+                                                <div>
+                                                    <p className="text-white font-semibold group-hover:text-orange-400 transition-colors">{s.station_name}</p>
+                                                    <p className="text-slate-500 text-xs uppercase">{s.station_code}</p>
+                                                </div>
+                                                <ArrowRight size={14} className="text-slate-600 group-hover:translate-x-1 transition-all" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="reg-row-2">

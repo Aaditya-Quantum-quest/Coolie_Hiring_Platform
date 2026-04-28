@@ -14,7 +14,7 @@ import {
     getPNRStatus,
     searchStation,
     getTrainsBetweenStations
-} from '../../services/irctcService'
+} from '../../services/railApiService'
 
 // ── Components ─────────────────────────────────────────────────────────────
 

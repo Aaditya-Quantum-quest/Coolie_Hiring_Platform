@@ -183,9 +183,9 @@ export const adminUsersService = {
   },
 
   // Ban customer
-  banCustomer: async (customerId) => {
+  banCustomer: async (customerId, { ban = true, reason = '' } = {}) => {
     try {
-      const response = await api.patch(`/admin/customers/${customerId}/ban`);
+      const response = await api.patch(`/admin/customers/${customerId}/ban`, { ban, reason });
       return response.data;
     } catch (error) {
       console.error('Error banning customer:', error);

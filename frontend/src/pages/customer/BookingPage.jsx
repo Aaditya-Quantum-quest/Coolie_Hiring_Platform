@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { useGlobalSocket } from '../../context/SocketContext'
 import useGeolocation from '../../hooks/useGeolocation'
-import { searchTrain, searchStation } from '../../services/irctcService'
+import { searchTrain, searchStation } from '../../services/railApiService'
 
 /* ─── Bargain Modal ─────────────────────────────────────────── */
 function BargainModal({ coolie, luggageSize, customAmount, onClose, onDone, priceTable }) {

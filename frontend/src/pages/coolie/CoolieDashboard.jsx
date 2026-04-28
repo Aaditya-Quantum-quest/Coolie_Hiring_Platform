@@ -11,7 +11,7 @@ import { useGlobalSocket } from '../../context/SocketContext'
 import LocationPermissionModal from '../../components/location/LocationPermissionModal'
 import { useApp } from '../../context/AppContext'
 import { coolieDashboardService, coolieStatusService } from '../../services/coolieService'
-import { getLiveStation } from '../../services/irctcService'
+import { getLiveStation } from '../../services/railApiService'
 
 /* ── Mock Data ───────────────────────────────────────────────── */
 const INITIAL_REQUESTS = [

@@ -104,7 +104,7 @@ export default function AdminDisputes() {
             <Sidebar role="admin" />
             <div className="ml-0 md:ml-64 flex-1 min-h-screen p-6">
                 <div className="max-w-6xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between mb-8 mt-16 md:mt-0">
                         <div>
                             <h1 className="text-2xl font-black text-white">Dispute Resolution</h1>
                             <p className="text-slate-400 text-sm">24-hour resolution SLA — {disputes.filter(d => d.status === 'open').length} open cases</p>

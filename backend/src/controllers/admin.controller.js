@@ -239,7 +239,7 @@ const getAllCustomers = async (req, res) => {
         const offset = (page - 1) * limit
 
         const result = await pool.query(
-            `SELECT id, name, email, phone, city, total_bookings, avg_rating, is_active, is_banned, created_at
+            `SELECT id, name, email, phone, city, total_bookings, avg_rating, is_active, is_banned, banned_reason, profile_photo_url, created_at
              FROM customers ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
             [limit, offset]
         )
@@ -260,9 +260,30 @@ const getAllCustomers = async (req, res) => {
 const banCustomer = async (req, res) => {
     try {
         const { id } = req.params
-        const { ban = true } = req.body
-        await pool.query('UPDATE customers SET is_banned=$1 WHERE id=$2', [ban, id])
-        res.status(200).json({ success: true, message: `Customer ${ban ? 'banned' : 'unbanned'}.` })
+        const { ban = true, reason } = req.body
+
+        if (ban && (!reason || reason.trim().length < 5)) {
+            return res.status(400).json({ success: false, message: 'Please provide a valid ban reason (min 5 characters).' })
+        }
+
+        // Get customer details for email
+        const customerResult = await pool.query('SELECT name, email FROM customers WHERE id=$1', [id])
+        const customer = customerResult.rows[0]
+        if (!customer) return res.status(404).json({ success: false, message: 'Customer not found.' })
+
+        await pool.query(
+            'UPDATE customers SET is_banned=$1, banned_reason=$2 WHERE id=$3', 
+            [ban, ban ? reason : null, id]
+        )
+
+        // Send email
+        const { sendBanEmail } = require('../utils/mailer')
+        await sendBanEmail(customer.email, customer.name, reason, !ban).catch(err => console.error('Error sending ban email:', err))
+
+        res.status(200).json({ 
+            success: true, 
+            message: `Customer ${ban ? 'banned' : 'unbanned'}. ${ban ? 'Ban' : 'Unban'} email sent.` 
+        })
     } catch (err) {
         console.error('banCustomer:', err)
         res.status(500).json({ success: false, message: 'Server error.' })

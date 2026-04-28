@@ -119,6 +119,48 @@ const sendApprovalEmail = async (to, name, coolieId, password) => {
 }
 
 /**
+ * Send ban/unban notification to customer.
+ */
+const sendBanEmail = async (to, name, reason, isUnbanned = false) => {
+    if (!process.env.SMTP_USER || process.env.SMTP_USER === 'your_mailtrap_username') {
+        console.log(`[MAILER] Would send ${isUnbanned ? 'unban' : 'ban'} email to ${to}`)
+        return
+    }
+
+    const transporter = getTransporter()
+    const subject = isUnbanned 
+        ? '🔓 Your Account Has Been Reinstated — Coolie Hire' 
+        : '🚫 Your Account Has Been Banned — Coolie Hire'
+    
+    const title = isUnbanned ? 'Account Reinstated' : 'Account Banned'
+    const color = isUnbanned ? '#22c55e' : '#ef4444'
+
+    await transporter.sendMail({
+        from: process.env.SMTP_FROM || '"Coolie Hire Security" <security@cooliehire.in>',
+        to,
+        subject,
+        html: `
+        <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:16px">
+          <h2 style="color:${color};margin-top:0">${title}</h2>
+          <p>Hi <strong>${name}</strong>,</p>
+          <p>Your account on the <strong>Coolie Hiring Platform</strong> has been ${isUnbanned ? '<strong>reinstated</strong>' : '<strong>banned</strong>'}.</p>
+          ${!isUnbanned && reason ? `
+          <div style="background:#1e293b;border-left:4px solid #ef4444;padding:16px;border-radius:8px;margin:20px 0">
+            <p style="margin:0;color:#fca5a5"><strong>Reason for Ban:</strong> ${reason}</p>
+          </div>
+          ` : ''}
+          ${isUnbanned ? `
+          <p>You can now log in and use our services as usual. We appreciate your cooperation.</p>
+          ` : `
+          <p>If you believe this is a mistake, please contact our support team at <a href="mailto:support@cooliehire.in" style="color:#f97316">support@cooliehire.in</a>.</p>
+          `}
+          <p style="color:#64748b;font-size:13px;margin-top:32px">© Coolie Hire Platform</p>
+        </div>
+        `
+    })
+}
+
+/**
  * Send rejection notification to coolie.
  */
 const sendRejectionEmail = async (to, name, reason) => {
@@ -149,5 +191,6 @@ module.exports = {
     sendLockoutEmail, 
     sendApprovalEmail, 
     sendRejectionEmail,
-    sendRegistrationReceivedEmail
+    sendRegistrationReceivedEmail,
+    sendBanEmail
 }

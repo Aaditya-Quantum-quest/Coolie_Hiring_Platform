@@ -96,4 +96,7 @@ router.post(
     awardXPRoute
 )
 
+// TEMP DEBUG ROUTE (Remove in production)
+router.get('/test-profile/:coolie_id', getProfile)
+
 module.exports = router

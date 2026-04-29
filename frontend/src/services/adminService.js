@@ -95,7 +95,8 @@ export const adminUsersService = {
   // Get all customers
   getAllCustomers: async (filters = {}) => {
     try {
-      const params = new URLSearchParams(filters);
+      const cleanFilters = Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== undefined && v !== null));
+      const params = new URLSearchParams(cleanFilters);
       const response = await api.get(`/admin/customers?${params}`);
       return response.data;
     } catch (error) {
@@ -107,7 +108,8 @@ export const adminUsersService = {
   // Get all coolies
   getAllCoolies: async (filters = {}) => {
     try {
-      const params = new URLSearchParams(filters);
+      const cleanFilters = Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== undefined && v !== null));
+      const params = new URLSearchParams(cleanFilters);
       const response = await api.get(`/admin/coolies?${params}`);
       return response.data;
     } catch (error) {
@@ -199,7 +201,8 @@ export const adminBookingsService = {
   // Get all bookings
   getAllBookings: async (filters = {}) => {
     try {
-      const params = new URLSearchParams(filters);
+      const cleanFilters = Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== undefined && v !== null));
+      const params = new URLSearchParams(cleanFilters);
       const response = await api.get(`/admin/bookings?${params}`);
       return response.data;
     } catch (error) {
@@ -236,7 +239,8 @@ export const adminDisputesService = {
   // Get all disputes
   getAllDisputes: async (filters = {}) => {
     try {
-      const params = new URLSearchParams(filters);
+      const cleanFilters = Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== undefined && v !== null));
+      const params = new URLSearchParams(cleanFilters);
       const response = await api.get(`/admin/disputes?${params}`);
       return response.data;
     } catch (error) {

@@ -14,7 +14,7 @@ const getProfile = async (req, res) => {
     try {
         const { coolie_id } = req.params
 
-        // Ensure profile exists (upsert)
+        console.log('getProfile: Fetching for', coolie_id)
         await ensureProfile(coolie_id)
 
         const { rows } = await pool.query(`
@@ -24,10 +24,17 @@ const getProfile = async (req, res) => {
             WHERE p.coolie_id = $1
         `, [coolie_id])
 
-        if (!rows.length) return res.status(404).json({ success: false, message: 'Coolie not found.' })
+        if (!rows.length) {
+            console.log('getProfile: Not found in DB')
+            return res.status(404).json({ success: false, message: 'Coolie not found.' })
+        }
 
         const profile = rows[0]
+        console.log('getProfile: Found profile, lifetime_xp:', profile.lifetime_xp)
+
         const progress = getProgressInfo(profile.lifetime_xp)
+        console.log('getProfile: Progress info calculated')
+
         const avgRating = profile.rating_count > 0
             ? (profile.total_rating_sum / profile.rating_count).toFixed(1)
             : null
@@ -62,7 +69,7 @@ const getProfile = async (req, res) => {
         })
     } catch (err) {
         console.error('getProfile error:', err)
-        res.status(500).json({ success: false, message: 'Server error.' })
+        res.status(500).json({ success: false, message: 'Server error.', error: err.message })
     }
 }
 

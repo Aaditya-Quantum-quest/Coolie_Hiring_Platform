@@ -3,10 +3,11 @@ import Sidebar from '../../components/Sidebar'
 import {
     Search, UserX, UserCheck, Eye, Shield, Star, Download,
     CheckCircle, MapPin, X, Award, Filter, ChevronDown, ChevronUp,
-    Phone, Calendar, Activity
+    Phone, Calendar, Activity, Mail, User, Zap, Building2, Landmark, CreditCard
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { adminUsersService } from '../../services/adminService'
+import { useApp } from '../../context/AppContext'
 
 const STATUS_STYLE = {
     active: 'status-available',
@@ -27,7 +28,7 @@ const STATUS_LABEL = {
 }
 
 /* ─── Compact mobile card ─── */
-function CoolieCard({ c, onView, onVerifyKYC, onFinalApprove, onToggleSuspend }) {
+function CoolieCard({ c, onView, onVerifyKYC, onFinalApprove, onToggleSuspend, adminRole }) {
     const [expanded, setExpanded] = useState(false)
     return (
         <div className="card mb-3 overflow-hidden">
@@ -82,7 +83,7 @@ function CoolieCard({ c, onView, onVerifyKYC, onFinalApprove, onToggleSuspend })
                         <Eye size={13} /> View
                     </button>
 
-                    {(c.status === 'pending' || c.status === 'under_review') && (
+                    {(c.status === 'pending' || c.status === 'under_review') && adminRole === 'admin' && (
                         <button
                             onClick={() => onVerifyKYC(c.dbId)}
                             className="flex-1 min-w-[80px] py-2 rounded-xl bg-blue-500/10 text-blue-400 text-xs font-semibold flex items-center justify-center gap-1 hover:bg-blue-500/20"
@@ -91,7 +92,7 @@ function CoolieCard({ c, onView, onVerifyKYC, onFinalApprove, onToggleSuspend })
                         </button>
                     )}
 
-                    {c.status === 'level1_approved' && (
+                    {c.status === 'level1_approved' && adminRole === 'super_admin' && (
                         <button
                             onClick={() => onFinalApprove(c.dbId)}
                             className="flex-1 min-w-[80px] py-2 rounded-xl bg-green-500/10 text-green-400 text-xs font-semibold flex items-center justify-center gap-1 hover:bg-green-500/20"
@@ -115,6 +116,8 @@ function CoolieCard({ c, onView, onVerifyKYC, onFinalApprove, onToggleSuspend })
 }
 
 export default function AdminCoolies() {
+    const { user } = useApp()
+    const adminRole = user?.adminRole || 'admin'
     const [coolies, setCoolies] = useState([])
     const [search, setSearch] = useState('')
     const [filterStatus, setFilterStatus] = useState('all')
@@ -131,10 +134,8 @@ export default function AdminCoolies() {
             })
             if (response.success) {
                 const mapped = response.data.map(c => ({
-                    id: c.id,
+                    ...c,
                     displayId: c.coolie_id || 'CL-PENDING',
-                    name: c.name,
-                    phone: c.phone,
                     station: c.station_name,
                     rating: parseFloat(c.rating_avg) || 0,
                     trips: c.total_trips || 0,
@@ -145,8 +146,6 @@ export default function AdminCoolies() {
                             : c.verification_status,
                     verified: c.is_verified,
                     joined: new Date(c.created_at).toLocaleDateString(),
-                    badge: c.badge,
-                    today: 0,
                     dbId: c.id,
                 }))
                 setCoolies(mapped)
@@ -156,6 +155,23 @@ export default function AdminCoolies() {
             toast.error('Failed to load coolies')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleViewDetail = async (c) => {
+        try {
+            setSelected({ ...c, loading: true })
+            const res = await adminUsersService.getCoolieDetails(c.dbId)
+            if (res.success) {
+                setSelected({
+                    ...c,
+                    ...res.data,
+                    loading: false
+                })
+            }
+        } catch (error) {
+            toast.error('Failed to load full details')
+            setSelected(null)
         }
     }
 
@@ -253,7 +269,7 @@ export default function AdminCoolies() {
                     <div className="mb-4 sm:mb-6 space-y-3">
                         <div className="flex gap-2">
                             <div className="relative flex-1">
-                                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                                {/* <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" /> */}
                                 <input
                                     className="input-field pl-9 w-full text-sm"
                                     placeholder="Search by name, ID, station..."
@@ -295,10 +311,11 @@ export default function AdminCoolies() {
                                 <CoolieCard
                                     key={i}
                                     c={c}
-                                    onView={setSelected}
+                                    onView={handleViewDetail}
                                     onVerifyKYC={verifyKYC}
                                     onFinalApprove={finalApprove}
                                     onToggleSuspend={toggleSuspend}
+                                    adminRole={adminRole}
                                 />
                             ))
                         )}
@@ -402,14 +419,14 @@ export default function AdminCoolies() {
                                                 <td className="py-3 px-4">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <button
-                                                            onClick={() => setSelected(c)}
+                                                            onClick={() => handleViewDetail(c)}
                                                             className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20"
                                                             title="View details"
                                                         >
                                                             <Eye size={14} />
                                                         </button>
 
-                                                        {(c.status === 'pending' || c.status === 'under_review') && (
+                                                        {(c.status === 'pending' || c.status === 'under_review') && adminRole === 'admin' && (
                                                             <button
                                                                 onClick={() => verifyKYC(c.dbId)}
                                                                 className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20"
@@ -419,7 +436,7 @@ export default function AdminCoolies() {
                                                             </button>
                                                         )}
 
-                                                        {c.status === 'level1_approved' && (
+                                                        {c.status === 'level1_approved' && adminRole === 'super_admin' && (
                                                             <button
                                                                 onClick={() => finalApprove(c.dbId)}
                                                                 className="w-8 h-8 rounded-lg bg-green-500/10 text-green-400 flex items-center justify-center hover:bg-green-500/20"
@@ -452,7 +469,7 @@ export default function AdminCoolies() {
                     {selected && (
                         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
                             {/* bottom-sheet on mobile, centered card on sm+ */}
-                            <div className="card w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+                            <div className="card w-full sm:max-w-xl rounded-t-3xl sm:rounded-2xl p-5 sm:p-8 max-h-[90vh] overflow-y-auto">
                                 {/* drag handle — mobile only */}
                                 <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-4 sm:hidden" />
 
@@ -482,25 +499,67 @@ export default function AdminCoolies() {
                                     )}
                                 </div>
 
-                                {/* Details grid */}
-                                <div className="space-y-0 text-sm mb-5">
-                                    {[
-                                        ['Phone', selected.phone, <Phone size={13} />],
-                                        ['Station', selected.station, <MapPin size={13} />],
-                                        ['Rating', `${selected.rating} ⭐`, <Star size={13} />],
-                                        ['Total Trips', selected.trips.toLocaleString(), <Activity size={13} />],
-                                        ['Joined', selected.joined, <Calendar size={13} />],
-                                    ].map(([label, value, icon]) => (
-                                        <div key={label} className="flex justify-between items-center py-2.5 border-b border-slate-800 last:border-0">
-                                            <span className="text-slate-400 flex items-center gap-1.5">{icon}{label}</span>
-                                            <span className="text-white font-medium text-right max-w-[55%] truncate">{value}</span>
+                                {selected.loading ? (
+                                    <div className="py-12 flex flex-col items-center justify-center gap-3">
+                                        <div className="w-8 h-8 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
+                                        <p className="text-slate-500 text-sm">Loading full profile...</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {/* Details grid */}
+                                        <div className="grid grid-cols-1 gap-x-6 gap-y-0 text-sm mb-6">
+                                            {[
+                                                ['Email', selected.email, <Mail size={13} />],
+                                                ['Phone', selected.phone, <Phone size={13} />],
+                                                ['Alt Phone', selected.alt_phone || 'N/A', <Phone size={13} />],
+                                                ['DOB', selected.date_of_birth ? new Date(selected.date_of_birth).toLocaleDateString() : 'N/A', <Calendar size={13} />],
+                                                ['Gender', selected.gender, <User size={13} />],
+                                                ['Station', `${selected.station_name} (${selected.station_code})`, <MapPin size={13} />],
+                                                ['Address', `${selected.address}, ${selected.city}, ${selected.state} - ${selected.pincode}`, <MapPin size={13} />],
+                                                ['Age', selected.age, <Activity size={13} />],
+                                                ['Languages', Array.isArray(selected.languages_spoken) ? selected.languages_spoken.join(', ') : selected.languages_spoken, <Zap size={13} />],
+                                                ['Bank Name', selected.bank_name || 'N/A', <Building2 size={13} />],
+                                                ['IFSC', selected.ifsc_code || 'N/A', <Landmark size={13} />],
+                                                ['UPI ID', selected.upi_id || 'N/A', <CreditCard size={13} />],
+                                                ['Joined', new Date(selected.created_at).toLocaleDateString(), <Calendar size={13} />],
+                                            ].map(([label, value, icon]) => (
+                                                <div key={label} className="flex justify-between items-start py-2.5 border-b border-slate-800 last:border-0">
+                                                    <span className="text-slate-400 flex items-center gap-1.5 shrink-0">{icon}{label}</span>
+                                                    <span className="text-white font-medium text-right ml-4">{value}</span>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
+
+                                        {/* Documents Section */}
+                                        <div className="mb-8">
+                                            <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
+                                                <Shield size={14} className="text-orange-400" /> Documents & Photos
+                                            </h4>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {[
+                                                    { label: 'Passport Photo', url: selected.passport_photo_url },
+                                                    { label: 'Aadhaar Front', url: selected.aadhaar_front_url },
+                                                    { label: 'Aadhaar Back', url: selected.aadhaar_back_url },
+                                                    { label: 'Secondary ID Front', url: selected.secondary_doc_front_url },
+                                                    { label: 'Secondary ID Back', url: selected.secondary_doc_back_url },
+                                                ].map((doc, idx) => doc.url && (
+                                                    <div key={idx} className="space-y-1.5">
+                                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{doc.label}</p>
+                                                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="block group">
+                                                            <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-800 border border-slate-700 group-hover:border-orange-500/50 transition-all">
+                                                                <img src={doc.url} alt={doc.label} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
 
                                 {/* Action buttons — responsive grid */}
                                 <div className="grid grid-cols-2 gap-2">
-                                    {(selected.status === 'pending' || selected.status === 'under_review') && (
+                                    {(selected.status === 'pending' || selected.status === 'under_review') && adminRole === 'admin' && (
                                         <button
                                             onClick={() => verifyKYC(selected.dbId)}
                                             className="btn-primary col-span-2 text-sm py-2.5 flex items-center justify-center gap-1.5"
@@ -509,7 +568,7 @@ export default function AdminCoolies() {
                                         </button>
                                     )}
 
-                                    {selected.status === 'level1_approved' && (
+                                    {selected.status === 'level1_approved' && adminRole === 'super_admin' && (
                                         <button
                                             onClick={() => finalApprove(selected.dbId)}
                                             className="btn-success col-span-2 text-sm py-2.5 flex items-center justify-center gap-1.5"

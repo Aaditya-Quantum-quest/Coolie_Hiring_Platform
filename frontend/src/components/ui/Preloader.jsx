@@ -1,22 +1,19 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 const MESSAGES = [
-  "initializing...",
-  "loading assets...",
-  "fetching data...",
-  "building ui...",
-  "almost there...",
-  "done!",
+  { en: "Initializing elite porter network...", hi: "पोर्टर कुली नेटवर्क सक्रिय हो रहा है..." },
+  { en: "Verifying station locations...", hi: "स्टेशन की जानकारी जाँची जा रही है..." },
+  { en: "Loading luggage handlers...", hi: "सामान सहायक तैयार हो रहे हैं..." },
+  { en: "Fetching real-time data...", hi: "रीयल-टाइम डेटा प्राप्त हो रहा है..." },
+  { en: "Building your experience...", hi: "आपका अनुभव तैयार किया जा रहा है..." },
+  { en: "Almost ready...", hi: "बस कुछ ही पल में..." },
 ];
 
 export default function Preloader({ onComplete }) {
-  const waveCvsRef = useRef(null);
   const pCvsRef = useRef(null);
   const wrapRef = useRef(null);
-  const waveFillRef = useRef(null);
   const rafRef = useRef(null);
   const loadRafRef = useRef(null);
-  const waveT = useRef(0);
   const particles = useRef([]);
 
   const [progress, setProgress] = useState(0);
@@ -33,80 +30,36 @@ export default function Preloader({ onComplete }) {
     cvs.height = wrap.offsetHeight;
   }, []);
 
-  /* ─── Draw animated wave ─── */
-  const drawWave = useCallback((ctx, W, H) => {
-    ctx.clearRect(0, 0, W, H);
-    const t = waveT.current;
-
-    ctx.beginPath();
-    ctx.moveTo(0, H);
-    for (let x = 0; x <= W; x += 2) {
-      const y =
-        H / 2 +
-        Math.sin(x * 0.025 + t) * 7 +
-        Math.sin(x * 0.04 + t * 1.4) * 4 +
-        Math.cos(x * 0.018 + t * 0.8) * 3;
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(W, H);
-    ctx.closePath();
-
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, "rgba(99,102,241,0.95)");
-    grad.addColorStop(1, "rgba(79,70,229,0.85)");
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(0, H);
-    for (let x = 0; x <= W; x += 2) {
-      const y =
-        H / 2 +
-        Math.sin(x * 0.028 + t * 1.3 + 1) * 4 +
-        Math.sin(x * 0.036 + t * 1.1 + 2) * 2.5;
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(W, H);
-    ctx.closePath();
-    ctx.fillStyle = "rgba(165,180,252,0.18)";
-    ctx.fill();
-  }, []);
-
   /* ─── Draw floating particles ─── */
   const drawParticles = useCallback((ctx, W, H) => {
     ctx.clearRect(0, 0, W, H);
     particles.current = particles.current.filter((p) => p.y > -10 && p.alpha > 0);
     particles.current.forEach((p) => {
       p.y -= p.speed;
-      p.alpha -= 0.0012;
+      p.alpha -= 0.0008;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(${p.color},${Math.max(0, p.alpha)})`;
       ctx.fill();
     });
-    if (Math.random() < 0.18 && particles.current.length < 60) {
+    if (Math.random() < 0.12 && particles.current.length < 40) {
       particles.current.push({
         x: Math.random() * W,
         y: H + 4,
-        r: Math.random() * 2 + 1,
-        speed: Math.random() * 0.6 + 0.3,
-        alpha: Math.random() * 0.4 + 0.1,
-        color: Math.random() > 0.5 ? "99,102,241" : "165,180,252",
+        r: Math.random() * 1.5 + 0.5,
+        speed: Math.random() * 0.4 + 0.2,
+        alpha: Math.random() * 0.25 + 0.05,
+        color: Math.random() > 0.5 ? "99,102,241" : "148,163,254",
       });
     }
   }, []);
 
   /* ─── Main animation loop ─── */
   const animate = useCallback(() => {
-    waveT.current += 0.045;
-
-    const waveCvs = waveCvsRef.current;
     const pCvs = pCvsRef.current;
-    if (waveCvs) drawWave(waveCvs.getContext("2d"), waveCvs.width, waveCvs.height);
     if (pCvs) drawParticles(pCvs.getContext("2d"), pCvs.width, pCvs.height);
-
     rafRef.current = requestAnimationFrame(animate);
-  }, [drawWave, drawParticles]);
+  }, [drawParticles]);
 
   /* ─── Progress ticker ─── */
   useEffect(() => {
@@ -136,11 +89,9 @@ export default function Preloader({ onComplete }) {
       if (p < 1) {
         loadRafRef.current = requestAnimationFrame(step);
       } else {
-        // Hold at 100% for a moment before transitioning
         setTimeout(() => {
           setDone(true);
           cancelAnimationFrame(rafRef.current);
-          // Add extra delay for smooth transition to homepage
           setTimeout(() => {
             onComplete?.();
           }, 800);
@@ -149,9 +100,7 @@ export default function Preloader({ onComplete }) {
     };
 
     loadRafRef.current = requestAnimationFrame(step);
-    return () => {
-      cancelAnimationFrame(loadRafRef.current);
-    };
+    return () => cancelAnimationFrame(loadRafRef.current);
   }, [onComplete]);
 
   /* ─── Start render loop & resize ─── */
@@ -165,86 +114,187 @@ export default function Preloader({ onComplete }) {
     };
   }, [animate, resizePCvs]);
 
-  /* ─── Resize wave canvas when fill width changes ─── */
-  useEffect(() => {
-    const cvs = waveCvsRef.current;
-    const fill = waveFillRef.current;
-    if (!cvs || !fill) return;
-    cvs.width = fill.parentElement?.offsetWidth * 2 || 600;
-    cvs.height = fill.offsetHeight || 48;
-  }, []);
-
   const pct = Math.round(progress * 100);
 
   return (
     <div
       ref={wrapRef}
       className="relative w-full min-h-screen flex items-center justify-center overflow-hidden"
-      style={{ background: "#0f0e17" }}
+      style={{ background: "#080c18" }}
     >
       {/* Floating particles */}
       <canvas ref={pCvsRef} className="absolute inset-0 pointer-events-none z-0" />
 
+      {/* Subtle radial glow behind content */}
+      <div
+        className="absolute pointer-events-none z-0"
+        style={{
+          width: 480,
+          height: 480,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(79,70,229,0.12) 0%, transparent 70%)",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      />
+
       {/* Preloader content */}
       <div
-        className={`relative z-10 flex flex-col items-center gap-9 transition-all duration-700
+        className={`relative z-10 flex flex-col items-center gap-6 transition-all duration-700
           ${done ? "opacity-0 scale-105 pointer-events-none" : "opacity-100 scale-100"}`}
       >
-        {/* Brand */}
+        {/* Icon box */}
         <div
-          className="text-xl font-medium tracking-widest"
-          style={{ color: "rgba(255,255,255,0.9)" }}
-        >
-          <span style={{ color: "#6366f1" }}>CoolieSeva</span>
-        </div>
-        <div
-          className="text-sm font-medium tracking-wide"
-          style={{ color: "rgba(255,255,255,0.7)" }}
-        >
-          आपका सामान हमारी जिम्मेदारी
-        </div>
-
-        {/* Wave bar */}
-        <div className="flex flex-col items-center gap-3 w-72">
-          <div
-            className="relative w-full overflow-hidden"
-            style={{
-              height: 48,
-              borderRadius: 24,
-              background: "rgba(255,255,255,0.06)",
-              border: "0.5px solid rgba(255,255,255,0.1)",
-            }}
-          >
-            {/* Filled portion */}
-            <div
-              ref={waveFillRef}
-              className="absolute top-0 left-0 h-full overflow-hidden transition-[width] duration-100 linear"
-              style={{ width: `${pct}%`, borderRadius: 24 }}
-            >
-              <canvas ref={waveCvsRef} className="absolute inset-0 w-full h-full" />
-            </div>
-          </div>
-
-          {/* Percentage row */}
-          <div className="flex justify-between w-full items-center">
-            <span className="text-xs tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>
-              loading
-            </span>
-            <span className="text-lg font-medium" style={{ color: "#a5b4fc" }}>
-              {pct}%
-            </span>
-          </div>
-        </div>
-
-        {/* Status message */}
-        <div
-          className="text-xs tracking-widest transition-opacity duration-300"
           style={{
-            color: "rgba(255,255,255,0.35)",
-            opacity: msgVisible ? 1 : 0,
+            width: 56,
+            height: 56,
+            borderRadius: 14,
+            background: "rgba(99,102,241,0.15)",
+            border: "1px solid rgba(99,102,241,0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 0 24px rgba(99,102,241,0.25), inset 0 1px 0 rgba(255,255,255,0.08)",
+            marginBottom: 4,
           }}
         >
-          {MESSAGES[msgIdx]}
+          {/* Archive/luggage icon */}
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#818cf8"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="21 8 21 21 3 21 3 8" />
+            <rect x="1" y="3" width="22" height="5" rx="1" />
+            <line x1="10" y1="12" x2="14" y2="12" />
+          </svg>
+        </div>
+
+        {/* Brand name */}
+        <div className="flex flex-col items-center gap-1">
+          <div
+            className="font-bold tracking-wide"
+            style={{
+              color: "#ffffff",
+              fontSize: 26,
+              letterSpacing: "0.02em",
+              fontFamily: "'Segoe UI', system-ui, sans-serif",
+            }}
+          >
+            <span style={{ color: "#818cf8" }}>Coolie</span>Seva
+          </div>
+          <div
+            style={{
+              color: "rgba(255,255,255,0.45)",
+              fontSize: 12,
+              letterSpacing: "0.03em",
+              fontFamily: "'Segoe UI', system-ui, sans-serif",
+            }}
+          >
+            आपका सामान हमारी जिम्मेदारी
+          </div>
+        </div>
+
+        {/* Large percentage */}
+        <div
+          className="flex items-baseline"
+          style={{ color: "#ffffff", lineHeight: 1 }}
+        >
+          <span
+            style={{
+              fontSize: 56,
+              fontWeight: 700,
+              fontFamily: "'Segoe UI', system-ui, sans-serif",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {pct}
+          </span>
+          <span
+            style={{
+              fontSize: 20,
+              fontWeight: 400,
+              color: "rgba(255,255,255,0.55)",
+              marginLeft: 2,
+              marginBottom: 4,
+            }}
+          >
+            %
+          </span>
+        </div>
+
+        {/* Thin progress bar */}
+        <div
+          style={{
+            width: 260,
+            height: 5,
+            borderRadius: 99,
+            background: "rgba(255,255,255,0.08)",
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          {/* Filled track */}
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              height: "100%",
+              width: `${pct}%`,
+              borderRadius: 99,
+              background: "linear-gradient(90deg, #4f46e5 0%, #818cf8 100%)",
+              transition: "width 0.1s linear",
+              boxShadow: "0 0 8px rgba(99,102,241,0.7)",
+            }}
+          />
+          {/* Shimmer on the tip */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: `calc(${pct}% - 20px)`,
+              width: 20,
+              height: "100%",
+              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.35))",
+              borderRadius: 99,
+              transition: "left 0.1s linear",
+            }}
+          />
+        </div>
+
+        {/* Status messages */}
+        <div
+          className="flex flex-col items-center gap-1 transition-opacity duration-300"
+          style={{ opacity: msgVisible ? 1 : 0 }}
+        >
+          <div
+            style={{
+              color: "rgba(255,255,255,0.45)",
+              fontSize: 11,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              fontFamily: "'Segoe UI', system-ui, sans-serif",
+            }}
+          >
+            {MESSAGES[msgIdx].en}
+          </div>
+          <div
+            style={{
+              color: "rgba(255,255,255,0.28)",
+              fontSize: 11,
+              letterSpacing: "0.02em",
+              fontFamily: "'Segoe UI', system-ui, sans-serif",
+            }}
+          >
+            {MESSAGES[msgIdx].hi}
+          </div>
         </div>
       </div>
     </div>

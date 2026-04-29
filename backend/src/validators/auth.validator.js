@@ -134,7 +134,6 @@ const coolieRegisterRules = [
 
     // Bank details — all optional
     body('bank_name').optional({ checkFalsy: true }).trim().isLength({ max: 100 }),
-    body('account_number').optional({ checkFalsy: true }).trim().isLength({ max: 30 }),
     body('ifsc_code')
         .optional({ checkFalsy: true })
         .trim()

@@ -90,10 +90,17 @@ const getAllCoolies = async (req, res) => {
             FROM coolies WHERE 1=1`
         const params = []
 
-        if (status) {
-            params.push(status)
-            query += ` AND verification_status = $${params.length}`
+        if (status && status !== 'undefined' && status !== 'all') {
+            if (status === 'active') {
+                query += ` AND verification_status = 'approved' AND is_suspended = false`
+            } else if (status === 'suspended') {
+                query += ` AND is_suspended = true`
+            } else {
+                params.push(status)
+                query += ` AND verification_status = $${params.length}`
+            }
         }
+        
         if (station) {
             params.push(`%${station}%`)
             query += ` AND station_name ILIKE $${params.length}`
@@ -103,9 +110,25 @@ const getAllCoolies = async (req, res) => {
         params.push(limit, offset)
 
         const result = await pool.query(query, params)
-        const countResult = await pool.query(
-            `SELECT COUNT(*) FROM coolies WHERE 1=1${status ? ` AND verification_status = '${status}'` : ''}`
-        )
+
+        // Generate count query with same filters
+        let countQuery = `SELECT COUNT(*) FROM coolies WHERE 1=1`
+        const countParams = []
+        if (status && status !== 'undefined' && status !== 'all') {
+            if (status === 'active') {
+                countQuery += ` AND verification_status = 'approved' AND is_suspended = false`
+            } else if (status === 'suspended') {
+                countQuery += ` AND is_suspended = true`
+            } else {
+                countParams.push(status)
+                countQuery += ` AND verification_status = $${countParams.length}`
+            }
+        }
+        if (station) {
+            countParams.push(`%${station}%`)
+            countQuery += ` AND station_name ILIKE $${countParams.length}`
+        }
+        const countResult = await pool.query(countQuery, countParams)
 
         res.status(200).json({
             success: true,

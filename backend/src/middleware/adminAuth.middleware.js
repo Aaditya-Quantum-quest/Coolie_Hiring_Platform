@@ -51,4 +51,14 @@ const requireSuperAdmin = (req, res, next) => {
     next()
 }
 
-module.exports = { protectAdmin, requireSuperAdmin }
+/**
+ * Only allow regular admins to perform Level 1
+ */
+const requireRegularAdmin = (req, res, next) => {
+    if (req.user?.adminRole !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Regular Admin access required for this action.' })
+    }
+    next()
+}
+
+module.exports = { protectAdmin, requireSuperAdmin, requireRegularAdmin }

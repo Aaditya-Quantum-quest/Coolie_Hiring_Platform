@@ -186,7 +186,7 @@ export default function AdminBookings() {
 
                     {/* ── Search ── */}
                     <div className="relative mb-4 sm:mb-5">
-                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                        {/* <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" /> */}
                         <input
                             className="input-field pl-9 w-full text-sm"
                             placeholder="Search by booking ID, customer, coolie, station..."

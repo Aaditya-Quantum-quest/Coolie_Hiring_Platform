@@ -34,13 +34,24 @@ api.interceptors.request.use((config) => {
 
 // Coolie Profile Service
 export const coolieProfileService = {
-  // Get coolie profile data
+  // Get coolie profile data (Rankings subset)
   getProfile: async (coolieId) => {
     try {
       const response = await api.get(`/rankings/profile/${coolieId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching coolie profile:', error);
+      throw error;
+    }
+  },
+
+  // Get full coolie profile data (Documents, sensitive info)
+  getFullProfile: async () => {
+    try {
+      const response = await api.get('/coolies/profile');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching full coolie profile:', error);
       throw error;
     }
   },

@@ -10,7 +10,7 @@ const {
     getDashboardStats, getLiveBookings, getRevenueData, getStationCoverage, getUrgentDisputes,
 } = require('../controllers/admin.controller')
 
-const { protectAdmin, requireSuperAdmin } = require('../middleware/adminAuth.middleware')
+const { protectAdmin, requireSuperAdmin, requireRegularAdmin } = require('../middleware/adminAuth.middleware')
 const { body } = require('express-validator')
 const { validate } = require('../middleware/validate.middleware')
 
@@ -47,7 +47,7 @@ router.get('/coolies', protectAdmin, getAllCoolies)
 router.get('/coolies/:id', protectAdmin, getCoolieDetail)
 
 // POST /api/admin/coolies/:id/approve/level1 — Document verification ✅
-router.post('/coolies/:id/approve/level1', protectAdmin, approveCoolieLevel1)
+router.post('/coolies/:id/approve/level1', protectAdmin, requireRegularAdmin, approveCoolieLevel1)
 
 // POST /api/admin/coolies/:id/approve/level2 — Final approval (generates Coolie ID + QR)
 // requireSuperAdmin ensures only super admin can do final approval

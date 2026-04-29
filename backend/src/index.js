@@ -204,7 +204,7 @@ app.use((req, res) => {
 // GLOBAL ERROR HANDLER
 // ─────────────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
-    console.error('❌ Global Error:', err);
+    console.error('❌ Global Error:', err.stack || err);
 
     if (err.code === 'LIMIT_FILE_SIZE') {
         return res.status(413).json({
@@ -219,6 +219,7 @@ app.use((err, req, res, next) => {
             process.env.NODE_ENV === 'production'
                 ? 'Internal server error'
                 : err.message,
+        error: process.env.NODE_ENV === 'production' ? null : err.stack
     });
 });
 

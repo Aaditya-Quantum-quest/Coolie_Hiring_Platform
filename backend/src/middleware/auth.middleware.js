@@ -25,8 +25,10 @@ const protect = async (req, res, next) => {
 
         // Verify user still exists and is active
         const table = decoded.role === 'coolie' ? 'coolies' : 'customers'
+        const statusColumn = decoded.role === 'coolie' ? 'is_suspended' : 'is_banned'
+        
         const result = await pool.query(
-            `SELECT id, name, email, is_active, is_banned FROM ${table} WHERE id = $1`,
+            `SELECT id, name, email, is_active, ${statusColumn} as is_blocked FROM ${table} WHERE id = $1`,
             [decoded.id]
         )
 
@@ -40,8 +42,8 @@ const protect = async (req, res, next) => {
             return res.status(403).json({ success: false, message: 'Account deactivated. Contact support.' })
         }
 
-        if (user.is_banned) {
-            return res.status(403).json({ success: false, message: 'Account suspended. Contact support.' })
+        if (user.is_blocked) {
+            return res.status(403).json({ success: false, message: 'Account suspended/banned. Contact support.' })
         }
 
         req.user = { id: decoded.id, email: decoded.email, role: decoded.role, name: user.name }

@@ -121,7 +121,8 @@ const registerCoolie = async (req, res) => {
         if (!files.passport_photo?.length) missingFiles.push('passport_photo (your passport size photo)')
         if (!files.aadhaar_front?.length) missingFiles.push('aadhaar_front (Aadhaar card — front side)')
         if (!files.aadhaar_back?.length) missingFiles.push('aadhaar_back (Aadhaar card — back side)')
-        if (!files.secondary_doc?.length) missingFiles.push('secondary_doc (Voter ID / PAN / Driving License)')
+        if (!files.secondary_doc_front?.length) missingFiles.push('secondary_doc_front (Secondary ID — front side)')
+        if (!files.secondary_doc_back?.length) missingFiles.push('secondary_doc_back (Secondary ID — back side)')
 
         if (missingFiles.length > 0) {
             cleanupFiles(files)

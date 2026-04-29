@@ -39,9 +39,8 @@ const coolieUpload = multer({
         destination: (req, file, cb) => {
             let folder = 'misc'
             if (file.fieldname === 'passport_photo') folder = 'passport_photos'
-            else if (file.fieldname === 'aadhaar_front') folder = 'aadhaar'
-            else if (file.fieldname === 'aadhaar_back') folder = 'aadhaar'
-            else if (file.fieldname === 'secondary_doc') folder = 'secondary_docs'
+            else if (file.fieldname === 'aadhaar_front' || file.fieldname === 'aadhaar_back') folder = 'aadhaar'
+            else if (file.fieldname === 'secondary_doc_front' || file.fieldname === 'secondary_doc_back') folder = 'secondary_docs'
 
             const dir = path.join(__dirname, '../../uploads', folder)
             ensureDir(dir)
@@ -58,7 +57,8 @@ const coolieUpload = multer({
     { name: 'passport_photo', maxCount: 1 },
     { name: 'aadhaar_front', maxCount: 1 },
     { name: 'aadhaar_back', maxCount: 1 },
-    { name: 'secondary_doc', maxCount: 1 },
+    { name: 'secondary_doc_front', maxCount: 1 },
+    { name: 'secondary_doc_back', maxCount: 1 },
 ])
 
 // Customer profile photo (single optional)

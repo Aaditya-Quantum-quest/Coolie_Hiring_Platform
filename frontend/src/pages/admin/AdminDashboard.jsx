@@ -194,19 +194,6 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
 
-                            {/* Search Bar */}
-                            <div className="mb-4 md:mb-6">
-                                <SearchBar
-                                    placeholder="Search bookings, customers, coolies, stations..."
-                                    value={searchQuery}
-                                    onChange={setSearchQuery}
-                                    onFilter={setSearchFilter}
-                                    filters={bookingFilters}
-                                    selectedFilter={searchFilter}
-                                    showFilters={true}
-                                />
-                            </div>
-
                             {/* Stat Cards — 2 cols on xs, 3 on sm, 6 on xl */}
                             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4 mb-6 md:mb-8">
                                 {STAT_CARDS.map((s, i) => (

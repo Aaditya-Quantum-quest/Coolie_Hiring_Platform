@@ -52,10 +52,14 @@ export default function AdminUsers() {
     }, [])
 
     const filtered = users.filter(u => {
+        const searchLower = search.toLowerCase()
         const matchSearch = search === '' ||
-            u.name.toLowerCase().includes(search.toLowerCase()) ||
-            u.email.toLowerCase().includes(search.toLowerCase()) ||
-            u.displayId.toLowerCase().includes(search.toLowerCase())
+            u.name.toLowerCase().includes(searchLower) ||
+            u.email.toLowerCase().includes(searchLower) ||
+            u.displayId.toLowerCase().includes(searchLower) ||
+            u.city.toLowerCase().includes(searchLower) ||
+            u.status.toLowerCase().includes(searchLower)
+            
         const matchStatus = filterStatus === 'all' || u.status === filterStatus
         return matchSearch && matchStatus
     })
@@ -124,7 +128,6 @@ export default function AdminUsers() {
                     {/* Filters */}
                     <div className="flex flex-col sm:flex-row gap-3 mb-4 md:mb-6">
                         <div className="relative flex-1 min-w-0">
-                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                             <input
                                 className="input-field pl-9 w-full text-sm"
                                 placeholder="Search by name, email, or ID..."

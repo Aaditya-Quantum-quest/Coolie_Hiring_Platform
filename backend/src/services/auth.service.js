@@ -150,7 +150,7 @@ const createCoolie = async (data, files) => {
         date_of_birth, gender, address, city, state, pincode,
         station_name, station_code, age,
         aadhaar_number, secondary_doc_type, secondary_doc_number,
-        bank_name, account_number, ifsc_code, upi_id,
+        bank_name, ifsc_code, upi_id,
         working_platforms, languages_spoken,
     } = data
 
@@ -168,34 +168,32 @@ const createCoolie = async (data, files) => {
     const aadhaar_number_hash = hashField(aadhaar_number)        // for uniqueness check
     const aadhaar_number_enc = encrypt(aadhaar_number)           // encrypted storage
     const secondary_doc_number_enc = encrypt(secondary_doc_number)
-    const account_number_enc = account_number ? encrypt(account_number) : null
 
     // Build upload file URLs
     const passport_photo_url = buildFileUrl(files?.passport_photo?.[0]?.path)
     const aadhaar_front_url = buildFileUrl(files?.aadhaar_front?.[0]?.path)
     const aadhaar_back_url = buildFileUrl(files?.aadhaar_back?.[0]?.path)
-    const secondary_doc_url = buildFileUrl(files?.secondary_doc?.[0]?.path)
+    const secondary_doc_front_url = buildFileUrl(files?.secondary_doc_front?.[0]?.path)
+    const secondary_doc_back_url = buildFileUrl(files?.secondary_doc_back?.[0]?.path)
 
-    // FIX: the INSERT statement was missing its opening clause entirely —
-    // the column list, pool.query() call, and template-literal start were all absent
     const r = await pool.query(
         `INSERT INTO coolies (
             name, email, password_hash, phone, alt_phone,
             date_of_birth, gender, address, city, state, pincode,
             station_name, station_code, working_platforms, age, languages_spoken,
             aadhaar_number_hash, aadhaar_number_enc, aadhaar_front_url, aadhaar_back_url,
-            secondary_doc_type, secondary_doc_number_enc, secondary_doc_url,
+            secondary_doc_type, secondary_doc_number_enc, secondary_doc_front_url, secondary_doc_back_url,
             passport_photo_url,
-            bank_name, account_number_enc, ifsc_code, upi_id,
+            bank_name, ifsc_code, upi_id,
             is_active, temp_password
         ) VALUES (
             $1,$2,$3,$4,$5,
             $6,$7,$8,$9,$10,$11,
             $12,$13,$14,$15,$16,
             $17,$18,$19,$20,
-            $21,$22,$23,
-            $24,
-            $25,$26,$27,$28,
+            $21,$22,$23,$24,
+            $25,
+            $26,$27,$28,
             FALSE, $29
         )
         RETURNING id, name, email, phone, station_name, verification_status, created_at`,
@@ -204,9 +202,9 @@ const createCoolie = async (data, files) => {
             date_of_birth, gender, address, city, state, pincode,
             station_name, station_code || null, platforms, age || 18, languages,
             aadhaar_number_hash, aadhaar_number_enc, aadhaar_front_url, aadhaar_back_url,
-            secondary_doc_type, secondary_doc_number_enc, secondary_doc_url,
+            secondary_doc_type, secondary_doc_number_enc, secondary_doc_front_url, secondary_doc_back_url,
             passport_photo_url,
-            bank_name || null, account_number_enc, ifsc_code || null, upi_id || null,
+            bank_name || null, ifsc_code || null, upi_id || null,
             password // store plain password temporarily for approval email
         ]
     )
@@ -222,12 +220,35 @@ const getCoolieById = async (id) => {
     const r = await pool.query(
         `SELECT id, coolie_id, name, email, phone, alt_phone, station_name, station_code,
                 passport_photo_url, qr_code_url, age, languages_spoken,
-                working_platforms, rating_avg, total_trips, badge,
+                gender, date_of_birth, address, city, state, pincode,
+                bank_name, ifsc_code, upi_id,
+                aadhaar_number_enc, secondary_doc_number_enc,
+                aadhaar_front_url, aadhaar_back_url, secondary_doc_front_url, secondary_doc_back_url,
+                rating_avg, total_trips, badge,
                 verification_status, is_verified, is_active, is_suspended, created_at
          FROM coolies WHERE id=$1`,
         [id]
     )
-    return r.rows[0] || null
+    const coolie = r.rows[0]
+    if (!coolie) return null
+
+    // Decrypt document numbers for the owner
+    try {
+        if (coolie.aadhaar_number_enc) {
+            coolie.aadhaar_number = decrypt(coolie.aadhaar_number_enc)
+        }
+        if (coolie.secondary_doc_number_enc) {
+            coolie.secondary_doc_number = decrypt(coolie.secondary_doc_number_enc)
+        }
+    } catch (err) {
+        console.error('[Decryption Error] Failed to decrypt document numbers:', err.message)
+    }
+
+    // Remove encrypted versions from response
+    delete coolie.aadhaar_number_enc
+    delete coolie.secondary_doc_number_enc
+
+    return coolie
 }
 
 // ─── Coolie Login Lockout ────────────────────────────────────
@@ -272,7 +293,7 @@ const getPendingCoolies = async () => {
     const r = await pool.query(
         `SELECT id, name, email, phone, city, station_name, station_code,
                 passport_photo_url, aadhaar_front_url, aadhaar_back_url,
-                secondary_doc_type, secondary_doc_url,
+                secondary_doc_type, secondary_doc_front_url, secondary_doc_back_url,
                 verification_status, verification_level,
                 age, date_of_birth, gender, address, state, pincode,
                 created_at
@@ -289,7 +310,8 @@ const getCoolieForAdmin = async (id) => {
                 date_of_birth, gender, address, city, state, pincode,
                 station_name, station_code, working_platforms, age, languages_spoken,
                 passport_photo_url, aadhaar_front_url, aadhaar_back_url,
-                secondary_doc_type, secondary_doc_url,
+                secondary_doc_type, secondary_doc_front_url, secondary_doc_back_url,
+                aadhaar_number_enc, secondary_doc_number_enc, account_number_enc,
                 qr_code_url, verification_status, verification_level,
                 level1_approved_at, level2_approved_at,
                 rejection_reason, is_verified, is_active,
@@ -297,7 +319,15 @@ const getCoolieForAdmin = async (id) => {
          FROM coolies WHERE id=$1`,
         [id]
     )
-    return r.rows[0] || null
+    const coolie = r.rows[0];
+    if (!coolie) return null;
+
+    return {
+        ...coolie,
+        aadhaar_number: decrypt(coolie.aadhaar_number_enc),
+        secondary_doc_number: decrypt(coolie.secondary_doc_number_enc),
+        account_number: decrypt(coolie.account_number_enc)
+    };
 }
 
 /**

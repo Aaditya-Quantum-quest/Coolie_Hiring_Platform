@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext'
 import {
     User, Briefcase, Eye, EyeOff, Upload, CheckCircle, Rocket,
     Mail, Lock, Phone, MapPin, CreditCard, RefreshCw, ArrowRight,
-    ArrowLeft, Zap, Shield, Star, Building2,
+    ArrowLeft, Zap, Shield, Star, Building2, Landmark,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
@@ -538,11 +538,21 @@ export default function RegisterPage() {
     const [showPass, setShowPass] = useState(false)
     const [loading, setLoading] = useState(false)
     const [form, setForm] = useState({
-        name: '', email: '', phone: '', password: '', address: '',
-        station: '', idType: 'Aadhar', idNumber: '', age: '',
-        languages: [], emergencyContact: '',
+        name: '', email: '', phone: '', password: '', 
+        alt_phone: '', date_of_birth: '', gender: 'male',
+        address: '', city: '', state: '', pincode: '',
+        station_name: '', station_code: '',
+        aadhaar_number: '', 
+        secondary_doc_type: 'voter_id', secondary_doc_number: '',
+        age: '', languages: [], emergencyContact: '',
+        bank_name: '', ifsc_code: '', upi_id: '',
     })
     const [photoFile, setPhotoFile] = useState(null)
+    const [aadhaarFront, setAadhaarFront] = useState(null)
+    const [aadhaarBack, setAadhaarBack] = useState(null)
+    const [secondaryFront, setSecondaryFront] = useState(null)
+    const [secondaryBack, setSecondaryBack] = useState(null)
+
     const [stationQuery, setStationQuery] = useState('')
     const [stationSuggestions, setStationSuggestions] = useState([])
     const [showSuggestions, setShowSuggestions] = useState(false)
@@ -567,7 +577,7 @@ export default function RegisterPage() {
     }, [type, step])
 
     const handleStationSearch = async (val) => {
-        update('station', val)
+        update('station_name', val)
         setStationQuery(val)
         if (val.trim().length >= 2) {
             setSearchingStations(true)
@@ -589,7 +599,7 @@ export default function RegisterPage() {
     }
 
     const selectStation = (s) => {
-        update('station', s.station_name)
+        setForm(f => ({ ...f, station_name: s.station_name, station_code: s.station_code }))
         setStationQuery(s.station_name)
         setShowSuggestions(false)
     }
@@ -628,10 +638,34 @@ export default function RegisterPage() {
                     navigate('/customer')
                 }
             } else {
-                if (!photoFile) {
-                    toast.error('Please upload your ID Proof Photo')
-                    setLoading(false)
-                    return
+                // Validation for Coolie
+                const requiredFiles = [
+                    { file: photoFile, label: 'Passport Photo' },
+                    { file: aadhaarFront, label: 'Aadhaar Front' },
+                    { file: aadhaarBack, label: 'Aadhaar Back' },
+                    { file: secondaryFront, label: 'Secondary ID Front' },
+                    { file: secondaryBack, label: 'Secondary ID Back' }
+                ];
+                
+                const missing = requiredFiles.find(f => !f.file);
+                if (missing) {
+                    toast.error(`Please upload your ${missing.label}`);
+                    setLoading(false); return;
+                }
+
+                if (!form.aadhaar_number || form.aadhaar_number.length !== 12) {
+                    toast.error('Please enter a valid 12-digit Aadhaar number');
+                    setLoading(false); return;
+                }
+
+                if (!form.secondary_doc_number || form.secondary_doc_number.length < 5) {
+                    toast.error('Please enter a valid Secondary Document number');
+                    setLoading(false); return;
+                }
+
+                if (!form.address || form.address.length < 10) {
+                    toast.error('Address must be at least 10 characters long');
+                    setLoading(false); return;
                 }
 
                 const formData = new FormData()
@@ -639,37 +673,30 @@ export default function RegisterPage() {
                 formData.append('email', form.email)
                 formData.append('phone', form.phone)
                 formData.append('password', form.password)
+                formData.append('alt_phone', form.alt_phone)
+                formData.append('date_of_birth', form.date_of_birth)
+                formData.append('gender', form.gender)
+                formData.append('address', form.address)
+                formData.append('city', form.city)
+                formData.append('state', form.state)
+                formData.append('pincode', form.pincode)
+                formData.append('station_name', form.station_name)
+                formData.append('station_code', form.station_code)
+                formData.append('aadhaar_number', form.aadhaar_number)
+                formData.append('secondary_doc_type', form.secondary_doc_type)
+                formData.append('secondary_doc_number', form.secondary_doc_number)
+                formData.append('bank_name', form.bank_name)
+                formData.append('ifsc_code', form.ifsc_code)
+                formData.append('upi_id', form.upi_id)
+                formData.append('age', form.age)
+                formData.append('languages_spoken', JSON.stringify(form.languages))
 
-                // Append the uploaded photo for all required backend document fields
+                // Files
                 formData.append('passport_photo', photoFile)
-                formData.append('aadhaar_front', photoFile)
-                formData.append('aadhaar_back', photoFile)
-                formData.append('secondary_doc', photoFile)
-
-                // Add required dummy fields not present in current form
-                formData.append('date_of_birth', '1990-01-01')
-                formData.append('gender', 'male')
-                formData.append('address', form.address || '123 Main St')
-                formData.append('city', 'New Delhi')
-                formData.append('state', 'Delhi')
-                formData.append('pincode', '110001')
-
-                formData.append('station_name', form.station || 'New Delhi Railway Station')
-
-                let aadhaar = form.idNumber
-                if (!aadhaar || aadhaar.length !== 12) aadhaar = '123456789012'
-                formData.append('aadhaar_number', aadhaar)
-
-                formData.append('secondary_doc_type', 'voter_id')
-                formData.append('secondary_doc_number', 'VOTER123456')
-
-                if (form.age) {
-                    formData.append('age', form.age)
-                }
-
-                if (form.languages.length > 0) {
-                    formData.append('languages_spoken', JSON.stringify(form.languages))
-                }
+                formData.append('aadhaar_front', aadhaarFront)
+                formData.append('aadhaar_back', aadhaarBack)
+                formData.append('secondary_doc_front', secondaryFront)
+                formData.append('secondary_doc_back', secondaryBack)
 
                 const res = await axios.post('/api/auth/coolie/register', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
@@ -682,7 +709,7 @@ export default function RegisterPage() {
             }
         } catch (error) {
             console.error('Registration failed', error)
-            const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || 'Registration failed'
+            const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || error.response?.data?.errors?.[0]?.msg || 'Registration failed'
             toast.error(`❌ ${msg}`)
         } finally {
             setLoading(false)
@@ -745,16 +772,16 @@ export default function RegisterPage() {
                     {/* ── Coolie: Step Progress + Steps ── */}
                     {type === 'coolie' && (
                         <div className="reg-progress">
-                            {[1, 2].map(s => (
+                            {[1, 2, 3].map(s => (
                                 <React.Fragment key={s}>
                                     <div className={`reg-step ${step >= s ? 'reg-step-active' : ''}`}>
                                         {step > s
                                             ? <CheckCircle size={13} />
                                             : <span className="reg-step-num">{s}</span>
                                         }
-                                        {s === 1 ? 'Basic Info' : 'Work Details'}
+                                        {s === 1 ? 'Basic' : s === 2 ? 'Address' : 'Identity'}
                                     </div>
-                                    {s < 2 && <div className="reg-step-connector" />}
+                                    {s < 3 && <div className="reg-step-connector" />}
                                 </React.Fragment>
                             ))}
                         </div>
@@ -804,6 +831,39 @@ export default function RegisterPage() {
                                 </div>
                             </div>
 
+                            {type === 'coolie' && (
+                                <>
+                                    <div className="login-field">
+                                        <label className="login-label">Alternate Phone</label>
+                                        <div className="login-input-wrap">
+                                            <Phone size={14} className="login-input-icon" />
+                                            <input className="input-field login-input" placeholder="Secondary mobile"
+                                                value={form.alt_phone} onChange={e => update('alt_phone', e.target.value)} maxLength={10} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="login-field">
+                                            <label className="login-label">Date of Birth *</label>
+                                            <div className="login-input-wrap">
+                                                <input type="date" className="input-field login-input"
+                                                    value={form.date_of_birth} onChange={e => update('date_of_birth', e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <div className="login-field">
+                                            <label className="login-label">Gender *</label>
+                                            <div className="login-input-wrap">
+                                                <select className="input-field login-input"
+                                                    value={form.gender} onChange={e => update('gender', e.target.value)}>
+                                                    <option value="male">Male</option>
+                                                    <option value="female">Female</option>
+                                                    <option value="other">Other</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
                             {/* Emergency Contact (customer only) */}
                             {type === 'customer' && (
                                 <div className="login-field">
@@ -835,7 +895,7 @@ export default function RegisterPage() {
 
                     {/* ── STEP 2 ── */}
                     {step === 2 && type === 'coolie' && (
-                        <form onSubmit={handleSubmit} className="login-form">
+                        <div className="login-form space-y-4">
 
                             <div className="login-field relative" ref={suggestionRef}>
                                 <label className="login-label">Home Station *</label>
@@ -843,8 +903,8 @@ export default function RegisterPage() {
                                     <MapPin size={14} className="login-input-icon" />
                                     <input
                                         className="input-field login-input"
-                                        placeholder="Search your station (e.g. RMU, NDLS) Type Jn At The End"
-                                        value={form.station}
+                                        placeholder="Search station (e.g. RMU, NDLS)"
+                                        value={form.station_name}
                                         onChange={e => handleStationSearch(e.target.value)}
                                         onFocus={() => { if (stationSuggestions.length > 0) setShowSuggestions(true) }}
                                     />
@@ -854,6 +914,11 @@ export default function RegisterPage() {
                                         </div>
                                     )}
                                 </div>
+                                {form.station_code && (
+                                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', marginLeft: '4px' }}>
+                                        Selected Code: <span className="text-orange-400 font-bold">{form.station_code}</span>
+                                    </p>
+                                )}
                                 {showSuggestions && stationSuggestions.length > 0 && (
                                     <div className="absolute left-0 right-0 top-[100%] mt-1 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden z-[100] shadow-2xl max-h-[220px] overflow-y-auto">
                                         {stationSuggestions.map((s, idx) => (
@@ -874,100 +939,203 @@ export default function RegisterPage() {
                                 )}
                             </div>
 
-                            <div className="reg-row-2">
+                            <div className="login-field">
+                                <label className="login-label">Home Address *</label>
+                                <div className="login-input-wrap">
+                                    <MapPin size={14} className="login-input-icon" />
+                                    <input className="input-field login-input" placeholder="House no, Street, Area"
+                                        value={form.address} onChange={e => update('address', e.target.value)} />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="login-field">
-                                    <label className="login-label">ID Type</label>
+                                    <label className="login-label">City *</label>
+                                    <div className="login-input-wrap">
+                                        <Building2 size={14} className="login-input-icon" />
+                                        <input className="input-field login-input" placeholder="City"
+                                            value={form.city} onChange={e => update('city', e.target.value)} />
+                                    </div>
+                                </div>
+                                <div className="login-field">
+                                    <label className="login-label">State *</label>
+                                    <div className="login-input-wrap">
+                                        <MapPin size={14} className="login-input-icon" />
+                                        <input className="input-field login-input" placeholder="State"
+                                            value={form.state} onChange={e => update('state', e.target.value)} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="login-field">
+                                <label className="login-label">Pincode *</label>
+                                <div className="login-input-wrap">
+                                    <MapPin size={14} className="login-input-icon" />
+                                    <input className="input-field login-input" placeholder="6-digit pincode"
+                                        value={form.pincode} onChange={e => update('pincode', e.target.value)} maxLength={6} />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                                <button type="button" onClick={() => setStep(1)} className="btn-secondary" style={{ flex: 1 }}>
+                                    ← Back
+                                </button>
+                                <button type="button" onClick={() => {
+                                    if (!form.station_name || !form.address || !form.city || !form.state || !form.pincode) {
+                                        toast.error('Please fill all address details'); return;
+                                    }
+                                    setStep(3)
+                                }} className="btn-primary login-submit-btn" style={{ flex: 2 }}>
+                                    Continue <ArrowRight size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── STEP 3 ── */}
+                    {step === 3 && type === 'coolie' && (
+                        <form onSubmit={handleSubmit} className="login-form space-y-6">
+                            
+                            {/* Section: Profile Photo */}
+                            <div className="login-section">
+                                <h3 className="section-title text-[14px] font-bold text-white mb-3">1. Passport Photo</h3>
+                                <label className="reg-upload-box" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', border: '2px dashed var(--border-color)', borderRadius: '12px' }}>
+                                    <input type="file" accept=".jpg,.jpeg,.png" style={{ display: 'none' }}
+                                        onChange={(e) => setPhotoFile(e.target.files[0])} />
+                                    {photoFile ? (
+                                        <div className="flex flex-col items-center">
+                                            <CheckCircle size={24} className="text-green-500 mb-2" />
+                                            <p className="text-sm font-medium text-white">{photoFile.name}</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center text-slate-400">
+                                            <Upload size={24} className="mb-2" />
+                                            <p className="text-sm">Upload passport size photo</p>
+                                        </div>
+                                    )}
+                                </label>
+                            </div>
+
+                            {/* Section: Basic Stats */}
+                            <div className="login-section grid grid-cols-2 gap-4">
+                                <div className="login-field">
+                                    <label className="login-label">Age *</label>
+                                    <div className="login-input-wrap">
+                                        <User size={14} className="login-input-icon" />
+                                        <input type="number" className="input-field login-input" placeholder="Age"
+                                            value={form.age} onChange={e => update('age', e.target.value)} min="18" max="65" />
+                                    </div>
+                                </div>
+                                <div className="login-field">
+                                    <label className="login-label">Languages Known</label>
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {['Hindi', 'English', 'Punjabi', 'Bengali'].map(lang => (
+                                            <button type="button" key={lang} onClick={() => toggleLang(lang)}
+                                                className={`reg-lang-tag ${form.languages.includes(lang) ? 'reg-lang-tag-active' : ''}`}
+                                                style={{ fontSize: '11px', padding: '4px 10px' }}>
+                                                {lang}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section: Aadhaar Card */}
+                            <div className="login-section p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                                <h3 className="section-title text-[13px] font-bold text-orange-400 mb-4 flex items-center gap-2">
+                                    <Shield size={16} /> Aadhaar Card (Primary ID)
+                                </h3>
+                                <div className="login-field mb-4">
+                                    <label className="login-label">Aadhaar Number *</label>
                                     <div className="login-input-wrap">
                                         <CreditCard size={14} className="login-input-icon" />
-                                        <select className="input-field login-input" value={form.idType}
-                                            onChange={e => update('idType', e.target.value)}>
-                                            <option>Aadhar</option>
-                                            <option>PAN Card</option>
-                                            <option>Voter ID</option>
-                                            <option>Driving License</option>
+                                        <input className="input-field login-input" placeholder="12-digit number"
+                                            value={form.aadhaar_number} onChange={e => update('aadhaar_number', e.target.value)} maxLength={12} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
+                                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setAadhaarFront(e.target.files[0])} />
+                                        {aadhaarFront ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400"/>Front Side</div>}
+                                    </label>
+                                    <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
+                                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setAadhaarBack(e.target.files[0])} />
+                                        {aadhaarBack ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400"/>Back Side</div>}
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Section: Secondary ID */}
+                            <div className="login-section p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+                                <h3 className="section-title text-[13px] font-bold text-blue-400 mb-4 flex items-center gap-2">
+                                    <Shield size={16} /> Secondary Document
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div className="login-field">
+                                        <label className="login-label">ID Type *</label>
+                                        <select className="input-field login-input h-[42px]" value={form.secondary_doc_type}
+                                            onChange={e => update('secondary_doc_type', e.target.value)}>
+                                            <option value="voter_id">Voter ID</option>
+                                            <option value="pan">PAN Card</option>
+                                            <option value="driving_license">Driving License</option>
+                                            <option value="passport">Passport</option>
                                         </select>
                                     </div>
+                                    <div className="login-field">
+                                        <label className="login-label">ID Number *</label>
+                                        <input className="input-field login-input h-[42px]" placeholder="Doc Number"
+                                            value={form.secondary_doc_number} onChange={e => update('secondary_doc_number', e.target.value)} />
+                                    </div>
                                 </div>
-                                <div className="login-field">
-                                    <label className="login-label">ID Number</label>
-                                    <div className="login-input-wrap">
-                                        <CreditCard size={14} className="login-input-icon" />
-                                        <input className="input-field login-input" placeholder="ID number"
-                                            value={form.idNumber} onChange={e => update('idNumber', e.target.value)} />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
+                                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setSecondaryFront(e.target.files[0])} />
+                                        {secondaryFront ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400"/>Front Photo</div>}
+                                    </label>
+                                    <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
+                                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setSecondaryBack(e.target.files[0])} />
+                                        {secondaryBack ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400"/>Back Photo</div>}
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Section: Bank Details */}
+                            <div className="login-section">
+                                <h3 className="section-title text-[14px] font-bold text-white flex items-center gap-2 mb-4">
+                                    <Landmark size={16} /> Bank & Payment
+                                </h3>
+                                <div className="space-y-4">
+                                    <div className="login-field">
+                                        <label className="login-label">Bank Name</label>
+                                        <div className="login-input-wrap">
+                                            <Building2 size={14} className="login-input-icon" />
+                                            <input className="input-field login-input" placeholder="e.g. SBI, HDFC"
+                                                value={form.bank_name} onChange={e => update('bank_name', e.target.value)} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="login-field">
+                                            <label className="login-label">IFSC Code</label>
+                                            <input className="input-field login-input" placeholder="IFSC"
+                                                value={form.ifsc_code} onChange={e => update('ifsc_code', e.target.value)} />
+                                        </div>
+                                        <div className="login-field">
+                                            <label className="login-label">UPI ID</label>
+                                            <input className="input-field login-input" placeholder="yourname@upi"
+                                                value={form.upi_id} onChange={e => update('upi_id', e.target.value)} />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="login-field">
-                                <label className="login-label">Age</label>
-                                <div className="login-input-wrap">
-                                    <User size={14} className="login-input-icon" />
-                                    <input
-                                        type="number"
-                                        className="input-field login-input"
-                                        placeholder="Your age (e.g. 25)"
-                                        value={form.age}
-                                        onChange={e => update('age', e.target.value)}
-                                        min="18"
-                                        max="65"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="login-field">
-                                <label className="login-label">Languages Known</label>
-                                <div className="reg-lang-grid">
-                                    {['Hindi', 'English', 'Punjabi', 'Bengali', 'Tamil', 'Marathi', 'Telugu'].map(lang => (
-                                        <button type="button" key={lang} onClick={() => toggleLang(lang)}
-                                            className={`reg-lang-tag ${form.languages.includes(lang) ? 'reg-lang-tag-active' : ''}`}>
-                                            {lang}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <label className="reg-upload-box" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                <input
-                                    type="file"
-                                    accept=".jpg,.jpeg,.png"
-                                    style={{ display: 'none' }}
-                                    onChange={(e) => {
-                                        const file = e.target.files[0];
-                                        if (file) {
-                                            if (file.size > 2 * 1024 * 1024) {
-                                                toast.error('File size must be less than 2MB');
-                                                e.target.value = null;
-                                                setPhotoFile(null);
-                                            } else {
-                                                setPhotoFile(file);
-                                            }
-                                        }
-                                    }}
-                                />
-                                {photoFile ? (
-                                    <>
-                                        <CheckCircle size={22} className="text-green-500 mb-1" />
-                                        <p style={{ fontSize: '13px', color: 'var(--text-body)' }}>{photoFile.name}</p>
-                                        <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{(photoFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Upload size={22} style={{ color: 'var(--text-muted)', marginBottom: '6px' }} />
-                                        <p style={{ fontSize: '13px', color: 'var(--text-body)' }}>Upload ID Proof Photo</p>
-                                        <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>JPG, PNG (Max 2MB)</p>
-                                    </>
-                                )}
-                            </label>
-
-                            <div style={{ display: 'flex', gap: '12px' }}>
-                                <button type="button" onClick={() => setStep(1)} className="btn-secondary"
-                                    style={{ flex: 1, padding: '13px' }}>
+                            <div style={{ display: 'flex', gap: '12px', marginTop: '30px' }}>
+                                <button type="button" onClick={() => setStep(2)} className="btn-secondary" style={{ flex: 1 }}>
                                     ← Back
                                 </button>
                                 <button type="submit" disabled={loading} className="btn-primary login-submit-btn" style={{ flex: 2 }}>
                                     {loading
                                         ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        : <><CheckCircle size={15} /> Register</>
+                                        : <><Rocket size={15} /> Submit Registration</>
                                     }
                                 </button>
                             </div>

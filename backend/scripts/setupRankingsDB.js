@@ -1,8 +1,9 @@
-require('dotenv').config({ path: '../.env' })
+const path = require('path')
+require('dotenv').config({ path: path.join(__dirname, '../.env') })
 const { Pool } = require('pg')
 
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/coolie_hire',
+    connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 })
 

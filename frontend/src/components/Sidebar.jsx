@@ -26,15 +26,15 @@ const COOLIE_ITEMS = [
     { path: '/coolie', icon: Home, label: 'Dashboard', badge: null },
     { path: '/coolie/profile', icon: User, label: 'My Profile', badge: null },
     { path: '/coolie/earnings', icon: DollarSign, label: 'Earnings', badge: null },
-    { path: '/coolie/leaderboard', icon: Award, label: 'Leaderboard', badge: '🏆' },
+    { path: '/coolie/leaderboard', icon: Award, label: 'Leaderboard', badge: null },
 ]
 
 const ADMIN_ITEMS = [
     { path: '/admin', icon: Home, label: 'Dashboard', badge: null },
     { path: '/admin/users', icon: Users, label: 'Users', badge: null },
     { path: '/admin/coolies', icon: Briefcase, label: 'Coolies', badge: null },
-    { path: '/admin/bookings', icon: Clock, label: 'Bookings', badge: '12' },
-    { path: '/admin/disputes', icon: AlertTriangle, label: 'Disputes', badge: '5' },
+    { path: '/admin/bookings', icon: Clock, label: 'Bookings', badge: null },
+    { path: '/admin/disputes', icon: AlertTriangle, label: 'Disputes', badge: null },
     { path: '/admin/analytics', icon: BarChart2, label: 'Analytics', badge: null },
 ]
 

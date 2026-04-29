@@ -12,7 +12,8 @@
  * ─────────────────────────────────────────────────────
  */
 
-require('dotenv').config()
+const path = require('path')
+require('dotenv').config({ path: path.join(__dirname, '../.env') })
 const readline = require('readline')
 const bcrypt = require('bcryptjs')
 const { Pool } = require('pg')

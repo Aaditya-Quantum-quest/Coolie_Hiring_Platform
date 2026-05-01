@@ -537,6 +537,8 @@ export default function RegisterPage() {
     const [step, setStep] = useState(1)
     const [showPass, setShowPass] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [errors, setErrors] = useState({})
+    const ErrorMsg = ({ field }) => errors[field] ? <p className="text-red-500 text-[11px] mt-1 ml-1 font-medium bg-red-500/10 py-1 px-2 rounded-md border border-red-500/20">{errors[field]}</p> : null;
     const [form, setForm] = useState({
         name: '', email: '', phone: '', password: '', 
         alt_phone: '', date_of_birth: '', gender: 'male',
@@ -624,6 +626,7 @@ export default function RegisterPage() {
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoading(true)
+        setErrors({})
         try {
             if (type === 'customer') {
                 const res = await axios.post('/api/auth/customer/register', {
@@ -650,6 +653,12 @@ export default function RegisterPage() {
                 const missing = requiredFiles.find(f => !f.file);
                 if (missing) {
                     toast.error(`Please upload your ${missing.label}`);
+                    setLoading(false); return;
+                }
+
+                const fileErrors = requiredFiles.filter(f => f.file && f.file.size > 2 * 1024 * 1024);
+                if (fileErrors.length > 0) {
+                    toast.error(`${fileErrors[0].label} size is too big. Max allowed is 2MB.`);
                     setLoading(false); return;
                 }
 
@@ -698,9 +707,7 @@ export default function RegisterPage() {
                 formData.append('secondary_doc_front', secondaryFront)
                 formData.append('secondary_doc_back', secondaryBack)
 
-                const res = await axios.post('/api/auth/coolie/register', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                })
+                const res = await axios.post('/api/auth/coolie/register', formData)
 
                 if (res.data.success) {
                     toast.success(`🎉 Registration Submitted! Check your email for confirmation. It will take 2-3 days to verify your documents.`, { duration: 6000 })
@@ -709,8 +716,25 @@ export default function RegisterPage() {
             }
         } catch (error) {
             console.error('Registration failed', error)
-            const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || error.response?.data?.errors?.[0]?.msg || 'Registration failed'
-            toast.error(`❌ ${msg}`)
+            if (error.response?.status === 422 && error.response?.data?.errors) {
+                const backendErrors = {}
+                error.response.data.errors.forEach(err => {
+                    backendErrors[err.field] = err.message
+                })
+                setErrors(backendErrors)
+                toast.error('❌ Please fix the errors highlighted in the form')
+                
+                const step1Fields = ['name', 'email', 'phone', 'password', 'alt_phone', 'date_of_birth', 'gender']
+                const step2Fields = ['station_name', 'address', 'city', 'state', 'pincode']
+                
+                if (step1Fields.some(f => backendErrors[f])) setStep(1)
+                else if (step2Fields.some(f => backendErrors[f])) setStep(2)
+                else setStep(3)
+                
+            } else {
+                const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || error.response?.data?.errors?.[0]?.msg || 'Registration failed'
+                toast.error(`❌ ${msg}`)
+            }
         } finally {
             setLoading(false)
         }
@@ -798,6 +822,7 @@ export default function RegisterPage() {
                                         <input className="input-field login-input" placeholder="Your full name"
                                             value={form.name} onChange={e => update('name', e.target.value)} />
                                     </div>
+                                    <ErrorMsg field="name" />
                                 </div>
                                 <div className="login-field">
                                     <label className="login-label">Phone *</label>
@@ -806,6 +831,7 @@ export default function RegisterPage() {
                                         <input className="input-field login-input" placeholder="10-digit mobile"
                                             value={form.phone} onChange={e => update('phone', e.target.value)} maxLength={10} />
                                     </div>
+                                    <ErrorMsg field="phone" />
                                 </div>
                             </div>
 
@@ -816,6 +842,7 @@ export default function RegisterPage() {
                                     <input type="email" className="input-field login-input" placeholder="your@email.com"
                                         value={form.email} onChange={e => update('email', e.target.value)} />
                                 </div>
+                                <ErrorMsg field="email" />
                             </div>
 
                             <div className="login-field">
@@ -829,6 +856,7 @@ export default function RegisterPage() {
                                         {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
                                     </button>
                                 </div>
+                                <ErrorMsg field="password" />
                             </div>
 
                             {type === 'coolie' && (
@@ -840,6 +868,7 @@ export default function RegisterPage() {
                                             <input className="input-field login-input" placeholder="Secondary mobile"
                                                 value={form.alt_phone} onChange={e => update('alt_phone', e.target.value)} maxLength={10} />
                                         </div>
+                                        <ErrorMsg field="alt_phone" />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="login-field">
@@ -848,6 +877,7 @@ export default function RegisterPage() {
                                                 <input type="date" className="input-field login-input"
                                                     value={form.date_of_birth} onChange={e => update('date_of_birth', e.target.value)} />
                                             </div>
+                                            <ErrorMsg field="date_of_birth" />
                                         </div>
                                         <div className="login-field">
                                             <label className="login-label">Gender *</label>
@@ -859,6 +889,7 @@ export default function RegisterPage() {
                                                     <option value="other">Other</option>
                                                 </select>
                                             </div>
+                                            <ErrorMsg field="gender" />
                                         </div>
                                     </div>
                                 </>
@@ -914,6 +945,7 @@ export default function RegisterPage() {
                                         </div>
                                     )}
                                 </div>
+                                <ErrorMsg field="station_name" />
                                 {form.station_code && (
                                     <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', marginLeft: '4px' }}>
                                         Selected Code: <span className="text-orange-400 font-bold">{form.station_code}</span>
@@ -946,6 +978,7 @@ export default function RegisterPage() {
                                     <input className="input-field login-input" placeholder="House no, Street, Area"
                                         value={form.address} onChange={e => update('address', e.target.value)} />
                                 </div>
+                                <ErrorMsg field="address" />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -956,6 +989,7 @@ export default function RegisterPage() {
                                         <input className="input-field login-input" placeholder="City"
                                             value={form.city} onChange={e => update('city', e.target.value)} />
                                     </div>
+                                    <ErrorMsg field="city" />
                                 </div>
                                 <div className="login-field">
                                     <label className="login-label">State *</label>
@@ -964,6 +998,7 @@ export default function RegisterPage() {
                                         <input className="input-field login-input" placeholder="State"
                                             value={form.state} onChange={e => update('state', e.target.value)} />
                                     </div>
+                                    <ErrorMsg field="state" />
                                 </div>
                             </div>
 
@@ -974,6 +1009,7 @@ export default function RegisterPage() {
                                     <input className="input-field login-input" placeholder="6-digit pincode"
                                         value={form.pincode} onChange={e => update('pincode', e.target.value)} maxLength={6} />
                                 </div>
+                                <ErrorMsg field="pincode" />
                             </div>
 
                             <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
@@ -1025,6 +1061,7 @@ export default function RegisterPage() {
                                         <input type="number" className="input-field login-input" placeholder="Age"
                                             value={form.age} onChange={e => update('age', e.target.value)} min="18" max="65" />
                                     </div>
+                                    <ErrorMsg field="age" />
                                 </div>
                                 <div className="login-field">
                                     <label className="login-label">Languages Known</label>
@@ -1052,6 +1089,7 @@ export default function RegisterPage() {
                                         <input className="input-field login-input" placeholder="12-digit number"
                                             value={form.aadhaar_number} onChange={e => update('aadhaar_number', e.target.value)} maxLength={12} />
                                     </div>
+                                    <ErrorMsg field="aadhaar_number" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
@@ -1080,11 +1118,13 @@ export default function RegisterPage() {
                                             <option value="driving_license">Driving License</option>
                                             <option value="passport">Passport</option>
                                         </select>
+                                        <ErrorMsg field="secondary_doc_type" />
                                     </div>
                                     <div className="login-field">
                                         <label className="login-label">ID Number *</label>
                                         <input className="input-field login-input h-[42px]" placeholder="Doc Number"
                                             value={form.secondary_doc_number} onChange={e => update('secondary_doc_number', e.target.value)} />
+                                        <ErrorMsg field="secondary_doc_number" />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -1112,17 +1152,20 @@ export default function RegisterPage() {
                                             <input className="input-field login-input" placeholder="e.g. SBI, HDFC"
                                                 value={form.bank_name} onChange={e => update('bank_name', e.target.value)} />
                                         </div>
+                                        <ErrorMsg field="bank_name" />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="login-field">
                                             <label className="login-label">IFSC Code</label>
                                             <input className="input-field login-input" placeholder="IFSC"
                                                 value={form.ifsc_code} onChange={e => update('ifsc_code', e.target.value)} />
+                                            <ErrorMsg field="ifsc_code" />
                                         </div>
                                         <div className="login-field">
                                             <label className="login-label">UPI ID</label>
                                             <input className="input-field login-input" placeholder="yourname@upi"
                                                 value={form.upi_id} onChange={e => update('upi_id', e.target.value)} />
+                                            <ErrorMsg field="upi_id" />
                                         </div>
                                     </div>
                                 </div>

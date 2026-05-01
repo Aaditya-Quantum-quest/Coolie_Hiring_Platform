@@ -540,11 +540,11 @@ export default function RegisterPage() {
     const [errors, setErrors] = useState({})
     const ErrorMsg = ({ field }) => errors[field] ? <p className="text-red-500 text-[11px] mt-1 ml-1 font-medium bg-red-500/10 py-1 px-2 rounded-md border border-red-500/20">{errors[field]}</p> : null;
     const [form, setForm] = useState({
-        name: '', email: '', phone: '', password: '', 
+        name: '', email: '', phone: '', password: '',
         alt_phone: '', date_of_birth: '', gender: 'male',
         address: '', city: '', state: '', pincode: '',
         station_name: '', station_code: '',
-        aadhaar_number: '', 
+        aadhaar_number: '',
         secondary_doc_type: 'voter_id', secondary_doc_number: '',
         age: '', languages: [], emergencyContact: '',
         bank_name: '', ifsc_code: '', upi_id: '',
@@ -649,7 +649,7 @@ export default function RegisterPage() {
                     { file: secondaryFront, label: 'Secondary ID Front' },
                     { file: secondaryBack, label: 'Secondary ID Back' }
                 ];
-                
+
                 const missing = requiredFiles.find(f => !f.file);
                 if (missing) {
                     toast.error(`Please upload your ${missing.label}`);
@@ -707,7 +707,7 @@ export default function RegisterPage() {
                 formData.append('secondary_doc_front', secondaryFront)
                 formData.append('secondary_doc_back', secondaryBack)
 
-                const res = await axios.post('/api/auth/coolie/register', formData)
+                const res = await axios.post('https://coolie-hiring-platform.onrender.com/api/auth/coolie/register', formData)
 
                 if (res.data.success) {
                     toast.success(`🎉 Registration Submitted! Check your email for confirmation. It will take 2-3 days to verify your documents.`, { duration: 6000 })
@@ -723,14 +723,14 @@ export default function RegisterPage() {
                 })
                 setErrors(backendErrors)
                 toast.error('❌ Please fix the errors highlighted in the form')
-                
+
                 const step1Fields = ['name', 'email', 'phone', 'password', 'alt_phone', 'date_of_birth', 'gender']
                 const step2Fields = ['station_name', 'address', 'city', 'state', 'pincode']
-                
+
                 if (step1Fields.some(f => backendErrors[f])) setStep(1)
                 else if (step2Fields.some(f => backendErrors[f])) setStep(2)
                 else setStep(3)
-                
+
             } else {
                 const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.message || error.response?.data?.errors?.[0]?.msg || 'Registration failed'
                 toast.error(`❌ ${msg}`)
@@ -1031,7 +1031,7 @@ export default function RegisterPage() {
                     {/* ── STEP 3 ── */}
                     {step === 3 && type === 'coolie' && (
                         <form onSubmit={handleSubmit} className="login-form space-y-6">
-                            
+
                             {/* Section: Profile Photo */}
                             <div className="login-section">
                                 <h3 className="section-title text-[14px] font-bold text-white mb-3">1. Passport Photo</h3>
@@ -1094,11 +1094,11 @@ export default function RegisterPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
                                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setAadhaarFront(e.target.files[0])} />
-                                        {aadhaarFront ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400"/>Front Side</div>}
+                                        {aadhaarFront ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400" />Front Side</div>}
                                     </label>
                                     <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
                                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setAadhaarBack(e.target.files[0])} />
-                                        {aadhaarBack ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400"/>Back Side</div>}
+                                        {aadhaarBack ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400" />Back Side</div>}
                                     </label>
                                 </div>
                             </div>
@@ -1130,11 +1130,11 @@ export default function RegisterPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
                                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setSecondaryFront(e.target.files[0])} />
-                                        {secondaryFront ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400"/>Front Photo</div>}
+                                        {secondaryFront ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400" />Front Photo</div>}
                                     </label>
                                     <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
                                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setSecondaryBack(e.target.files[0])} />
-                                        {secondaryBack ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400"/>Back Photo</div>}
+                                        {secondaryBack ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400" />Back Photo</div>}
                                     </label>
                                 </div>
                             </div>

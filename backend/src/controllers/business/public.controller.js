@@ -129,4 +129,49 @@ const getStations = async (req, res) => {
     }
 };
 
-module.exports = { getBusinessesByStation, getBusinessDetail, postReview, getStations };
+const getAllBusinesses = async (req, res) => {
+    try {
+        const { type, sort = 'rating', search, city, page = 1, limit = 20 } = req.query;
+        const offset = (page - 1) * limit;
+
+        let where = [`b.verification_status = 'fully_approved'`, `b.is_active = true`];
+        let params = [];
+        let idx = 1;
+
+        if (type && type !== 'all') { where.push(`b.business_type = $${idx++}`); params.push(type); }
+        if (city) { where.push(`b.city ILIKE $${idx++}`); params.push(`%${city}%`); }
+        if (search) { where.push(`(b.business_name ILIKE $${idx} OR b.city ILIKE $${idx})`); params.push(`%${search}%`); idx++; }
+
+        const total = parseInt((await db.query(`SELECT COUNT(*) FROM businesses b WHERE ${where.join(' AND ')}`, params)).rows[0].count);
+
+        const orderBy = sort === 'rating' ? 'avg_rating DESC NULLS LAST' : 'b.created_at DESC';
+        params.push(limit, offset);
+
+        const result = await db.query(
+            `SELECT b.id, b.business_name, b.business_type, b.cover_photo_url, b.logo_url,
+                    b.full_address, b.city, b.state, b.latitude, b.longitude,
+                    b.opening_time, b.closing_time, b.payment_modes,
+                    COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count,
+                    rd.cuisine_types, rd.food_type, rd.avg_cost_for_two,
+                    hd.star_rating, hd.check_in_time, hd.check_out_time,
+                    COALESCE(
+                        (SELECT json_agg(room_type) FROM room_types rt WHERE rt.business_id = b.id LIMIT 3),
+                        '[]'
+                    ) as room_types
+             FROM businesses b
+             LEFT JOIN business_reviews r ON r.business_id = b.id AND r.is_visible = true
+             LEFT JOIN restaurant_details rd ON rd.business_id = b.id
+             LEFT JOIN hotel_details hd ON hd.business_id = b.id
+             WHERE ${where.join(' AND ')}
+             GROUP BY b.id, rd.cuisine_types, rd.food_type, rd.avg_cost_for_two, hd.star_rating, hd.check_in_time, hd.check_out_time
+             ORDER BY ${orderBy} LIMIT $${idx} OFFSET $${idx + 1}`,
+            params
+        );
+
+        res.json({ success: true, businesses: result.rows, total, page: parseInt(page), limit: parseInt(limit), totalPages: Math.ceil(total / limit) });
+    } catch (err) {
+        res.status(500).json({ success: false, error: { message: err.message } });
+    }
+};
+
+module.exports = { getBusinessesByStation, getBusinessDetail, postReview, getStations, getAllBusinesses };

@@ -9,23 +9,40 @@ export default function SettingsPage() {
     const [saving, setSaving] = useState(false);
 
     const changePw = async () => {
+        if (!pw.old_password || !pw.new_password) { toast.error('All fields are required'); return; }
         if (pw.new_password !== pw.confirm_password) { toast.error('Passwords do not match'); return; }
-        if (pw.new_password.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+        if (pw.new_password.length < 6) { toast.error('New password must be at least 6 characters'); return; }
+        
         setSaving(true);
-        const res = await authFetch('/api/v1/business/auth/change-password', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ old_password: pw.old_password, new_password: pw.new_password })
-        });
-        const data = await res.json();
-        setSaving(false);
-        if (data.success) { toast.success('Password changed!'); setPw({ old_password: '', new_password: '', confirm_password: '' }); }
-        else toast.error(data.error?.message || 'Failed');
+        try {
+            const res = await authFetch('/api/v1/business/auth/change-password', {
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    old_password: pw.old_password, 
+                    new_password: pw.new_password 
+                })
+            });
+            
+            const data = await res.json();
+            if (data.success) { 
+                toast.success('Password updated successfully!'); 
+                setPw({ old_password: '', new_password: '', confirm_password: '' }); 
+            } else {
+                toast.error(data.error?.message || 'Failed to update password');
+            }
+        } catch (err) {
+            console.error('Password change error:', err);
+            toast.error('Network error. Please try again.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const Input = ({ label, ...props }) => (
         <div>
             <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>{label}</label>
-            <input {...props} className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
+            <input {...props} className="w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all focus:ring-1 focus:ring-[#7B2FFF]"
                 style={{ backgroundColor: 'var(--bg-alt)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
         </div>
     );

@@ -5,7 +5,7 @@ import {
     Home, Search, MapPin, CreditCard, Clock, Star, Train,
     Map, User, LogOut, ChevronLeft, ChevronRight,
     Briefcase, DollarSign, Award, BarChart2, Users,
-    AlertTriangle, Menu, X, Zap
+    AlertTriangle, Menu, X, Zap, Building2, Store
 } from 'lucide-react'
 
 /* ── GSAP loaded from CDN via useEffect (no bundler dep needed) ── */
@@ -16,6 +16,7 @@ const CUSTOMER_ITEMS = [
     { path: '/customer/track', icon: MapPin, label: 'Track Coolie', badge: null },
     { path: '/customer/trains', icon: Train, label: 'Train Status', badge: null },
     { path: '/customer/map', icon: Map, label: 'Station Map', badge: null },
+    { path: '/customer/businesses', icon: Store, label: 'Hotels & Restaurants', badge: null },
     { path: '/customer/history', icon: Clock, label: 'My Bookings', badge: null },
     { path: '/customer/profile', icon: User, label: 'My Profile', badge: null },
     { path: '/customer/payment', icon: CreditCard, label: 'Payments', badge: null },
@@ -33,6 +34,7 @@ const ADMIN_ITEMS = [
     { path: '/admin', icon: Home, label: 'Dashboard', badge: null },
     { path: '/admin/users', icon: Users, label: 'Users', badge: null },
     { path: '/admin/coolies', icon: Briefcase, label: 'Coolies', badge: null },
+    { path: '/admin/businesses', icon: Building2, label: 'Businesses', badge: null },
     { path: '/admin/bookings', icon: Clock, label: 'Bookings', badge: null },
     { path: '/admin/disputes', icon: AlertTriangle, label: 'Disputes', badge: null },
     { path: '/admin/analytics', icon: BarChart2, label: 'Analytics', badge: null },
@@ -79,11 +81,12 @@ function useGSAP(cb) {
 export default function Sidebar({ role = 'customer' }) {
     const location = useLocation()
     const navigate = useNavigate()
-    const { user, logout } = useApp()
+    const { user, logout, coolieStatus, shiftStartTime } = useApp()
     const [collapsed, setCollapsed] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
     const [hoveredPath, setHoveredPath] = useState(null)
     const [time, setTime] = useState(new Date())
+    const [shiftSeconds, setShiftSeconds] = useState(0)
 
     const sidebarRef = useRef(null)
     const logoRef = useRef(null)
@@ -101,6 +104,28 @@ export default function Sidebar({ role = 'customer' }) {
         const id = setInterval(() => setTime(new Date()), 1000)
         return () => clearInterval(id)
     }, [])
+
+    /* shift clock for coolies */
+    useEffect(() => {
+        if (role === 'coolie' && shiftStartTime) {
+            const updateShift = () => {
+                const diff = Math.floor((Date.now() - shiftStartTime) / 1000)
+                setShiftSeconds(diff > 0 ? diff : 0)
+            }
+            updateShift()
+            const id = setInterval(updateShift, 1000)
+            return () => clearInterval(id)
+        } else {
+            setShiftSeconds(0)
+        }
+    }, [role, shiftStartTime])
+
+    const formatShift = (s) => {
+        const h = String(Math.floor(s / 3600)).padStart(2, '0')
+        const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0')
+        const sec = String(s % 60).padStart(2, '0')
+        return `${h}:${m}:${sec}`
+    }
 
     /* ── GSAP entrance ── */
     useGSAP(gsap => {
@@ -283,9 +308,31 @@ export default function Sidebar({ role = 'customer' }) {
                         </div>
                     </div>
                     <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e', flexShrink: 0 }} />
-                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>ONLINE · ACTIVE</div>
+                        <div style={{ 
+                            width: 6, height: 6, borderRadius: '50%', 
+                            background: coolieStatus === 'offline' ? '#ef4444' : '#22c55e', 
+                            boxShadow: `0 0 6px ${coolieStatus === 'offline' ? '#ef4444' : '#22c55e'}`, 
+                            flexShrink: 0 
+                        }} />
+                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                            {role === 'coolie' ? coolieStatus : 'Online'} · ACTIVE
+                        </div>
                     </div>
+                    {role === 'coolie' && coolieStatus !== 'offline' && shiftStartTime && (
+                        <div style={{ 
+                            marginTop: 10, padding: '8px 10px', borderRadius: 10, 
+                            background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.15)',
+                            display: 'flex', alignItems: 'center', justifyBetween: 'space-between'
+                        }}>
+                            <div style={{ flex: 1 }}>
+                                <p style={{ fontSize: 8, color: '#22c55e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Current Shift</p>
+                                <p style={{ fontSize: 14, color: '#fff', fontWeight: 800, fontFamily: 'monospace', letterSpacing: '0.05em' }}>{formatShift(shiftSeconds)}</p>
+                            </div>
+                            <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Clock size={12} color="#22c55e" />
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

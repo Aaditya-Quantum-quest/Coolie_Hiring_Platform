@@ -38,6 +38,7 @@ import StationMap from './pages/customer/StationMap'
 import TrainStatus from './pages/customer/TrainStatus'
 import CustomerProfile from './pages/customer/CustomerProfile'
 import BookingReceipt from './pages/customer/BookingReceipt'
+import CustomerBusinesses from './pages/customer/CustomerBusinesses'
 
 // Coolie Pages
 import CoolieDashboard from './pages/coolie/CoolieDashboard'
@@ -45,6 +46,7 @@ import CoolieProfile from './pages/coolie/CoolieProfile'
 import CoolieEarnings from './pages/coolie/CoolieEarnings'
 import Leaderboard from './pages/coolie/Leaderboard'
 import CoolieHeroRanking from './pages/coolie/CoolieHeroRanking'
+import CoolieVerification from './pages/coolie/CoolieVerification'
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -53,6 +55,7 @@ import AdminCoolies from './pages/admin/AdminCoolies'
 import AdminBookings from './pages/admin/AdminBookings'
 import AdminDisputes from './pages/admin/AdminDisputes'
 import AdminAnalytics from './pages/admin/AdminAnalytics'
+import AdminBusinesses from './pages/admin/AdminBusinesses'
 
 const ProtectedRoute = ({ children, allowedRole }) => {
   const { role } = useApp()
@@ -81,6 +84,7 @@ function AppRoutes() {
       <Route path="/customer/trains" element={<ProtectedRoute allowedRole="customer"><TrainStatus /></ProtectedRoute>} />
       <Route path="/customer/profile" element={<ProtectedRoute allowedRole="customer"><CustomerProfile /></ProtectedRoute>} />
       <Route path="/customer/receipt/:id" element={<ProtectedRoute allowedRole="customer"><BookingReceipt /></ProtectedRoute>} />
+      <Route path="/customer/businesses" element={<ProtectedRoute allowedRole="customer"><CustomerBusinesses /></ProtectedRoute>} />
 
       {/* Coolie */}
       <Route path="/coolie" element={<ProtectedRoute allowedRole="coolie"><CoolieDashboard /></ProtectedRoute>} />
@@ -93,6 +97,7 @@ function AppRoutes() {
       <Route path="/admin" element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/users" element={<ProtectedRoute allowedRole="admin"><AdminUsers /></ProtectedRoute>} />
       <Route path="/admin/coolies" element={<ProtectedRoute allowedRole="admin"><AdminCoolies /></ProtectedRoute>} />
+      <Route path="/admin/businesses" element={<ProtectedRoute allowedRole="admin"><AdminBusinesses /></ProtectedRoute>} />
       <Route path="/admin/bookings" element={<ProtectedRoute allowedRole="admin"><AdminBookings /></ProtectedRoute>} />
       <Route path="/admin/disputes" element={<ProtectedRoute allowedRole="admin"><AdminDisputes /></ProtectedRoute>} />
       <Route path="/admin/analytics" element={<ProtectedRoute allowedRole="admin"><AdminAnalytics /></ProtectedRoute>} />
@@ -111,6 +116,9 @@ function AppRoutes() {
       {/* Public Business Pages (require customer login) */}
       <Route path="/station/:stationId/nearby" element={<ProtectedRoute allowedRole="customer"><NearbyBusinesses /></ProtectedRoute>} />
       <Route path="/business/:businessId" element={<ProtectedRoute allowedRole="customer"><BusinessDetail /></ProtectedRoute>} />
+
+      {/* Public Verification (QR Scan) */}
+      <Route path="/verify/coolie/:id" element={<CoolieVerification />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

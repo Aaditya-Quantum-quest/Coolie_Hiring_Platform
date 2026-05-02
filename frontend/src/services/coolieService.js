@@ -185,6 +185,31 @@ export const coolieDashboardService = {
       throw error;
     }
   },
+
+  // Get consolidated overview (Prevent 429)
+  getOverview: async (coolieId) => {
+    try {
+      const response = await api.get(`/coolies/dashboard-overview/${coolieId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching dashboard overview:', error);
+      throw error;
+    }
+  },
+
+  // Update booking status
+  updateStatus: async (bookingRef, status) => {
+    try {
+      // Note: This endpoint is actually in bookingRoutes, but we map it here for convenience
+      // bookingRoutes is app.use('/api/bookings', bookingRoutes)
+      // So we need a different axios instance or just use a direct path
+      const response = await api.post(`../bookings/${bookingRef}/status`, { status });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating status:', error);
+      throw error;
+    }
+  },
 };
 
 // Coolie Status Service

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { QRCodeCanvas } from 'qrcode.react'
 import Sidebar from '../../components/Sidebar'
 import {
     User, Phone, MapPin, Shield, Star, Edit3, Camera,
@@ -10,6 +11,21 @@ import { coolieProfileService } from '../../services/coolieService'
 
 export default function CoolieProfile() {
     const { user } = useApp()
+
+    const downloadQR = () => {
+        const canvas = document.getElementById('coolie-qr-canvas');
+        if (canvas) {
+            const pngUrl = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream');
+            let downloadLink = document.createElement('a');
+            downloadLink.href = pngUrl;
+            downloadLink.download = `Coolie_QR_${user?.coolie_id || 'profile'}.png`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            toast.success('QR Code downloaded!');
+        }
+    };
+
     const [loading, setLoading] = useState(true)
     const [profile, setProfile] = useState({
         name: user?.name || 'Coolie',
@@ -96,11 +112,11 @@ export default function CoolieProfile() {
                         secondary_doc_front_url: data.secondary_doc_front_url || '',
                         secondary_doc_back_url: data.secondary_doc_back_url || '',
                         passport_photo_url: data.passport_photo_url || '',
-                        verifiedDate: data.level2_approved_at 
+                        verifiedDate: data.level2_approved_at
                             ? new Date(data.level2_approved_at).toLocaleDateString()
-                            : data.created_at 
-                            ? new Date(data.created_at).toLocaleDateString()
-                            : '—'
+                            : data.created_at
+                                ? new Date(data.created_at).toLocaleDateString()
+                                : '—'
                     }))
                 }
             } catch (error) {
@@ -285,281 +301,384 @@ export default function CoolieProfile() {
     }
 
     return (
-        <div className="flex bg-[#0A0814] min-h-screen">
+        <div className="flex bg-[#0A0814] min-h-screen text-slate-300 font-sans selection:bg-[#7B2FFF] selection:text-white">
             <Sidebar role="coolie" />
-            <div className="ml-0 md:ml-64 flex-1 p-5 md:p-8">
-                <div className="max-w-5xl mx-auto space-y-5">
-                    {loading ? (
-                        <div className="flex items-center justify-center py-20">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7B2FFF]"></div>
+            
+            <main className="flex-1 md:ml-64 p-4 md:p-10 overflow-y-auto">
+                {loading ? (
+                    <div className="flex items-center justify-center min-h-[60vh]">
+                        <div className="relative">
+                            <div className="w-16 h-16 border-4 border-[#7B2FFF]/20 border-t-[#7B2FFF] rounded-full animate-spin" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-8 h-8 bg-[#7B2FFF]/10 rounded-full animate-pulse" />
+                            </div>
                         </div>
-                    ) : (
-                        <>
-                            {/* ── HERO HEADER ── */}
-                            <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-6 flex flex-col md:flex-row gap-6 items-start">
-                                <div className="flex gap-5 flex-1 items-start">
-                                    <div className="relative shrink-0">
-                                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#3a2060] to-[#1E1A40] flex items-center justify-center text-white text-3xl font-black border-2 border-[#7B2FFF]/40 overflow-hidden">
-                                            <img
-                                                src={profile.passport_photo_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.name}`}
-                                                alt="avatar"
-                                                className="w-full h-full object-cover"
-                                                onError={e => { e.target.style.display = 'none' }}
-                                            />
-                                        </div>
-                                        <div className="absolute -bottom-1 -right-1 bg-[#7B2FFF] text-[10px] text-white font-bold px-1.5 py-0.5 rounded-full">
-                                            ✓
-                                        </div>
+                    </div>
+                ) : (
+                    <div className="max-w-7xl mx-auto space-y-10 pb-24">
+                        {/* ── HERO SECTION ── */}
+                        <div className="relative group">
+                            {/* Dynamic Background Glow */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-[#7B2FFF]/20 to-[#A855F7]/20 blur-[120px] rounded-[3rem] -z-10 opacity-50 group-hover:opacity-80 transition-opacity duration-1000" />
+                            
+                            <div className="bg-[#1C1C2D]/80 backdrop-blur-xl border border-white/10 rounded-[3rem] p-10 md:p-14 flex flex-col lg:flex-row items-center lg:items-end gap-12 relative overflow-hidden shadow-2xl">
+                                
+                                {/* Profile Image & Badge */}
+                                <div className="relative shrink-0">
+                                    <div className="w-40 h-40 md:w-48 md:h-48 rounded-full border-[6px] border-[#2D2D44] overflow-hidden bg-[#12102A] shadow-[0_0_50px_rgba(123,47,255,0.3)] transition-all duration-700 group-hover:scale-105 group-hover:rotate-2">
+                                        <img
+                                            src={profile.passport_photo_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.name}`}
+                                            alt="avatar"
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
-
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-yellow-400 text-[11px] font-semibold flex items-center gap-1">
-                                                <Star size={11} fill="currentColor" /> {profile.badge}
-                                            </span>
-                                        </div>
-                                        <h1 className="text-white text-2xl font-black leading-tight">{profile.name}</h1>
-                                        <p className="text-[#6B6188] text-xs mt-0.5 font-mono">PORTER {profile.id}</p>
-
-                                        <div className="flex gap-6 mt-3">
-                                            <div>
-                                                <p className="text-yellow-400 font-black text-lg leading-none">★ {Number(profile.rating).toFixed(1)}</p>
-                                                <p className="text-[#6B6188] text-[10px] uppercase tracking-wider mt-0.5">Rating</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-white font-black text-lg leading-none">{profile.totalTrips.toLocaleString()}</p>
-                                                <p className="text-[#6B6188] text-[10px] uppercase tracking-wider mt-0.5">Total Trips</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-white font-black text-lg leading-none">{profile.age} years</p>
-                                                <p className="text-[#6B6188] text-[10px] uppercase tracking-wider mt-0.5">Age</p>
-                                            </div>
-                                        </div>
+                                    <button className="absolute bottom-2 right-2 w-12 h-12 bg-[#7B2FFF] rounded-full border-4 border-[#1C1C2D] flex items-center justify-center text-white hover:bg-[#9D5BFF] hover:scale-110 transition-all shadow-xl z-20">
+                                        <Camera size={20} />
+                                    </button>
+                                    <div className="absolute -top-4 -left-4 bg-yellow-400 text-black px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-tighter shadow-lg rotate-[-12deg] z-10 border-2 border-[#1C1C2D]">
+                                        {profile.badge || 'PRO'} LEVEL
                                     </div>
                                 </div>
 
-                                {/* QR Card */}
-                                <div className="bg-[#12102A] border border-[#1E1A40] rounded-2xl p-4 flex flex-col items-center min-w-[160px]">
-                                    <div className="w-24 h-24 bg-white rounded-xl flex items-center justify-center mb-2">
-                                        <div className="w-20 h-20 grid grid-cols-7 gap-px p-1">
-                                            {Array.from({ length: 49 }, (_, i) => (
-                                                <div key={i} className={`rounded-[1px] ${[0, 1, 2, 3, 4, 5, 6, 7, 13, 14, 20, 21, 27, 28, 34, 35, 41, 42, 43, 44, 45, 46, 47, 48, 8, 15, 22, 29, 36, 10, 17, 24, 31, 38].includes(i) ? 'bg-black' : 'bg-white'}`} />
-                                            ))}
+                                {/* Name & Quick Stats */}
+                                <div className="flex-1 text-center lg:text-left">
+                                    <div className="flex flex-col lg:flex-row items-center gap-4 mb-4">
+                                        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-sm">{profile.name}</h1>
+                                        <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 px-4 py-1.5 rounded-full">
+                                            <ShieldCheck size={16} className="text-green-400" />
+                                            <span className="text-green-400 text-[10px] font-black uppercase tracking-[0.2em]">Verified Elite</span>
                                         </div>
                                     </div>
-                                    <p className="text-white text-xs font-bold mb-0.5">Quick Identity Scan</p>
-                                    <p className="text-[#6B6188] text-[10px] text-center mb-3">Scan to verify Credentials</p>
-                                    <button
-                                        onClick={() => toast.success('QR Downloaded!')}
-                                        className="flex items-center gap-1.5 text-[#A855F7] text-[11px] font-semibold hover:text-white transition-colors"
+                                    
+                                    <div className="flex flex-wrap justify-center lg:justify-start gap-6 mb-10 text-slate-400 font-medium">
+                                        <span className="flex items-center gap-2.5 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+                                            <Briefcase size={20} className="text-[#7B2FFF]" /> 
+                                            Senior Logistics Specialist
+                                        </span>
+                                        <span className="flex items-center gap-2.5 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+                                            <MapPin size={20} className="text-[#A855F7]" /> 
+                                            {profile.station}
+                                        </span>
+                                        <span className="flex items-center gap-2.5 bg-yellow-400/10 text-yellow-400 px-4 py-2 rounded-xl border border-yellow-400/20 font-black">
+                                            <Star size={20} fill="currentColor" /> 
+                                            {Number(profile.rating).toFixed(1)} Rating
+                                        </span>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                                        <button 
+                                            onClick={() => startEdit('name', profile.name)}
+                                            className="px-10 py-4 bg-[#5D46FF] hover:bg-[#725DFF] text-white rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-3 transition-all shadow-[0_10px_30px_rgba(93,70,255,0.4)] hover:-translate-y-1 active:translate-y-0"
+                                        >
+                                            <Edit3 size={20} /> Edit Profile
+                                        </button>
+                                        <button 
+                                            onClick={() => toast.success('Profile link copied!')}
+                                            className="px-10 py-4 bg-[#2D2D44] hover:bg-[#3D3D5A] text-slate-300 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-3 transition-all hover:-translate-y-1 active:translate-y-0"
+                                        >
+                                            <Share2 size={20} /> Share ID
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Verification QR Card */}
+                                <div className="lg:absolute lg:right-10 lg:top-1/2 lg:-translate-y-1/2 flex flex-col items-center bg-[#12102A]/80 backdrop-blur-2xl border border-white/10 p-6 rounded-[2.5rem] shadow-2xl group/qr hover:border-[#7B2FFF]/50 transition-all duration-500">
+                                     <div className="p-3 bg-white rounded-[1.5rem] shadow-inner mb-4 group-hover/qr:scale-105 transition-transform duration-500">
+                                        <QRCodeCanvas 
+                                            id="coolie-qr-canvas"
+                                            value={`${window.location.origin}/verify/coolie/${profile.id}`}
+                                            size={120}
+                                            level="H"
+                                            includeMargin={false}
+                                        />
+                                     </div>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4">PORTER ID: {profile.id}</p>
+                                    <button 
+                                        onClick={downloadQR} 
+                                        className="w-full py-3 bg-[#7B2FFF]/10 hover:bg-[#7B2FFF] text-[#7B2FFF] hover:text-white border border-[#7B2FFF]/20 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all group/dl"
                                     >
-                                        <Download size={12} /> Download QR
+                                        <Download size={16} className="group-hover/dl:animate-bounce" /> Save Digital ID
                                     </button>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* ── MAIN GRID ── */}
-                            <div className="grid md:grid-cols-2 gap-5">
-
-                                {/* ── XP SYSTEM ── */}
+                    {/* ── MAIN CONTENT GRID ── */}
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+                        
+                        {/* LEFT COLUMN: CORE INFO */}
+                        <div className="xl:col-span-2 space-y-10">
+                            
+                            {/* Performance & XP */}
+                            <div className="relative overflow-hidden">
                                 <XPDisplay />
+                            </div>
 
-                                {/* ── PERSONAL INFORMATION ── */}
-                                <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h2 className="text-white font-bold flex items-center gap-2 text-sm">
-                                            <User size={15} className="text-orange-400" /> Personal Information
-                                        </h2>
-                                        <button
-                                            onClick={() => startEdit('name', profile.name)}
-                                            className="text-[10px] text-[#A855F7] font-semibold hover:text-white transition-colors flex items-center gap-1"
-                                        >
-                                            <Edit3 size={11} /> Edit Info
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <Field label="Full Name" field="name" editable />
-                                            <Field label="Age" field="age" editable />
+                            {/* Work & Personal Details Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                
+                                {/* Work Details Card */}
+                                <div className="bg-[#14142B] border border-white/5 rounded-[2.5rem] p-10 group/card hover:bg-[#1C1C35] transition-all duration-500">
+                                    <div className="flex items-center gap-4 mb-10">
+                                        <div className="w-12 h-12 rounded-2xl bg-[#7B2FFF]/10 flex items-center justify-center text-[#7B2FFF] group-hover/card:scale-110 transition-transform">
+                                            <Package size={24} />
                                         </div>
-                                        <div>
-                                            <p className="text-[11px] text-[#6B6188] uppercase tracking-wider mb-2">Languages Spoken</p>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {(profile.languages || []).map(lang => (
-                                                    <span key={lang} className="text-[11px] bg-[#7B2FFF]/20 text-[#A855F7] border border-[#7B2FFF]/30 px-2.5 py-0.5 rounded-full font-medium">
-                                                        {lang}
-                                                    </span>
-                                                ))}
-                                            </div>
+                                        <h2 className="text-2xl font-black text-white tracking-tight">Work Details</h2>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-10">
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Zone</p>
+                                            <p className="text-white font-black text-xl tracking-tight">{profile.station}</p>
+                                            <p className="text-[#7B2FFF] text-[10px] font-bold uppercase">{profile.stationZone || 'Main Terminal'}</p>
                                         </div>
-                                        <Field label="Member Since" field="memberSince" />
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Experience</p>
+                                            <p className="text-white font-black text-xl tracking-tight">4+ Years</p>
+                                            <p className="text-orange-400 text-[10px] font-bold uppercase">Senior Grade</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Deliveries</p>
+                                            <p className="text-white font-black text-xl tracking-tight">{profile.totalTrips.toLocaleString()}+</p>
+                                            <p className="text-green-400 text-[10px] font-bold uppercase">99% Success</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Vehicle</p>
+                                            <p className="text-white font-black text-xl tracking-tight">Dolly S3</p>
+                                            <p className="text-slate-500 text-[10px] font-bold uppercase">Standard Issue</p>
+                                        </div>
                                     </div>
-                                </div>
-
-                                {/* ── WORK DETAILS ── */}
-                                <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
-                                    <h2 className="text-white font-bold flex items-center gap-2 text-sm mb-4">
-                                        <span className="text-orange-400">🚉</span> Work Details
-                                    </h2>
-
-                                    <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl p-3 mb-4">
-                                        <p className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1">Station</p>
-                                        <p className="text-white font-bold text-sm">{profile.station}</p>
-                                        <p className="text-[#6B6188] text-[11px]">{profile.stationZone}</p>
-                                    </div>
-
-                                    <div className="mb-3">
-                                        <p className="text-[11px] text-[#6B6188] uppercase tracking-wider mb-2">Working Platforms</p>
+                                    <div className="mt-10 pt-10 border-t border-white/5">
+                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Platform Coverage</p>
                                         <div className="flex flex-wrap gap-2">
-                                            {['01', '02', '04', '05', '06', '08', '10', '12', '14', '16'].map(pf => (
-                                                <button
-                                                    key={pf}
-                                                    onClick={() => togglePlatform(pf)}
-                                                    className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${profile.platforms.includes(pf)
-                                                            ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
-                                                            : 'bg-[#12102A] text-[#6B6188] border border-[#1E1A40] hover:border-[#7B2FFF]/40'
-                                                        }`}
-                                                >
+                                            {['01', '02', '05', '08', '12', '14'].map(pf => (
+                                                <span key={pf} className="w-10 h-10 rounded-xl bg-[#0A0814] border border-white/5 flex items-center justify-center text-xs font-black text-white hover:border-[#7B2FFF] hover:text-[#7B2FFF] cursor-default transition-all">
                                                     {pf}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl p-3">
-                                        <p className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1">Platform Coverage</p>
-                                        <p className="text-[#B0A8CC] text-[12px] leading-relaxed">{profile.platformCoverage}</p>
-                                    </div>
-                                </div>
-
-                                {/* ── PAYMENT DETAILS ── */}
-                                <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
-                                    <h2 className="text-white font-bold flex items-center gap-2 text-sm mb-4">
-                                        <CreditCard size={15} className="text-orange-400" /> Payment Details
-                                    </h2>
-
-                                    <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl p-3 mb-4 flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-[#1E1A40] flex items-center justify-center text-blue-400 shrink-0">
-                                            <CreditCard size={18} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-white text-sm font-bold">{profile.bankName}</p>
-                                            <p className="text-[#6B6188] text-[11px]">{profile.bankBranch}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[#6B6188] text-[10px]">ACCOUNT NUMBER</p>
-                                            <p className="text-white text-xs font-mono font-semibold">{profile.bankAccount}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl p-3">
-                                            <p className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1">IFSC Code</p>
-                                            <p className="text-white text-sm font-mono font-semibold">{profile.ifsc}</p>
-                                        </div>
-                                        <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl p-3">
-                                            <p className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1">UPI ID</p>
-                                            <p className="text-white text-sm font-mono font-semibold">{profile.upiId}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* ── IDENTITY + ACHIEVEMENTS ── */}
-                                <div className="space-y-4">
-                                    <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-14 h-14 rounded-full bg-green-500/10 border-2 border-green-500/40 flex items-center justify-center shrink-0">
-                                                <Shield size={24} className="text-green-400" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-white font-bold text-sm">Identity Verified</p>
-                                                <p className="text-[#6B6188] text-[11px] mt-0.5 leading-relaxed">
-                                                    Biometric and government ID checks were completed on {profile.verifiedDate}.
-                                                </p>
-                                                <span className="inline-flex items-center gap-1 mt-2 text-[10px] bg-green-500/10 text-green-400 border border-green-500/30 px-2.5 py-0.5 rounded-full font-semibold">
-                                                    ● ACTIVE STATUS
                                                 </span>
-                                            </div>
+                                            ))}
+                                            <button className="w-10 h-10 rounded-xl bg-white/5 border border-dashed border-white/10 flex items-center justify-center text-slate-500 hover:text-white transition-all">
+                                                <Plus size={16} />
+                                            </button>
                                         </div>
                                     </div>
+                                </div>
 
-                                    {/* ── DOCUMENTS SECTION ── */}
-                                    <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
-                                        <h2 className="text-white font-bold flex items-center gap-2 text-sm mb-4">
-                                            <Shield size={15} className="text-orange-400" /> Verification Documents
-                                        </h2>
-                                        
-                                        <div className="space-y-4">
-                                            {/* Aadhaar Info */}
-                                            <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl p-3">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <p className="text-[10px] text-[#6B6188] uppercase tracking-wider">Aadhaar Card</p>
-                                                    <p className="text-white text-xs font-mono">{profile.aadhaar_number}</p>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <div className="aspect-[3/2] rounded-lg bg-[#0A0814] overflow-hidden border border-[#1E1A40] relative group">
-                                                        <img src={profile.aadhaar_front_url} alt="Aadhaar Front" className="w-full h-full object-cover" />
-                                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                            <a href={profile.aadhaar_front_url} target="_blank" rel="noreferrer" className="text-white text-[10px] font-bold">VIEW FRONT</a>
-                                                        </div>
-                                                    </div>
-                                                    <div className="aspect-[3/2] rounded-lg bg-[#0A0814] overflow-hidden border border-[#1E1A40] relative group">
-                                                        <img src={profile.aadhaar_back_url} alt="Aadhaar Back" className="w-full h-full object-cover" />
-                                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                            <a href={profile.aadhaar_back_url} target="_blank" rel="noreferrer" className="text-white text-[10px] font-bold">VIEW BACK</a>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                {/* Personal Info Card */}
+                                <div className="bg-[#14142B] border border-white/5 rounded-[2.5rem] p-10 group/card hover:bg-[#1C1C35] transition-all duration-500">
+                                    <div className="flex items-center gap-4 mb-10">
+                                        <div className="w-12 h-12 rounded-2xl bg-[#A855F7]/10 flex items-center justify-center text-[#A855F7] group-hover/card:scale-110 transition-transform">
+                                            <User size={24} />
+                                        </div>
+                                        <h2 className="text-2xl font-black text-white tracking-tight">Personal Profile</h2>
+                                    </div>
+                                    <div className="space-y-8">
+                                        <div className="flex justify-between items-center group/item">
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email Address</p>
+                                                <p className="text-white font-bold group-hover/item:text-[#7B2FFF] transition-colors">{user?.email || 'alex.m@coolieseva.com'}</p>
                                             </div>
-
-                                            {/* Secondary Doc Info */}
-                                            <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl p-3">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <p className="text-[10px] text-[#6B6188] uppercase tracking-wider">{profile.secondary_doc_type.replace('_', ' ')}</p>
-                                                    <p className="text-white text-xs font-mono">{profile.secondary_doc_number}</p>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <div className="aspect-[3/2] rounded-lg bg-[#0A0814] overflow-hidden border border-[#1E1A40] relative group">
-                                                        <img src={profile.secondary_doc_front_url} alt="Doc Front" className="w-full h-full object-cover" />
-                                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                            <a href={profile.secondary_doc_front_url} target="_blank" rel="noreferrer" className="text-white text-[10px] font-bold">VIEW FRONT</a>
-                                                        </div>
-                                                    </div>
-                                                    <div className="aspect-[3/2] rounded-lg bg-[#0A0814] overflow-hidden border border-[#1E1A40] relative group">
-                                                        <img src={profile.secondary_doc_back_url} alt="Doc Back" className="w-full h-full object-cover" />
-                                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                            <a href={profile.secondary_doc_back_url} target="_blank" rel="noreferrer" className="text-white text-[10px] font-bold">VIEW BACK</a>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                <Mail size={14} />
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5">
-                                        <h2 className="text-white font-bold text-sm mb-3 text-center uppercase tracking-widest">Recent Achievements</h2>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl p-3 flex flex-col items-center gap-2">
-                                                <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-                                                    <span className="text-xl">😊</span>
-                                                </div>
-                                                <p className="text-white text-xs font-bold text-center">92% Safe Handling</p>
+                                        <div className="flex justify-between items-center group/item">
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Phone Number</p>
+                                                <p className="text-white font-bold group-hover/item:text-[#7B2FFF] transition-colors">{user?.phone || '+91 98765 43210'}</p>
                                             </div>
-                                            <div className="bg-[#12102A] border border-[#1E1A40] rounded-xl p-3 flex flex-col items-center gap-2">
-                                                <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-                                                    <Zap size={20} className="text-orange-400" fill="currentColor" />
-                                                </div>
-                                                <p className="text-white text-xs font-bold text-center">Fast Delivery</p>
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                <Phone size={14} />
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center group/item">
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Languages</p>
+                                                <p className="text-white font-bold group-hover/item:text-[#7B2FFF] transition-colors">
+                                                    {profile.languages.join(', ') || 'English, Hindi, Punjabi'}
+                                                </p>
+                                            </div>
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                <Globe size={14} />
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center group/item">
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Age & Gender</p>
+                                                <p className="text-white font-bold group-hover/item:text-[#7B2FFF] transition-colors">{profile.age} Years • Male</p>
+                                            </div>
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                <Calendar size={14} />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </>
-                    )}
+                        </div>
+
+                        {/* RIGHT COLUMN: STATUS & PAYMENTS */}
+                        <div className="space-y-10">
+                            
+                            {/* Verification Status Card */}
+                            <div className="bg-gradient-to-br from-[#7B2FFF] to-[#5D46FF] rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-[50px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:scale-150 transition-transform duration-1000" />
+                                
+                                <div className="flex items-center gap-4 mb-8">
+                                    <Shield size={28} className="drop-shadow-lg" />
+                                    <h2 className="text-2xl font-black tracking-tight">Identity Status</h2>
+                                </div>
+                                
+                                <div className="space-y-6 relative z-10">
+                                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Background Check</span>
+                                            <Check size={16} />
+                                        </div>
+                                        <p className="text-xl font-black">CLEARED</p>
+                                        <p className="text-[10px] opacity-70 font-bold uppercase mt-1">Verified on {profile.verifiedDate}</p>
+                                    </div>
+                                    
+                                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Health Inspection</span>
+                                            <Clock size={16} />
+                                        </div>
+                                        <p className="text-xl font-black">DUE IN 14 DAYS</p>
+                                        <p className="text-[10px] opacity-70 font-bold uppercase mt-1">Renewal Required soon</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Payment Methods Card */}
+                            <div className="bg-[#14142B] border border-white/5 rounded-[2.5rem] p-10 group/card hover:bg-[#1C1C35] transition-all duration-500">
+                                <div className="flex items-center justify-between mb-10">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-orange-400/10 flex items-center justify-center text-orange-400 group-hover/card:scale-110 transition-transform">
+                                            <CreditCard size={24} />
+                                        </div>
+                                        <h2 className="text-2xl font-black text-white tracking-tight">Payments</h2>
+                                    </div>
+                                    <button className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all">
+                                        <Plus size={20} />
+                                    </button>
+                                </div>
+                                
+                                <div className="space-y-6">
+                                    {/* Bank Account */}
+                                    <div className="bg-[#1C1C35] border border-white/10 rounded-3xl p-6 flex items-center gap-5 hover:border-[#7B2FFF]/50 transition-all cursor-pointer">
+                                        <div className="w-14 h-14 rounded-2xl bg-[#12102A] flex items-center justify-center text-slate-400">
+                                            <Building2 size={24} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-white font-black text-sm uppercase tracking-tight">{profile.bankName}</p>
+                                            <p className="text-slate-500 text-xs font-mono tracking-widest uppercase">**** {profile.bankAccount.slice(-4)}</p>
+                                        </div>
+                                        <div className="bg-green-500/10 text-green-400 text-[8px] font-black px-2 py-1 rounded-full border border-green-500/20">ACTIVE</div>
+                                    </div>
+
+                                    {/* UPI ID */}
+                                    <div className="bg-[#1C1C35] border border-white/10 rounded-3xl p-6 flex items-center gap-5 hover:border-[#7B2FFF]/50 transition-all cursor-pointer">
+                                        <div className="w-14 h-14 rounded-2xl bg-[#12102A] flex items-center justify-center text-slate-400">
+                                            <Zap size={24} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-white font-black text-sm uppercase tracking-tight">Instant UPI</p>
+                                            <p className="text-slate-500 text-xs font-mono tracking-widest uppercase">{profile.upiId || 'PENDING'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── DOCUMENTS SECTION ── */}
+                    <div className="bg-[#14142B] border border-white/5 rounded-[3rem] p-10 md:p-14 group/docs">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                            <div className="flex items-center gap-5">
+                                <div className="w-16 h-16 rounded-[1.5rem] bg-[#7B2FFF]/10 flex items-center justify-center text-[#7B2FFF] group-hover/docs:rotate-6 transition-transform">
+                                    <FileText size={32} />
+                                </div>
+                                <div>
+                                    <h2 className="text-3xl font-black text-white tracking-tight">Identity Documents</h2>
+                                    <p className="text-slate-500 font-medium">Official Government Verification Proofs</p>
+                                </div>
+                            </div>
+                            <button className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3 transition-all">
+                                Manage Vault <Plus size={16} />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {[
+                                { label: 'Aadhaar Front', url: profile.aadhaar_front_url },
+                                { label: 'Aadhaar Back', url: profile.aadhaar_back_url },
+                                { label: 'Secondary Proof', url: profile.secondary_doc_front_url },
+                                { label: 'License Copy', url: profile.secondary_doc_back_url }
+                            ].map((doc, i) => (
+                                <div key={i} className="group/item relative aspect-[1.4/1] rounded-[2rem] bg-[#0A0814] border border-white/5 overflow-hidden cursor-pointer hover:border-[#7B2FFF]/50 transition-all duration-500">
+                                    {doc.url ? (
+                                        <img src={doc.url} alt={doc.label} className="w-full h-full object-cover opacity-40 group-hover/item:opacity-100 group-hover/item:scale-110 transition-all duration-700" />
+                                    ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-slate-700 group-hover/item:text-slate-400 transition-colors">
+                                            <Image size={40} strokeWidth={1.5} />
+                                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">No Preview</span>
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0A0814] via-transparent to-transparent opacity-90 group-hover/item:opacity-0 transition-opacity duration-500 flex items-end p-8">
+                                        <p className="text-white font-black text-xs uppercase tracking-widest">{doc.label}</p>
+                                    </div>
+                                    <div className="absolute inset-0 flex items-center justify-center bg-[#7B2FFF]/20 opacity-0 group-hover/item:opacity-100 backdrop-blur-sm transition-all duration-500">
+                                        <div className="w-14 h-14 rounded-full bg-white text-black flex items-center justify-center shadow-2xl scale-50 group-hover/item:scale-100 transition-transform duration-500">
+                                            <Eye size={24} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    </div>
+                )}
+            </main>
+
+            {/* ── EDITING OVERLAY ── */}
+            {editingField && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={cancelEdit} />
+                    <div className="bg-[#1C1C35] border border-white/10 rounded-[3rem] p-10 md:p-14 max-w-xl w-full shadow-[0_0_100px_rgba(0,0,0,0.5)] relative z-10">
+                        <div className="flex items-center gap-4 mb-10">
+                            <div className="w-12 h-12 rounded-2xl bg-[#7B2FFF]/10 flex items-center justify-center text-[#7B2FFF]">
+                                <Edit3 size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black text-white tracking-tight uppercase">Update Profile</h3>
+                                <p className="text-slate-500 font-medium text-sm">Modifying {editingField.replace('_', ' ')}</p>
+                            </div>
+                        </div>
+                        
+                        <input
+                            autoFocus
+                            className="w-full bg-[#0A0814] border-2 border-white/5 rounded-2xl px-8 py-6 text-xl text-white font-black outline-none focus:border-[#7B2FFF] transition-all mb-10 shadow-inner"
+                            value={editVal}
+                            onChange={e => setEditVal(e.target.value)}
+                            placeholder={`Enter new ${editingField}...`}
+                        />
+                        
+                        <div className="grid grid-cols-2 gap-6">
+                            <button 
+                                onClick={cancelEdit} 
+                                className="py-5 bg-white/5 hover:bg-white/10 text-slate-300 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all"
+                            >
+                                Discard
+                            </button>
+                            <button 
+                                onClick={saveEdit} 
+                                className="py-5 bg-[#5D46FF] hover:bg-[#725DFF] text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-[#5D46FF]/20"
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     )
 }

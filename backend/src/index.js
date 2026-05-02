@@ -63,6 +63,12 @@ const io = new Server(httpServer, {
 
 setupSocketHandlers(io);
 
+// Make io accessible in controllers
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
+
 // ─────────────────────────────────────────────────────────────
 // SECURITY
 // ─────────────────────────────────────────────────────────────
@@ -93,7 +99,7 @@ app.use(
 // ─────────────────────────────────────────────────────────────
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
+    max: 1000, // Increased from 200 to 1000 to handle polling
     standardHeaders: true,
     legacyHeaders: false,
     message: {
@@ -126,6 +132,16 @@ app.use(cookieParser());
 // ─────────────────────────────────────────────────────────────
 // STATIC FILES
 // ─────────────────────────────────────────────────────────────
+const fs = require('fs');
+app.use('/uploads', (req, res, next) => {
+    const localPath = path.join(__dirname, '../uploads', req.path);
+    if (fs.existsSync(localPath) && fs.lstatSync(localPath).isFile()) {
+        return next();
+    }
+    // Fallback to production Render server
+    res.redirect(`https://coolie-hiring-platform.onrender.com/uploads${req.path}`);
+});
+
 app.use(
     '/uploads',
     express.static(path.join(__dirname, '../uploads'), {
@@ -150,7 +166,7 @@ app.use('/api/v1/rankings', rankingRoutes);
 app.use('/api/location', locationRoutes);
 
 // Coolie
-app.use('/api/coolie', coolieRoutes);
+app.use('/api/v1/coolies', coolieRoutes);
 
 // Customer
 app.use('/api/customer', customerRoutes);

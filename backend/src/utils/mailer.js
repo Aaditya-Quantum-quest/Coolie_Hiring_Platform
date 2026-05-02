@@ -187,10 +187,125 @@ const sendRejectionEmail = async (to, name, reason) => {
     })
 }
 
+/**
+ * Business registration received email.
+ */
+const sendBusinessRegistrationEmail = async (to, ownerName, businessName) => {
+    if (!process.env.SMTP_USER || process.env.SMTP_USER === 'your_mailtrap_username') {
+        console.log(`[MAILER] Would send business registration email to ${to} for: ${businessName}`)
+        return
+    }
+    const transporter = getTransporter()
+    await transporter.sendMail({
+        from: process.env.SMTP_FROM || '"CoolieSeva Business" <noreply@cooliehire.in>',
+        to,
+        subject: '📝 Business Registration Received — CoolieSeva',
+        html: `
+        <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:16px">
+          <h2 style="color:#7B2FFF;margin-top:0">📝 Registration Received</h2>
+          <p>Hi <strong>${ownerName}</strong>,</p>
+          <p>Thank you for registering <strong>${businessName}</strong> on <strong>CoolieSeva</strong>!</p>
+          <div style="background:#1e293b;border-left:4px solid #7B2FFF;padding:16px;border-radius:8px;margin:20px 0">
+            <p style="margin:0;color:#cbd5e1">Your business details are under review by our admin team. This typically takes <strong>24–48 hours</strong>.</p>
+          </div>
+          <p>Once your business details are approved (Level 1), you will receive another email with login instructions.</p>
+          <p style="color:#64748b;font-size:13px;margin-top:32px">© CoolieSeva Business Portal</p>
+        </div>
+        `
+    })
+}
+
+/**
+ * Business Level 1 approval email (business details approved by admin).
+ */
+const sendBusinessLevel1ApprovalEmail = async (to, ownerName, businessName) => {
+    if (!process.env.SMTP_USER || process.env.SMTP_USER === 'your_mailtrap_username') {
+        console.log(`[MAILER] Would send business Level 1 approval email to ${to}`)
+        return
+    }
+    const transporter = getTransporter()
+    await transporter.sendMail({
+        from: process.env.SMTP_FROM || '"CoolieSeva Business" <noreply@cooliehire.in>',
+        to,
+        subject: '✅ Business Details Approved (Level 1) — CoolieSeva',
+        html: `
+        <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:16px">
+          <h2 style="color:#22c55e;margin-top:0">✅ Level 1 Approved!</h2>
+          <p>Hi <strong>${ownerName}</strong>,</p>
+          <p>Great news! Your business <strong>${businessName}</strong> has passed <strong>Level 1 verification</strong> (Business Details Review).</p>
+          <div style="background:#1e293b;border-left:4px solid #22c55e;padding:16px;border-radius:8px;margin:20px 0">
+            <p style="margin:0;color:#cbd5e1">🎯 <strong>Next Step:</strong> You can now log in to the Business Portal to complete your profile. Your account will go through <strong>Level 2 (Owner Identity Verification)</strong> by our Super Admin team.</p>
+          </div>
+          <p>Once fully verified, your listing will go live on CoolieSeva!</p>
+          <p style="color:#64748b;font-size:13px;margin-top:32px">© CoolieSeva Business Portal</p>
+        </div>
+        `
+    })
+}
+
+/**
+ * Business Level 2 approval email (owner verified by super admin, full access granted).
+ */
+const sendBusinessLevel2ApprovalEmail = async (to, ownerName, businessName) => {
+    if (!process.env.SMTP_USER || process.env.SMTP_USER === 'your_mailtrap_username') {
+        console.log(`[MAILER] Would send business Level 2 approval email to ${to}`)
+        return
+    }
+    const transporter = getTransporter()
+    await transporter.sendMail({
+        from: process.env.SMTP_FROM || '"CoolieSeva Business" <noreply@cooliehire.in>',
+        to,
+        subject: '🎉 Your Business is Fully Approved & Live! — CoolieSeva',
+        html: `
+        <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:16px">
+          <h2 style="color:#22c55e;margin-top:0">🎉 Fully Approved & Live!</h2>
+          <p>Hi <strong>${ownerName}</strong>,</p>
+          <p>Congratulations! <strong>${businessName}</strong> has completed <strong>both levels of verification</strong> and is now <strong>live on CoolieSeva</strong>!</p>
+          <div style="background:#1e293b;border:1px solid #22c55e;padding:20px;border-radius:12px;margin:20px 0;text-align:center">
+            <p style="margin:0;font-size:13px;color:#94a3b8">Status</p>
+            <h1 style="margin:8px 0;color:#22c55e;font-size:24px">✅ LIVE & ACTIVE</h1>
+          </div>
+          <p>You can now log in to your Owner Dashboard to manage your menu, rooms, bookings, and more!</p>
+          <p style="color:#64748b;font-size:13px;margin-top:32px">© CoolieSeva Business Portal</p>
+        </div>
+        `
+    })
+}
+
+/**
+ * Business rejection email.
+ */
+const sendBusinessRejectionEmail = async (to, ownerName, businessName, reason) => {
+    if (!process.env.SMTP_USER || process.env.SMTP_USER === 'your_mailtrap_username') {
+        console.log(`[MAILER] Would send business rejection email to ${to}`)
+        return
+    }
+    const transporter = getTransporter()
+    await transporter.sendMail({
+        from: process.env.SMTP_FROM || '"CoolieSeva Business" <noreply@cooliehire.in>',
+        to,
+        subject: '❌ Business Application — Action Required — CoolieSeva',
+        html: `
+        <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:16px">
+          <h2 style="color:#ef4444;margin-top:0">Application Needs Attention</h2>
+          <p>Hi <strong>${ownerName}</strong>,</p>
+          <p>Unfortunately, your application for <strong>${businessName}</strong> could not be approved at this time.</p>
+          ${reason ? `<div style="background:#1e293b;border-left:4px solid #ef4444;padding:16px;border-radius:8px;margin:20px 0"><p style="margin:0;color:#fca5a5"><strong>Reason:</strong> ${reason}</p></div>` : ''}
+          <p>Please contact our support team at <a href="mailto:support@cooliehire.in" style="color:#7B2FFF">support@cooliehire.in</a> for assistance.</p>
+          <p style="color:#64748b;font-size:13px;margin-top:32px">© CoolieSeva Business Portal</p>
+        </div>
+        `
+    })
+}
+
 module.exports = { 
     sendLockoutEmail, 
     sendApprovalEmail, 
     sendRejectionEmail,
     sendRegistrationReceivedEmail,
-    sendBanEmail
+    sendBanEmail,
+    sendBusinessRegistrationEmail,
+    sendBusinessLevel1ApprovalEmail,
+    sendBusinessLevel2ApprovalEmail,
+    sendBusinessRejectionEmail
 }

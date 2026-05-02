@@ -10,6 +10,10 @@ const protect = async (req, res, next) => {
         const token = req.cookies?.access_token
 
         if (!token) {
+            console.log('DEBUG: Auth failed - No access_token cookie found.');
+            console.log('DEBUG: Origin:', req.headers.origin);
+            console.log('DEBUG: Headers:', req.headers);
+            console.log('DEBUG: Cookies received:', req.cookies);
             return res.status(401).json({ success: false, message: 'Not authenticated. Please login.' })
         }
 

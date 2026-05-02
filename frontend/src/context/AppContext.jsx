@@ -12,6 +12,11 @@ export const AppProvider = ({ children }) => {
     const [role, setRole] = useState(() => localStorage.getItem('role') || null)
     const [notifications, setNotifications] = useState([])
     const [activeSOS, setActiveSOS] = useState(false)
+    const [shiftStartTime, setShiftStartTime] = useState(() => {
+        const saved = localStorage.getItem('shiftStartTime')
+        return saved ? parseInt(saved) : null
+    })
+    const [coolieStatus, setCoolieStatus] = useState(() => localStorage.getItem('coolieStatus') || 'offline')
 
     // Sync to localStorage on change
     React.useEffect(() => {
@@ -23,6 +28,16 @@ export const AppProvider = ({ children }) => {
         if (role) localStorage.setItem('role', role)
         else localStorage.removeItem('role')
     }, [role])
+
+    React.useEffect(() => {
+        if (shiftStartTime) localStorage.setItem('shiftStartTime', shiftStartTime.toString())
+        else localStorage.removeItem('shiftStartTime')
+    }, [shiftStartTime])
+
+    React.useEffect(() => {
+        if (coolieStatus) localStorage.setItem('coolieStatus', coolieStatus)
+        else localStorage.removeItem('coolieStatus')
+    }, [coolieStatus])
 
     const login = (userData, userRole) => {
         setUser(userData)
@@ -47,8 +62,8 @@ export const AppProvider = ({ children }) => {
 
     return (
         <AppContext.Provider value={{ 
-            user, role, notifications, activeSOS, 
-            setUser, setRole, login, logout, addNotification, setActiveSOS 
+            user, role, notifications, activeSOS, shiftStartTime, coolieStatus,
+            setUser, setRole, login, logout, addNotification, setActiveSOS, setShiftStartTime, setCoolieStatus
         }}>
             {children}
         </AppContext.Provider>

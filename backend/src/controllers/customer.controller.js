@@ -18,7 +18,7 @@ exports.getAllCoolies = async (req, res) => {
             SELECT id, name, phone, age, station_name as station, 
                    rating_avg as rating, total_trips as "totalBookings", 
                    badge, is_online as status, passport_photo_url as photo,
-                   experience_years as experience, languages_spoken as languages,
+                   languages_spoken as languages,
                    latitude as lat, longitude as lng
             FROM coolies
         `);
@@ -41,7 +41,7 @@ exports.getCoolieProfile = async (req, res) => {
             SELECT id, name, phone, age, station_name as station, 
                    rating_avg as rating, total_trips as "totalBookings", 
                    badge, is_online as status, passport_photo_url as photo,
-                   experience_years as experience, languages_spoken as languages,
+                   languages_spoken as languages,
                    latitude as lat, longitude as lng
             FROM coolies WHERE id = $1
         `, [id]);

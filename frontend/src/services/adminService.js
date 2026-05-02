@@ -319,6 +319,71 @@ export const adminAnalyticsService = {
   },
 };
 
+// Admin Businesses Service
+export const adminBusinessesService = {
+  getAllBusinesses: async (filters = {}) => {
+    try {
+      const cleanFilters = Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== undefined && v !== null && v !== ''));
+      const params = new URLSearchParams(cleanFilters);
+      const response = await api.get(`/admin/businesses?${params}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching businesses:', error);
+      throw error;
+    }
+  },
+
+  getStats: async () => {
+    try {
+      const response = await api.get('/admin/businesses/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching business stats:', error);
+      throw error;
+    }
+  },
+
+  getBusinessDetails: async (businessId) => {
+    try {
+      const response = await api.get(`/admin/businesses/${businessId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching business details:', error);
+      throw error;
+    }
+  },
+
+  approveLevel1: async (businessId) => {
+    try {
+      const response = await api.patch(`/admin/businesses/${businessId}/approve-level1`);
+      return response.data;
+    } catch (error) {
+      console.error('Error approving business level 1:', error);
+      throw error;
+    }
+  },
+
+  approveLevel2: async (businessId) => {
+    try {
+      const response = await api.patch(`/admin/businesses/${businessId}/approve-level2`);
+      return response.data;
+    } catch (error) {
+      console.error('Error approving business level 2:', error);
+      throw error;
+    }
+  },
+
+  rejectBusiness: async (businessId, reason) => {
+    try {
+      const response = await api.patch(`/admin/businesses/${businessId}/reject`, { rejection_reason: reason });
+      return response.data;
+    } catch (error) {
+      console.error('Error rejecting business:', error);
+      throw error;
+    }
+  },
+};
+
 // Export all services
 export default {
   adminDashboardService,
@@ -326,4 +391,5 @@ export default {
   adminBookingsService,
   adminDisputesService,
   adminAnalyticsService,
+  adminBusinessesService,
 };

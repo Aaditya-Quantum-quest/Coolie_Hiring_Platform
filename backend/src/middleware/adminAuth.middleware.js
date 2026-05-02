@@ -52,11 +52,13 @@ const requireSuperAdmin = (req, res, next) => {
 }
 
 /**
- * Only allow regular admins to perform Level 1
+ * Allow both regular admins and super_admins.
+ * Use this for base admin functions.
  */
 const requireRegularAdmin = (req, res, next) => {
-    if (req.user?.adminRole !== 'admin') {
-        return res.status(403).json({ success: false, message: 'Regular Admin access required for this action.' })
+    const role = req.user?.adminRole
+    if (role !== 'admin' && role !== 'super_admin') {
+        return res.status(403).json({ success: false, message: 'Admin access required for this action.' })
     }
     next()
 }

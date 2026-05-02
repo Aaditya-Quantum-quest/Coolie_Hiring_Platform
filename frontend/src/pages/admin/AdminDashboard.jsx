@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import {
     Users, UserCheck, BookOpen, IndianRupee, TrendingUp,
     AlertTriangle, CheckCircle, Clock, Shield, Activity,
-    MapPin, Bell, ChevronRight, Zap
+    MapPin, Bell, ChevronRight, Zap, Building2
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import SearchBar from '../../components/ui/SearchBar'
@@ -342,8 +342,8 @@ export default function AdminDashboard() {
                                 {[
                                     { label: 'Manage Users', icon: Users, path: '/admin/users', color: 'from-blue-500 to-cyan-500' },
                                     { label: 'Manage Coolies', icon: UserCheck, path: '/admin/coolies', color: 'from-green-500 to-emerald-500' },
-                                    { label: 'View Bookings', icon: BookOpen, path: '/admin/bookings', color: 'from-orange-500 to-amber-500' },
-                                    { label: 'Analytics', icon: TrendingUp, path: '/admin/analytics', color: 'from-purple-500 to-violet-500' },
+                                    { label: 'Businesses', icon: Building2, path: '/admin/businesses', color: 'from-purple-500 to-violet-500' },
+                                    { label: 'Analytics', icon: TrendingUp, path: '/admin/analytics', color: 'from-orange-500 to-amber-500' },
                                 ].map((action, i) => (
                                     <button
                                         key={i}

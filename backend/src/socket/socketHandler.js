@@ -67,9 +67,13 @@ const setupSocketHandlers = (io) => {
 
         socket.on('disconnect', async () => {
             console.log(`Socket disconnected: ${socket.id}`);
+            // Removed automatic offline to prevent flakiness. 
+            // Coolie stays online until they explicitly click "Go Offline" or session expires.
+            /*
             if (socket.coolieId) {
                 await setCoolieOffline(socket.coolieId);
             }
+            */
         });
     });
 };

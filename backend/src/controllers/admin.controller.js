@@ -413,14 +413,13 @@ const getLiveBookings = async (req, res) => {
                 b.id,
                 c.name as customer_name,
                 co.name as coolie_name,
-                s.name as station_name,
+                b.initial_station_name as station_name,
                 b.status,
                 b.amount,
                 b.created_at
             FROM bookings b
             LEFT JOIN customers c ON b.customer_id = c.id
             LEFT JOIN coolies co ON b.coolie_id = co.id
-            LEFT JOIN stations s ON b.station_id = s.id
             WHERE DATE(b.created_at) = CURRENT_DATE
             ORDER BY b.created_at DESC
             LIMIT 10
@@ -515,22 +514,24 @@ const getRevenueData = async (req, res) => {
 
 const getStationCoverage = async (req, res) => {
     try {
+        const totalVerified = await pool.query('SELECT COUNT(*) as count FROM coolies WHERE is_verified = true')
+        const total = parseInt(totalVerified.rows[0].count) || 1 // avoid division by zero
+
         const result = await pool.query(`
             SELECT 
-                s.name as station,
-                COUNT(co.id) as coolies_count,
-                COUNT(co.id) * 100.0 / (SELECT COUNT(*) FROM coolies WHERE is_verified = true) as percentage
-            FROM stations s
-            LEFT JOIN coolies co ON s.id = co.station_id AND co.is_verified = true AND co.is_suspended = false
-            GROUP BY s.id, s.name
+                co.station_name as station,
+                COUNT(co.id) as coolies_count
+            FROM coolies co
+            WHERE co.is_verified = true AND co.is_suspended = false
+            GROUP BY co.station_name
             ORDER BY coolies_count DESC
             LIMIT 10
         `)
         
         const coverage = result.rows.map(row => ({
             station: row.station,
-            coolies: row.coolies_count,
-            pct: Math.round(row.percentage)
+            coolies: parseInt(row.coolies_count),
+            pct: Math.round((parseInt(row.coolies_count) / total) * 100)
         }))
         
         res.status(200).json({ success: true, data: coverage })
@@ -563,7 +564,7 @@ const getAllBookingsAdmin = async (req, res) => {
         const offset = (page - 1) * limit;
         
         let query = `
-            SELECT b.id, b.booking_ref, b.initial_station_name, b.destination_station_name, b.platform, b.destination, b.luggage_size, 
+            SELECT b.id, b.booking_ref, b.initial_station_name, b.destination_station_name, b.platform, 
                    b.amount, b.status, b.created_at as date, b.otp, b.train_no,
                    c.name as customer_name, co.name as coolie_name
             FROM bookings b
@@ -604,8 +605,6 @@ const getAllBookingsAdmin = async (req, res) => {
             initialStation: b.initial_station_name,
             station: b.destination_station_name,
             from: b.platform,
-            to: b.destination,
-            luggage: b.luggage_size,
             amount: b.amount,
             status: b.status,
             date: new Date(b.date).toLocaleString(),

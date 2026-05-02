@@ -109,11 +109,19 @@ function RequestCard({ req, onAccept, onReject }) {
 function ActiveJobCard({ job, onComplete }) {
     const [otp, setOtp] = useState('')
     const [otpVerified, setOtpVerified] = useState(false)
-    const CORRECT_OTP = '4521'
-
-    const verifyOtp = () => {
-        if (otp === CORRECT_OTP) { setOtpVerified(true); toast.success('OTP Verified! Job started ✅') }
-        else toast.error('Wrong OTP!')
+    const verifyOtp = async () => {
+        if (otp === String(job.otp)) { 
+            try {
+                await coolieDashboardService.updateStatus(job.id, 'in_progress');
+                setOtpVerified(true); 
+                toast.success('OTP Verified! Job started ✅') 
+            } catch (error) {
+                console.error('Error starting job:', error);
+                toast.error('Failed to start job');
+            }
+        } else {
+            toast.error('Wrong OTP!')
+        }
     }
 
     return (
@@ -156,7 +164,6 @@ function ActiveJobCard({ job, onComplete }) {
 
 /* ── Main Dashboard ──────────────────────────────────────────── */
 export default function CoolieDashboard() {
-    const [status, setStatus] = useState('available')
     const [requests, setRequests] = useState([])
     const [activeJob, setActiveJob] = useState(null)
     const [completedToday, setCompletedToday] = useState([])
@@ -177,12 +184,12 @@ export default function CoolieDashboard() {
     const { location, permission, startWatching, stopWatching } = useGeolocation()
     const { socket, connected } = useGlobalSocket()
     const [showLocationModal, setShowLocationModal] = useState(false)
-    const { user } = useApp()
+    const { user, shiftStartTime, setShiftStartTime, coolieStatus, setCoolieStatus } = useApp()
     const coolieId = user?.coolie_id || user?.id || 'pending-id'
 
     // Handle Location Updates
     useEffect(() => {
-        if (status !== 'offline' && location && socket && connected) {
+        if (coolieStatus !== 'offline' && location && socket && connected) {
             socket.emit('coolie:location-update', {
                 coolieId,
                 lat: location.lat,
@@ -190,49 +197,70 @@ export default function CoolieDashboard() {
                 bookingId: activeJob ? activeJob.id : null
             })
         }
-    }, [location, status, socket, connected, activeJob])
+    }, [location, coolieStatus, socket, connected, activeJob])
+
+    // Real-time Booking Updates
+    useEffect(() => {
+        if (socket && connected) {
+            socket.on('booking:new-request', (data) => {
+                console.log('New booking request received via socket:', data);
+                // Prepend to requests list if not already there
+                setRequests(prev => {
+                    if (prev.find(r => r.id === data.id)) return prev;
+                    return [data, ...prev];
+                });
+                toast.success('New Booking Request! 🔔', { duration: 6000 });
+                
+                // Play notification sound if possible
+                try { new Audio('/assets/notification.mp3').play(); } catch(e) {}
+            });
+
+            return () => {
+                socket.off('booking:new-request');
+            };
+        }
+    }, [socket, connected]);
 
     // Fetch dashboard data
     useEffect(() => {
-        const fetchDashboardData = async () => {
+        const fetchDashboardData = async (isInitial = false) => {
             if (!coolieId || coolieId === 'pending-id') return;
             
             try {
-                setLoading(true);
+                if (isInitial) setLoading(true);
                 
-                // Fetch all data in parallel
-                const [statsData, activeJobsData, completedData, requestsData, statusData] = await Promise.all([
-                    coolieDashboardService.getStats(coolieId).catch(() => ({ data: { totalEarnings: 0, tripsToday: 0, avgRating: 0, pending: 0 } })),
-                    coolieDashboardService.getActiveJobs(coolieId).catch(() => ({ data: [] })),
-                    coolieDashboardService.getCompletedToday(coolieId).catch(() => ({ data: [] })),
-                    coolieDashboardService.getUpcomingRequests(coolieId).catch(() => ({ data: [] })),
-                    coolieStatusService.getStatus(coolieId).catch(() => ({ data: { is_online: false } }))
-                ]);
+                // Use consolidated endpoint to prevent 429 Too Many Requests
+                const response = await coolieDashboardService.getOverview(coolieId);
                 
-                // Update state with fetched data
-                if (statsData.data) {
-                    setStats({
-                        totalEarnings: statsData.data.totalEarnings || 0,
-                        tripsToday: statsData.data.tripsToday || 0,
-                        avgRating: statsData.data.avgRating || 0,
-                        pending: statsData.data.pending || 0
-                    });
+                if (response.success && response.data) {
+                    const { stats: statsData, activeJobs: activeData, completedToday: completedData, upcomingRequests: requestsData, is_online: isOnline } = response.data;
+                    
+                    if (statsData) setStats(statsData);
+                    setActiveJob(activeData?.[0] || null);
+                    setCompletedToday(completedData || []);
+                    setRequests(requestsData || []);
+                    
+                    // Update global status carefully
+                    if (activeData && activeData.length > 0) {
+                        setCoolieStatus('onduty');
+                    } else if (coolieStatus !== 'onduty') {
+                        setCoolieStatus(isOnline ? 'available' : 'offline');
+                    }
+                    
+                    // Sync timer if needed
+                    if (isOnline && !shiftStartTime) {
+                        setShiftStartTime(Date.now());
+                    }
                 }
-                
-                setActiveJob(activeJobsData.data?.[0] || null);
-                setCompletedToday(completedData.data || []);
-                setRequests(requestsData.data || []);
-                setStatus(statusData.data?.is_online ? 'available' : 'offline');
                 
             } catch (error) {
                 console.error('Error fetching dashboard data:', error);
-                toast.error('Failed to load dashboard data');
             } finally {
-                setLoading(false);
+                if (isInitial) setLoading(false);
             }
         };
         
-        fetchDashboardData();
+        fetchDashboardData(true); // Initial load with spinner
         
         // Fetch station board
         const fetchBoard = async () => {
@@ -251,17 +279,31 @@ export default function CoolieDashboard() {
         
         // Set up periodic refresh
         const interval = setInterval(() => {
-            fetchDashboardData();
+            fetchDashboardData(false); // Background refresh without spinner
             fetchBoard();
         }, 30000); // Refresh every 30 seconds
         return () => clearInterval(interval);
     }, [coolieId, user?.station_code]);
 
-    // Shift clock
+    // Shift clock - Calculates duration from persistent start time
     useEffect(() => {
-        const t = setInterval(() => setShiftSeconds(s => s + 1), 1000)
+        // Run once immediately
+        if (shiftStartTime) {
+            const initialDiff = Math.floor((Date.now() - shiftStartTime) / 1000);
+            setShiftSeconds(initialDiff > 0 ? initialDiff : 0);
+        }
+
+        const t = setInterval(() => {
+            if (shiftStartTime) {
+                const diff = Math.floor((Date.now() - shiftStartTime) / 1000);
+                // Prevent negative numbers or weird jumps
+                setShiftSeconds(diff > 0 ? diff : 0);
+            } else {
+                setShiftSeconds(0);
+            }
+        }, 1000)
         return () => clearInterval(t)
-    }, [])
+    }, [shiftStartTime])
 
     const formatShift = (s) => {
         const h = String(Math.floor(s / 3600)).padStart(2, '0')
@@ -271,11 +313,12 @@ export default function CoolieDashboard() {
     }
 
     const toggleStatus = async () => {
-        if (status === 'available' || status === 'onduty') { 
+        if (coolieStatus === 'available' || coolieStatus === 'onduty') { 
             try {
                 await coolieStatusService.goOffline(coolieId);
-                setStatus('offline')
+                setCoolieStatus('offline')
                 stopWatching()
+                setShiftStartTime(null) // Reset shift start time on go offline
                 if (socket && connected) socket.emit('coolie:go-offline', { coolieId })
                 toast('You are now offline', { icon: '💤' }) 
             } catch (error) {
@@ -289,7 +332,8 @@ export default function CoolieDashboard() {
                 try {
                     await coolieStatusService.goOnline(coolieId, location?.lat, location?.lng);
                     startWatching()
-                    setStatus('available')
+                    setCoolieStatus('available')
+                    if (!shiftStartTime) setShiftStartTime(Date.now()) // Set shift start time only if not already set
                     if (socket && connected && location) {
                         socket.emit('coolie:go-online', { coolieId, lat: location.lat, lng: location.lng })
                     }
@@ -310,17 +354,23 @@ export default function CoolieDashboard() {
         if (permission === 'denied') {
             toast.error('Please allow location in browser settings')
         } else {
-            setStatus('available')
+            setCoolieStatus('available')
             toast.success('You are AVAILABLE! 🔔')
         }
     }
 
-    const handleAccept = (id) => {
-        const req = requests.find(r => r.id === id)
-        setActiveJob({ ...req })
-        setRequests([])
-        setStatus('onduty')
-        toast.success('Booking Accepted! 🏃')
+    const handleAccept = async (id) => {
+        try {
+            await coolieDashboardService.updateStatus(id, 'confirmed');
+            const req = requests.find(r => r.id === id)
+            setActiveJob({ ...req, status: 'confirmed' })
+            setRequests([])
+            setCoolieStatus('onduty')
+            toast.success('Booking Accepted! 🏃')
+        } catch (error) {
+            console.error('Error accepting booking:', error);
+            toast.error('Failed to accept booking');
+        }
     }
 
     const handleReject = (id) => {
@@ -365,19 +415,25 @@ export default function CoolieDashboard() {
             job.time.toLowerCase().includes(searchQuery.toLowerCase())
     })
 
-    const handleComplete = () => {
-        const newEntry = { label: `Job #${activeJob.id}`, time: 'Completed just now', amount: activeJob.price }
-        setCompletedToday(prev => [newEntry, ...prev])
-        setActiveJob(null)
-        setStatus('available')
-        toast.success('Job completed! ✅')
+    const handleComplete = async (id) => {
+        try {
+            await coolieDashboardService.updateStatus(id, 'completed');
+            const newEntry = { label: `Job #${activeJob.id}`, time: 'Completed just now', amount: activeJob.price }
+            setCompletedToday(prev => [newEntry, ...prev])
+            setActiveJob(null)
+            setCoolieStatus('available')
+            toast.success('Job completed! ✅')
+        } catch (error) {
+            console.error('Error completing job:', error);
+            toast.error('Failed to complete job');
+        }
     }
 
     const STATS = [
-        { label: 'TOTAL EARNINGS', value: `₹${stats.totalEarnings.toLocaleString()}`, icon: '💰', change: '+12%', color: 'text-green-400' },
-        { label: 'TRIPS TODAY',    value: String(stats.tripsToday).padStart(2, '0'), icon: '🔁', color: 'text-[#A855F7]' },
-        { label: 'AVG RATING',     value: stats.avgRating.toFixed(2),   icon: '⭐', color: 'text-yellow-400' },
-        { label: 'PENDING',        value: String(stats.pending).padStart(2,'0'), icon: '🕐', color: 'text-[#7B2FFF]' },
+        { label: 'TOTAL EARNINGS', value: `₹${stats.totalEarnings.toLocaleString()}`, icon: <Activity className="text-green-400" size={20} />, change: '+12%', color: 'text-green-400' },
+        { label: 'TRIPS TODAY',    value: String(stats.tripsToday).padStart(2, '0'), icon: <CheckCircle className="text-[#A855F7]" size={20} />, color: 'text-[#A855F7]' },
+        { label: 'AVG RATING',     value: stats.avgRating.toFixed(2),   icon: <Star className="text-yellow-400" size={20} />, color: 'text-yellow-400' },
+        { label: 'PENDING',        value: String(stats.pending).padStart(2,'0'), icon: <Clock className="text-[#7B2FFF]" size={20} />, color: 'text-[#7B2FFF]' },
     ]
 
     return (
@@ -409,15 +465,15 @@ export default function CoolieDashboard() {
                             <div className="flex items-start justify-between">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 ${
-                                            status === 'available' || status === 'onduty' 
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 ${
+                                            coolieStatus === 'available' || coolieStatus === 'onduty' 
                                                 ? 'bg-green-500/10 text-green-400 border border-green-500/30' 
                                                 : 'bg-red-500/10 text-red-400 border border-red-500/30'
                                         }`}>
                                             <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                                                status === 'available' || status === 'onduty' ? 'bg-green-400' : 'bg-red-400'
+                                                coolieStatus === 'available' || coolieStatus === 'onduty' ? 'bg-green-400' : 'bg-red-400'
                                             }`} /> 
-                                            {status === 'available' ? 'Available' : status === 'onduty' ? 'On Duty' : 'Offline'}
+                                            {coolieStatus === 'available' ? 'Available' : coolieStatus === 'onduty' ? 'On Duty' : 'Offline'}
                                         </span>
                                         <span className="text-[#6B6188] text-[11px] font-mono">#{user?.coolie_id || 'PENDING'}</span>
                                     </div>
@@ -432,12 +488,12 @@ export default function CoolieDashboard() {
                                     <button
                                         onClick={toggleStatus}
                                         className={`mt-2 text-[11px] px-3 py-1 rounded-full font-bold border transition-all ${
-                                            status === 'available' || status === 'onduty'
+                                            coolieStatus === 'available' || coolieStatus === 'onduty'
                                                 ? 'bg-green-500/10 text-green-400 border-green-500/30'
                                                 : 'bg-[#1E1A40] text-[#6B6188] border-[#1E1A40] hover:border-[#7B2FFF]'
                                         }`}
                                     >
-                                        {status === 'offline' ? '● Go Online' : '● Online — Tap to go offline'}
+                                        {coolieStatus === 'offline' ? '● Go Online' : '● Online — Tap to go offline'}
                                     </button>
                                 </div>
                             </div>
@@ -449,7 +505,7 @@ export default function CoolieDashboard() {
                         {STATS.map((s, i) => (
                             <div key={i} className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-4">
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xl">{s.icon}</span>
+                                    <span className="p-2 rounded-xl bg-white/5">{s.icon}</span>
                                     {s.change && (
                                         <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded-full font-bold">{s.change}</span>
                                     )}
@@ -479,14 +535,14 @@ export default function CoolieDashboard() {
                                     <div className="text-4xl mb-3">
                                         {loading ? (
                                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7B2FFF] mx-auto"></div>
-                                        ) : '🕐'}
+                                        ) : <Luggage className="text-[#6B6188] mx-auto" size={48} />}
                                     </div>
                                     <p className="text-[#6B6188]">
                                         {loading ? 'Loading requests...' :
                                             searchQuery ? 'No requests found matching your search criteria' : 
-                                            (status === 'offline' ? 'You are offline. Go online to receive requests.' : 'Waiting for new booking requests...')}
+                                            (coolieStatus === 'offline' ? 'You are offline. Go online to receive requests.' : 'Waiting for new booking requests...')}
                                     </p>
-                                    {status === 'offline' && !searchQuery && !loading && (
+                                    {coolieStatus === 'offline' && !searchQuery && !loading && (
                                         <button onClick={toggleStatus} className="mt-4 px-6 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-bold text-sm hover:bg-[#5B1FCC]">
                                             Go Online
                                         </button>

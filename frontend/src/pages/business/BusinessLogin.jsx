@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useBusinessAuth } from '../../context/BusinessAuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -70,9 +70,14 @@ export default function BusinessLogin() {
                             {loading ? 'Signing in...' : 'Sign In'}
                         </button>
                     </form>
-                    <p className="text-center text-sm mt-6" style={{ color: 'var(--text-body)' }}>
-                        New business? <a href="/register/business" className="font-semibold hover:underline" style={{ color: '#7B2FFF' }}>Register here</a>
-                    </p>
+                    <div className="mt-6 text-center space-y-2">
+                        <p className="text-sm" style={{ color: 'var(--text-body)' }}>
+                            New business? <Link to="/register/business" className="font-semibold hover:underline" style={{ color: '#7B2FFF' }}>Register here</Link>
+                        </p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                            Not a business? <Link to="/login" className="hover:underline opacity-80" style={{ color: 'var(--text-body)' }}>Back to User Login</Link>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

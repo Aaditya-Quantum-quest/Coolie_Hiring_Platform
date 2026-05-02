@@ -707,7 +707,8 @@ export default function RegisterPage() {
                 formData.append('secondary_doc_front', secondaryFront)
                 formData.append('secondary_doc_back', secondaryBack)
 
-                const res = await axios.post('https://coolie-hiring-platform.onrender.com/api/auth/coolie/register', formData)
+                // const res = await axios.post('https://coolie-hiring-platform.onrender.com/api/auth/coolie/register', formData)
+                const res = await axios.post('/api/auth/coolie/register', formData)
 
                 if (res.data.success) {
                     toast.success(`🎉 Registration Submitted! Check your email for confirmation. It will take 2-3 days to verify your documents.`, { duration: 6000 })

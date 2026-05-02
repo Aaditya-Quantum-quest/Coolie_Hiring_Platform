@@ -56,7 +56,6 @@ function BookingCard({ b, onView }) {
             <div className="flex items-center gap-3 px-4 pb-3 text-xs text-slate-400 flex-wrap">
                 <span className="flex items-center gap-1"><User size={10} />{b.coolie}</span>
                 <span className="flex items-center gap-1"><MapPin size={10} />{b.station}</span>
-                <span className="flex items-center gap-1"><Package size={10} />{b.luggage}</span>
             </div>
 
             {/* Expand / actions */}
@@ -80,8 +79,8 @@ function BookingCard({ b, onView }) {
                 <div className="border-t border-slate-800 px-4 py-3 space-y-2 text-xs">
                     <div className="flex justify-between">
                         <span className="text-slate-400">Route</span>
-                        <span className="text-white font-medium flex items-center gap-1">
-                            {b.from} <ArrowRight size={10} /> {b.to}
+                        <span className="text-white font-medium">
+                            {b.initialStation} → {b.station}
                         </span>
                     </div>
                     <div className="flex justify-between">
@@ -218,7 +217,7 @@ export default function AdminBookings() {
                                         <th className="py-4 px-4 text-left font-semibold">Customer</th>
                                         <th className="py-4 px-4 text-left font-semibold">Coolie</th>
                                         <th className="py-4 px-4 text-left font-semibold">Station</th>
-                                        <th className="py-4 px-4 text-left font-semibold hidden lg:table-cell">Luggage</th>
+
                                         <th className="py-4 px-4 text-left font-semibold">Status</th>
                                         <th className="py-4 px-4 text-right font-semibold">Amount</th>
                                         <th className="py-4 px-4 text-right font-semibold">View</th>
@@ -255,9 +254,7 @@ export default function AdminBookings() {
                                                         <span className="truncate max-w-[100px]">{b.station}</span>
                                                     </div>
                                                 </td>
-                                                <td className="py-3 px-4 text-slate-400 text-xs hidden lg:table-cell">
-                                                    <div className="flex items-center gap-1"><Package size={10} />{b.luggage}</div>
-                                                </td>
+
                                                 <td className="py-3 px-4">
                                                     <span className={STATUS_STYLE[b.status] || STATUS_STYLE.pending}>
                                                         {STATUS_LABELS[b.status] || b.status}
@@ -322,8 +319,7 @@ export default function AdminBookings() {
                                         ['Customer', selected.customer, <User size={13} />],
                                         ['Coolie', selected.coolie, <User size={13} />],
                                         ['Station', selected.station, <MapPin size={13} />],
-                                        ['Route', `${selected.from} → ${selected.to}`, <ArrowRight size={13} />],
-                                        ['Luggage', selected.luggage, <Package size={13} />],
+                                        ['Route', `${selected.initialStation} → ${selected.station}`, <ArrowRight size={13} />],
                                         ['Amount', `₹${selected.amount}`, null],
                                         ['Payment', selected.payment, <CreditCard size={13} />],
                                         ['Date', selected.date, <Calendar size={13} />],

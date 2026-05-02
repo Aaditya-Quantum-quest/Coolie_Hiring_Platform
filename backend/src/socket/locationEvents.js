@@ -2,6 +2,9 @@ const db = require('../config/db');
 
 const updateCoolieLocationInDB = async (coolieId, lat, lng, isOnline = true) => {
     try {
+        if (isOnline) {
+            console.log(`[Status] Coolie ${coolieId} is ONLINE at ${lat}, ${lng}`);
+        }
         await db.query(
             `UPDATE coolies 
              SET is_online = $1, latitude = $2, longitude = $3, last_location_update = NOW() 
@@ -15,6 +18,7 @@ const updateCoolieLocationInDB = async (coolieId, lat, lng, isOnline = true) => 
 
 const setCoolieOffline = async (coolieId) => {
     try {
+        console.log(`[Status] Setting coolie ${coolieId} to OFFLINE`);
         await db.query(
             `UPDATE coolies 
              SET is_online = false 

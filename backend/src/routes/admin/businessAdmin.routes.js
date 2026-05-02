@@ -1,12 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const { getAll, getOne, approve, reject, deactivate } = require('../../controllers/admin/businessAdmin.controller');
-// const { protect, adminOnly } = require('../../middleware/auth.middleware'); // Add admin auth if needed
+const { getAll, getOne, approveLevel1, approveLevel2, reject, deactivate, getStats } = require('../../controllers/admin/businessAdmin.controller');
+const { protectAdmin, requireRegularAdmin, requireSuperAdmin } = require('../../middleware/adminAuth.middleware');
 
-router.get('/', getAll);
-router.get('/:businessId', getOne);
-router.patch('/:businessId/approve', approve);
-router.patch('/:businessId/reject', reject);
-router.patch('/:businessId/deactivate', deactivate);
+router.get('/stats', protectAdmin, requireRegularAdmin, getStats);
+router.get('/', protectAdmin, requireRegularAdmin, getAll);
+router.get('/:businessId', protectAdmin, requireRegularAdmin, getOne);
+
+// Level 1 — regular admin
+router.patch('/:businessId/approve-level1', protectAdmin, requireRegularAdmin, approveLevel1);
+
+// Level 2 — super admin only
+router.patch('/:businessId/approve-level2', protectAdmin, requireSuperAdmin, approveLevel2);
+
+router.patch('/:businessId/reject', protectAdmin, requireRegularAdmin, reject);
+router.patch('/:businessId/deactivate', protectAdmin, requireRegularAdmin, deactivate);
 
 module.exports = router;

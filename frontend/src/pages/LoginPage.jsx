@@ -212,10 +212,16 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    <p className="login-footer-text">
-                        Don't have an account?{' '}
-                        <Link to="/register" className="login-footer-link">Register here</Link>
-                    </p>
+                    <div className="login-footer-section">
+                        <p className="login-footer-text">
+                            Don't have an account?{' '}
+                            <Link to="/register" className="login-footer-link">Register here</Link>
+                        </p>
+                        <p className="login-footer-text" style={{ marginTop: '10px' }}>
+                            Are you a business?{' '}
+                            <Link to="/business/login" className="login-footer-link" style={{ color: '#a78bfa' }}>Business Login</Link>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

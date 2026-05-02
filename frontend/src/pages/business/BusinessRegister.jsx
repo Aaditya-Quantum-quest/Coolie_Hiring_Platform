@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import toast from 'react-hot-toast';
 import {
     Store, Hotel, ChevronRight, ChevronLeft, Check,
     Building2, Utensils, MapPin, Phone, Clock, CreditCard,
@@ -429,14 +430,29 @@ function Step2({ formData, update, onBack, onNext }) {
             {/* Nav */}
             <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between', paddingTop: 4 }}>
                 <button className="br-btn-secondary" onClick={onBack}><ChevronLeft size={15} /> Back</button>
-                <button className="br-btn-primary" onClick={onNext}>Review <ChevronRight size={15} /></button>
+                <button className="br-btn-primary" onClick={() => {
+                    const required = [
+                        { f: 'business_name', l: 'Business Name' },
+                        { f: 'full_name', l: 'Owner Name' },
+                        { f: 'email', l: 'Email' },
+                        { f: 'password', l: 'Password' },
+                        { f: 'phone_primary', l: 'Phone' },
+                        { f: 'city', l: 'City' }
+                    ];
+                    for (const { f, l } of required) {
+                        if (!formData[f]) return toast.error(`${l} is required`);
+                    }
+                    if (!formData.email.includes('@')) return toast.error('Invalid email address');
+                    if (formData.phone_primary.length < 10) return toast.error('Invalid phone number');
+                    onNext();
+                }}>Review <ChevronRight size={15} /></button>
             </div>
         </div>
     );
 }
 
 // ─── Step 3 ───────────────────────────────────────────────────────────────────
-function Step3({ formData, onBack, onSubmit }) {
+function Step3({ formData, onBack, onSubmit, error }) {
     const [submitting, setSubmitting] = useState(false);
     const handle = async () => { setSubmitting(true); await onSubmit(); setSubmitting(false); };
 
@@ -505,6 +521,18 @@ function Step3({ formData, onBack, onSubmit }) {
                 ))}
             </div>
 
+            {/* Error messaging */}
+            {error && (
+                <div style={{ 
+                    marginBottom: 20, padding: '12px 16px', borderRadius: 12, 
+                    background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
+                    display: 'flex', alignItems: 'center', gap: 10
+                }}>
+                    <Shield size={16} style={{ color: '#ef4444' }} />
+                    <span style={{ fontSize: '0.8rem', color: '#fca5a5', fontWeight: 500 }}>{error}</span>
+                </div>
+            )}
+
             {/* Trust row */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, justifyContent: 'center', marginBottom: 24 }}>
                 {[{ I: Shield, t: 'Secure & Encrypted' }, { I: Zap, t: 'Instant Activation' }, { I: CheckCircle2, t: 'Verified Listings' }].map(({ I, t }) => (
@@ -565,21 +593,43 @@ export default function BusinessRegister() {
 
     const update = (field, value) => setFormData(p => ({ ...p, [field]: value }));
 
+    const [error, setError] = useState(null);
+
     const handleSubmit = async () => {
+        setError(null);
         const fd = new FormData();
         Object.entries(formData).forEach(([k, v]) => {
+            // Skip null/undefined entirely — don't send "null" strings to backend
+            if (v === null || v === undefined) return;
             if (k === 'logo' || k === 'cover') { if (v) fd.append(k, v); }
             else if (k === 'gallery') { v.forEach(f => fd.append('gallery', f)); }
-            else if (Array.isArray(v) || typeof v === 'object') fd.append(k, JSON.stringify(v));
+            // Serialize arrays and plain objects (but not File instances)
+            else if (Array.isArray(v)) fd.append(k, JSON.stringify(v));
+            else if (typeof v === 'object' && !(v instanceof File)) fd.append(k, JSON.stringify(v));
             else fd.append(k, v);
         });
         try {
             const res = await fetch(`${API}/api/v1/business/auth/register`, { method: 'POST', body: fd });
             const data = await res.json();
-            if (data.success) setSubmitted(true);
+            if (data.success) {
+                setSubmitted(true);
+                toast.success('Registration submitted for approval!');
+            } else {
+                // If there are specific validation errors, show the first one or a combined message
+                if (data.errors && data.errors.length > 0) {
+                    setError(data.errors[0].message);
+                    toast.error(data.errors[0].message);
+                } else {
+                    const msg = data.error?.message || 'Registration failed. Please check your inputs.';
+                    setError(msg);
+                    toast.error(msg);
+                }
+            }
         } catch (err) {
             console.error(err);
-            setSubmitted(true);
+            const msg = 'Network error. Please try again.';
+            setError(msg);
+            toast.error(msg);
         }
     };
 
@@ -647,7 +697,7 @@ export default function BusinessRegister() {
                 <div className="fs-fade2 br-glass" style={{ overflow: 'hidden' }}>
                     {step === 1 && <Step1 formData={formData} update={update} onNext={() => setStep(2)} />}
                     {step === 2 && <Step2 formData={formData} update={update} onBack={() => setStep(1)} onNext={() => setStep(3)} />}
-                    {step === 3 && <Step3 formData={formData} onBack={() => setStep(2)} onSubmit={handleSubmit} />}
+                    {step === 3 && <Step3 formData={formData} onBack={() => setStep(2)} onSubmit={handleSubmit} error={error} />}
                 </div>
 
                 <p className="fs-fade3" style={{ textAlign: 'center', marginTop: 18, fontSize: '0.68rem', color: 'rgba(255,255,255,0.18)' }}>

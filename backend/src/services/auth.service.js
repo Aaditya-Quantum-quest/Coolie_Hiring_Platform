@@ -311,7 +311,8 @@ const getCoolieForAdmin = async (id) => {
                 station_name, station_code, working_platforms, age, languages_spoken,
                 passport_photo_url, aadhaar_front_url, aadhaar_back_url,
                 secondary_doc_type, secondary_doc_front_url, secondary_doc_back_url,
-                aadhaar_number_enc, secondary_doc_number_enc, account_number_enc,
+                aadhaar_number_enc, secondary_doc_number_enc,
+                bank_name, ifsc_code, upi_id,
                 qr_code_url, verification_status, verification_level,
                 level1_approved_at, level2_approved_at,
                 rejection_reason, is_verified, is_active,
@@ -325,8 +326,7 @@ const getCoolieForAdmin = async (id) => {
     return {
         ...coolie,
         aadhaar_number: decrypt(coolie.aadhaar_number_enc),
-        secondary_doc_number: decrypt(coolie.secondary_doc_number_enc),
-        account_number: decrypt(coolie.account_number_enc)
+        secondary_doc_number: decrypt(coolie.secondary_doc_number_enc)
     };
 }
 

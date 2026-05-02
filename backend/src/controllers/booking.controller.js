@@ -2,8 +2,33 @@ const db = require('../config/db');
 
 exports.createBooking = async (req, res) => {
     try {
-        const { coolieId, station, initialStation, platform, destination, luggageSize, amount, trainNo, trainName, luggageImgUrl } = req.body;
+        const { station, initialStation, platform, amount, trainNo, trainName, luggageImgUrl, luggageCount } = req.body;
         const customerId = req.user.id;
+        
+        // Improve matching: station might be "Jaipur Junction (JP)"
+        let stationSearch = station;
+        let stationCode = '';
+        
+        const codeMatch = station.match(/\(([^)]+)\)/);
+        if (codeMatch) {
+            stationCode = codeMatch[1];
+            // Also try to match without the code part if needed
+            stationSearch = station.split(' (')[0];
+        }
+
+        const coolieResult = await db.query(`
+            SELECT id FROM coolies 
+            WHERE (station_name = $1 OR station_code = $2 OR station_name = $3) 
+            AND is_online = true 
+            AND is_verified = true
+            LIMIT 1
+        `, [station, stationCode, stationSearch]);
+
+        if (coolieResult.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'No available coolie found at the destination station.' });
+        }
+
+        const coolieId = coolieResult.rows[0].id;
         
         // Generate a random booking reference
         const bookingRef = 'BK' + Math.floor(1000 + Math.random() * 9000);
@@ -11,13 +36,34 @@ exports.createBooking = async (req, res) => {
 
         const result = await db.query(`
             INSERT INTO bookings (
-                booking_ref, customer_id, coolie_id, initial_station_name, destination_station_name, platform, destination, 
-                luggage_size, amount, train_no, train_name, luggage_img_url, otp, status, payment_status
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending', 'pending')
+                booking_ref, customer_id, coolie_id, initial_station_name, destination_station_name, platform, 
+                amount, train_no, train_name, luggage_img_url, luggage_count, otp, status, payment_status
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', 'pending')
             RETURNING *
-        `, [bookingRef, customerId, coolieId, initialStation, station, platform, destination, luggageSize, amount, trainNo, trainName, luggageImgUrl, otp]);
+        `, [bookingRef, customerId, coolieId, initialStation, station, platform, amount, trainNo, trainName, luggageImgUrl, luggageCount, otp]);
 
-        res.status(201).json({ success: true, booking: result.rows[0] });
+        const booking = result.rows[0];
+
+        // Emit real-time notification to the assigned coolie
+        if (req.io) {
+            const socketData = {
+                id: booking.booking_ref,
+                customer: req.user.name || 'New Customer',
+                tag: 'REGULAR',
+                platform: booking.platform,
+                bags: booking.luggage_count + ' bags',
+                to: booking.destination_station_name,
+                price: booking.amount,
+                timer: 60,
+                otp: booking.otp,
+                trainNo: booking.train_no,
+                trainName: booking.train_name
+            };
+            req.io.to(`coolie_${coolieId}`).emit('booking:new-request', socketData);
+            console.log(`[Socket] New booking ${booking.booking_ref} emitted to coolie_${coolieId}`);
+        }
+
+        res.status(201).json({ success: true, booking });
     } catch (error) {
         console.error('createBooking error:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -46,8 +92,8 @@ exports.getMyBookings = async (req, res) => {
             initialStation: b.initial_station_name,
             station: b.destination_station_name,
             platform: b.platform,
-            destination: b.destination,
-            luggageSize: b.luggage_size,
+            destination: b.destination_station_name,
+            luggageSize: null,
             luggageCount: 3, // Assuming fixed or could be dynamic
             date: b.created_at ? b.created_at.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             time: b.created_at ? b.created_at.toISOString().split('T')[1].substring(0, 5) : '00:00',

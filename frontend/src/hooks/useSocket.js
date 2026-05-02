@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = 'https://coolie-hiring-platform.onrender.com';
+// const SOCKET_URL = 'https://coolie-hiring-platform.onrender.com';
+const SOCKET_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
 const useSocket = (autoConnect = true) => {
     const socketRef = useRef(null);

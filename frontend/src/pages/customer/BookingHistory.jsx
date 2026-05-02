@@ -141,7 +141,7 @@ export default function BookingHistory() {
                                         </span>
                                         <span className="flex items-center gap-1 max-[767px]:text-[10px]">
                                             <Package size={11} className="max-[767px]:w-2.5 max-[767px]:h-2.5" />
-                                            {b.luggageCount} bags ({b.luggageSize})
+                                            {b.luggageCount} bags
                                         </span>
                                     </div>
                                 </div>
@@ -173,7 +173,6 @@ export default function BookingHistory() {
                                                 { label: 'Platform', val: b.platform },
                                                 { label: 'Initial Stn.', val: b.initialStation || 'N/A' },
                                                 { label: 'Dest. Stn.', val: b.station || 'N/A' },
-                                                { label: 'Destination', val: b.destination },
                                                 { label: 'Train No.', val: b.trainNo },
                                                 { label: 'Train Name', val: b.trainName || 'N/A' },
                                             ].map(({ label, val }) => (

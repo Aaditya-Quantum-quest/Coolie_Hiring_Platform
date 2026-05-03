@@ -17,14 +17,20 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
       },
-      // '/api': {
-      //   target: 'https://coolie-hiring-platform.onrender.com',
-      //   changeOrigin: true,
-      // },
-      // '/uploads': {
-      //   target: 'https://coolie-hiring-platform.onrender.com',
-      //   changeOrigin: true,
-      // },
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          charts: ['recharts'],
+          motion: ['framer-motion'],
+          maps: ['leaflet', 'react-leaflet'],
+          socket: ['socket.io-client'],
+        },
+      },
     },
   },
 })

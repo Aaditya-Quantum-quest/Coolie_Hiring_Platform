@@ -3,7 +3,8 @@ const router = express.Router();
 const { 
     goOnline, goOffline, getStatus, getProfile,
     getDashboardStats, getActiveJobs, getCompletedToday, getUpcomingRequests,
-    getDashboardOverview, getPublicProfile, updateProfile
+    getDashboardOverview, getPublicProfile, updateProfile,
+    getEarnings, getTransactions, getWeeklySummary
 } = require('../controllers/coolie.controller');
 const { protect } = require('../middleware/auth.middleware');
 
@@ -20,5 +21,10 @@ router.get('/dashboard/:coolieId/stats', protect, getDashboardStats);
 router.get('/active-jobs/:coolieId', protect, getActiveJobs);
 router.get('/completed-today/:coolieId', protect, getCompletedToday);
 router.get('/requests/:coolieId', protect, getUpcomingRequests);
+
+// Earnings routes
+router.get('/earnings/:coolieId', protect, getEarnings);
+router.get('/transactions/:coolieId', protect, getTransactions);
+router.get('/earnings/:coolieId/weekly-summary', protect, getWeeklySummary);
 
 module.exports = router;

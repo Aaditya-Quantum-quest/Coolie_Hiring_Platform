@@ -11,19 +11,19 @@ const comparePassword = async (plain, hash) => bcrypt.compare(plain, hash)
 // ─── JWT TOKENS ─────────────────────────────────────────────
 const generateTokens = (payload) => ({
     accessToken: jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN || '15m',
+        expiresIn: process.env.JWT_EXPIRES_IN || '3d', // Changed to 3 days
     }),
     // FIX: use JWT_REFRESH_SECRET (not JWT_SECRET) so the two tokens
     // are signed with different keys and can be independently verified/revoked
     refreshToken: jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-        expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+        expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '3d', // Changed to 3 days
     }),
 })
 
 // ─── REFRESH TOKEN STORE ────────────────────────────────────
 const storeRefreshToken = async (userId, userType, refreshToken) => {
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 days
     await pool.query('DELETE FROM refresh_tokens WHERE user_id = $1 AND user_type = $2', [userId, userType])
     await pool.query(
         'INSERT INTO refresh_tokens (user_id, user_type, token_hash, expires_at) VALUES ($1,$2,$3,$4)',

@@ -213,8 +213,23 @@ exports.updateBookingStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Booking not found' });
         }
 
-        res.status(200).json({ success: true, booking: result.rows[0] });
+        const booking = result.rows[0];
+
+        // ✅ Update coolie's total_earnings and total_trips when booking is completed
+        if (status === 'completed' && booking.coolie_id && booking.amount) {
+            await db.query(`
+                UPDATE coolies 
+                SET total_earnings = total_earnings + $1,
+                    total_trips = total_trips + 1
+                WHERE id = $2
+            `, [booking.amount, booking.coolie_id]);
+            
+            console.log(`✅ Updated coolie ${booking.coolie_id} earnings: +₹${booking.amount}`);
+        }
+
+        res.status(200).json({ success: true, booking });
     } catch (error) {
+        console.error('updateBookingStatus error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

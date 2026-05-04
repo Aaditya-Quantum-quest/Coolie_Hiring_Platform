@@ -12,7 +12,7 @@
     "db:setup": "node src/config/setupDb.js",
     "create:admin": "node scripts/createAdmin.js",
     "generate:key": "node src/utils/secretKeyGenerator.js",
-    "create:admin:noninteractive": "node scripts/createAdmin.js --name \"Harsh\" --email \"Harsh@admin.com\" --password \"Harsh@123\" --role super_admin"
+    "create:admin:noninteractive": "node scripts/createAdmin.js --name \"PriyaYadav\" --email \"priyaYadav@admin.com\" --password \"PriyaYadav@123\" --role super_admin"
   },
   "keywords": [],
   "author": "",

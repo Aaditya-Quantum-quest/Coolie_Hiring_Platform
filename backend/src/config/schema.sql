@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS coolies (
     -- Performance
     rating_avg              NUMERIC(3,2) DEFAULT 0.00,
     total_trips             INTEGER DEFAULT 0,
+    total_earnings          DECIMAL(10,2) DEFAULT 0.00,
 
     created_at              TIMESTAMPTZ DEFAULT NOW(),
     updated_at              TIMESTAMPTZ DEFAULT NOW()

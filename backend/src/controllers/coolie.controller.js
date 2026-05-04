@@ -126,7 +126,7 @@ const getPublicProfile = async (req, res) => {
         const { coolieId } = req.params;
 
         const result = await db.query(
-            `SELECT id, name, coolie_id, rating_avg, station_name, total_trips, is_online, profile_img_url, working_platforms, age 
+            `SELECT id, name, coolie_id, rating_avg, station_name, total_trips, total_earnings, is_online, profile_img_url, working_platforms, age 
              FROM coolies 
              WHERE id::text = $1 OR coolie_id = $1`,
             [coolieId]
@@ -151,9 +151,9 @@ const getDashboardStats = async (req, res) => {
     try {
         const { id } = req.user;
         
-        // Total earnings (completed bookings)
-        const earningsResult = await db.query(
-            "SELECT COALESCE(SUM(amount), 0) as total FROM bookings WHERE coolie_id = $1 AND status = 'completed'",
+        // Get coolie data including total_earnings
+        const coolieResult = await db.query(
+            "SELECT total_earnings, rating_avg FROM coolies WHERE id = $1",
             [id]
         );
         
@@ -168,19 +168,13 @@ const getDashboardStats = async (req, res) => {
             "SELECT COUNT(*) as count FROM bookings WHERE coolie_id = $1 AND status = 'pending'",
             [id]
         );
-        
-        // Avg Rating
-        const ratingResult = await db.query(
-            "SELECT rating_avg FROM coolies WHERE id = $1",
-            [id]
-        );
 
         res.status(200).json({
             success: true,
             data: {
-                totalEarnings: parseInt(earningsResult.rows[0].total),
+                totalEarnings: parseFloat(coolieResult.rows[0]?.total_earnings || 0),
                 tripsToday: parseInt(tripsTodayResult.rows[0].count),
-                avgRating: parseFloat(ratingResult.rows[0].rating_avg || 0),
+                avgRating: parseFloat(coolieResult.rows[0]?.rating_avg || 0),
                 pending: parseInt(pendingResult.rows[0].count)
             }
         });
@@ -280,40 +274,10 @@ const getDashboardOverview = async (req, res) => {
         const { id } = req.user;
 
         // Run queries in parallel
-        const [statsRes, activeRes, completedRes, requestsRes, statusRes] = await Promise.all([
-            db.query("SELECT COALESCE(SUM(amount), 0) as total FROM bookings WHERE coolie_id = $1 AND status = 'completed'", [id]),
+        const [coolieInfo, tripsToday, pendingCount, activeJobs, completedJobs, upcomingReqs] = await Promise.all([
+            db.query("SELECT rating_avg, is_online, total_earnings FROM coolies WHERE id = $1", [id]),
             db.query("SELECT COUNT(*) as count FROM bookings WHERE coolie_id = $1 AND DATE(created_at) = CURRENT_DATE AND status = 'completed'", [id]),
             db.query("SELECT COUNT(*) as count FROM bookings WHERE coolie_id = $1 AND status = 'pending'", [id]),
-            db.query("SELECT rating_avg, is_online FROM coolies WHERE id = $1", [id]),
-            db.query(`
-                SELECT b.*, c.name as customer_name
-                FROM bookings b
-                JOIN customers c ON b.customer_id = c.id
-                WHERE b.coolie_id = $1 AND b.status IN ('confirmed', 'arrived', 'in_progress')
-                ORDER BY b.created_at DESC
-            `, [id]),
-            db.query(`
-                SELECT b.*
-                FROM bookings b
-                WHERE b.coolie_id = $1 AND b.status = 'completed' AND DATE(b.created_at) = CURRENT_DATE
-                ORDER BY b.created_at DESC
-            `, [id]),
-            db.query(`
-                SELECT b.*, c.name as customer_name
-                FROM bookings b
-                JOIN customers c ON b.customer_id = c.id
-                WHERE b.coolie_id = $1 AND b.status = 'pending'
-                ORDER BY b.created_at DESC
-            `, [id])
-        ]);
-
-        // Note: I accidentally added extra queries in the Promise.all above, let's fix the mapping
-        // Correction: [earnings, tripsToday, pendingCount, coolieInfo, activeJobs, completedJobs, upcomingReqs]
-        const [earnings, tripsToday, pendingCount, coolieInfo, activeJobs, completedJobs, upcomingReqs] = await Promise.all([
-            db.query("SELECT COALESCE(SUM(amount), 0) as total FROM bookings WHERE coolie_id = $1 AND status = 'completed'", [id]),
-            db.query("SELECT COUNT(*) as count FROM bookings WHERE coolie_id = $1 AND DATE(created_at) = CURRENT_DATE AND status = 'completed'", [id]),
-            db.query("SELECT COUNT(*) as count FROM bookings WHERE coolie_id = $1 AND status = 'pending'", [id]),
-            db.query("SELECT rating_avg, is_online FROM coolies WHERE id = $1", [id]),
             db.query(`
                 SELECT b.*, c.name as customer_name
                 FROM bookings b
@@ -340,7 +304,7 @@ const getDashboardOverview = async (req, res) => {
             success: true,
             data: {
                 stats: {
-                    totalEarnings: parseInt(earnings.rows[0].total),
+                    totalEarnings: parseFloat(coolieInfo.rows[0]?.total_earnings || 0),
                     tripsToday: parseInt(tripsToday.rows[0].count),
                     avgRating: parseFloat(coolieInfo.rows[0]?.rating_avg || 0),
                     pending: parseInt(pendingCount.rows[0].count)
@@ -438,6 +402,205 @@ const updateProfile = async (req, res) => {
     }
 };
 
+// Get Earnings Data (Weekly or Monthly)
+const getEarnings = async (req, res) => {
+    try {
+        const { coolieId } = req.params;
+        const { period } = req.query; // 'weekly' or 'monthly'
+
+        // Get coolie UUID from coolie_id or use as UUID directly
+        const coolieResult = await db.query(
+            'SELECT id, total_earnings FROM coolies WHERE id::text = $1 OR coolie_id = $1',
+            [coolieId]
+        );
+
+        if (coolieResult.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Coolie not found' });
+        }
+
+        const coolieUUID = coolieResult.rows[0].id;
+        const totalEarnings = parseFloat(coolieResult.rows[0].total_earnings || 0);
+
+        if (period === 'weekly') {
+            // Get last 7 days earnings
+            const weeklyResult = await db.query(`
+                SELECT 
+                    TO_CHAR(created_at, 'Day') as day,
+                    COALESCE(SUM(amount), 0) as earnings,
+                    COUNT(*) as trips
+                FROM bookings
+                WHERE coolie_id = $1 
+                    AND status = 'completed'
+                    AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+                GROUP BY TO_CHAR(created_at, 'Day'), EXTRACT(DOW FROM created_at)
+                ORDER BY EXTRACT(DOW FROM created_at)
+            `, [coolieUUID]);
+
+            // Get total for the week
+            const weekTotalResult = await db.query(`
+                SELECT 
+                    COALESCE(SUM(amount), 0) as total,
+                    COUNT(*) as trips
+                FROM bookings
+                WHERE coolie_id = $1 
+                    AND status = 'completed'
+                    AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+            `, [coolieUUID]);
+
+            return res.status(200).json({
+                success: true,
+                data: {
+                    weeklyData: weeklyResult.rows.map(row => ({
+                        day: row.day.trim(),
+                        earnings: parseFloat(row.earnings),
+                        trips: parseInt(row.trips)
+                    })),
+                    totalWeek: parseFloat(weekTotalResult.rows[0].total),
+                    totalTrips: parseInt(weekTotalResult.rows[0].trips)
+                }
+            });
+        } else if (period === 'monthly') {
+            // Get last 4 weeks earnings
+            const monthlyResult = await db.query(`
+                SELECT 
+                    'Week ' || EXTRACT(WEEK FROM created_at) as week,
+                    COALESCE(SUM(amount), 0) as earnings,
+                    COUNT(*) as trips
+                FROM bookings
+                WHERE coolie_id = $1 
+                    AND status = 'completed'
+                    AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+                GROUP BY EXTRACT(WEEK FROM created_at)
+                ORDER BY EXTRACT(WEEK FROM created_at)
+            `, [coolieUUID]);
+
+            // Get total for the month
+            const monthTotalResult = await db.query(`
+                SELECT 
+                    COALESCE(SUM(amount), 0) as total
+                FROM bookings
+                WHERE coolie_id = $1 
+                    AND status = 'completed'
+                    AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+            `, [coolieUUID]);
+
+            return res.status(200).json({
+                success: true,
+                data: {
+                    monthlyData: monthlyResult.rows.map(row => ({
+                        week: row.week,
+                        earnings: parseFloat(row.earnings),
+                        trips: parseInt(row.trips)
+                    })),
+                    totalMonth: parseFloat(monthTotalResult.rows[0].total)
+                }
+            });
+        }
+
+        res.status(400).json({ success: false, message: 'Invalid period. Use "weekly" or "monthly"' });
+    } catch (error) {
+        console.error('getEarnings error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Get Transaction History
+const getTransactions = async (req, res) => {
+    try {
+        const { coolieId } = req.params;
+        const { page = 1, limit = 20 } = req.query;
+
+        // Get coolie UUID
+        const coolieResult = await db.query(
+            'SELECT id FROM coolies WHERE id::text = $1 OR coolie_id = $1',
+            [coolieId]
+        );
+
+        if (coolieResult.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Coolie not found' });
+        }
+
+        const coolieUUID = coolieResult.rows[0].id;
+        const offset = (page - 1) * limit;
+
+        const result = await db.query(`
+            SELECT 
+                b.booking_ref as id,
+                c.name as customer,
+                b.amount,
+                TO_CHAR(b.created_at, 'DD Mon, HH24:MI') as date,
+                'UPI' as method
+            FROM bookings b
+            JOIN customers c ON b.customer_id = c.id
+            WHERE b.coolie_id = $1 AND b.status = 'completed'
+            ORDER BY b.created_at DESC
+            LIMIT $2 OFFSET $3
+        `, [coolieUUID, limit, offset]);
+
+        res.status(200).json({
+            success: true,
+            data: result.rows
+        });
+    } catch (error) {
+        console.error('getTransactions error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Get Weekly Summary
+const getWeeklySummary = async (req, res) => {
+    try {
+        const { coolieId } = req.params;
+
+        // Get coolie UUID
+        const coolieResult = await db.query(
+            'SELECT id FROM coolies WHERE id::text = $1 OR coolie_id = $1',
+            [coolieId]
+        );
+
+        if (coolieResult.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Coolie not found' });
+        }
+
+        const coolieUUID = coolieResult.rows[0].id;
+
+        // Get today's earnings and trips
+        const todayResult = await db.query(`
+            SELECT 
+                COALESCE(SUM(amount), 0) as earnings,
+                COUNT(*) as trips
+            FROM bookings
+            WHERE coolie_id = $1 
+                AND status = 'completed'
+                AND DATE(created_at) = CURRENT_DATE
+        `, [coolieUUID]);
+
+        // Get tips received this week (assuming tips are tracked separately or as a percentage)
+        // For now, we'll calculate it as 10% of weekly earnings
+        const weeklyResult = await db.query(`
+            SELECT COALESCE(SUM(amount), 0) as total
+            FROM bookings
+            WHERE coolie_id = $1 
+                AND status = 'completed'
+                AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+        `, [coolieUUID]);
+
+        const tipsReceived = Math.floor(parseFloat(weeklyResult.rows[0].total) * 0.1);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                todayEarnings: parseFloat(todayResult.rows[0].earnings),
+                todayTrips: parseInt(todayResult.rows[0].trips),
+                tipsReceived
+            }
+        });
+    } catch (error) {
+        console.error('getWeeklySummary error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     goOnline,
     goOffline,
@@ -449,5 +612,8 @@ module.exports = {
     getUpcomingRequests,
     getDashboardOverview,
     getPublicProfile,
-    updateProfile
+    updateProfile,
+    getEarnings,
+    getTransactions,
+    getWeeklySummary
 };

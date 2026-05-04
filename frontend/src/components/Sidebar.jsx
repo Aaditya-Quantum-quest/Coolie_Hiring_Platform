@@ -8,36 +8,34 @@ import {
     AlertTriangle, Menu, X, Zap, Building2, Store
 } from 'lucide-react'
 
-/* ── GSAP loaded from CDN via useEffect (no bundler dep needed) ── */
-
 const CUSTOMER_ITEMS = [
-    { path: '/customer', icon: Home, label: 'Dashboard', badge: null },
-    { path: '/customer/book', icon: Search, label: 'Book Coolie', badge: null },
-    { path: '/customer/track', icon: MapPin, label: 'Track Coolie', badge: null },
-    { path: '/customer/trains', icon: Train, label: 'Train Status', badge: null },
-    { path: '/customer/map', icon: Map, label: 'Station Map', badge: null },
-    { path: '/customer/businesses', icon: Store, label: 'Hotels & Restaurants', badge: null },
-    { path: '/customer/history', icon: Clock, label: 'My Bookings', badge: null },
-    { path: '/customer/profile', icon: User, label: 'My Profile', badge: null },
-    { path: '/customer/payment', icon: CreditCard, label: 'Payments', badge: null },
-    { path: '/customer/rate', icon: Star, label: 'Rate & Review', badge: null },
+    { path: '/customer', icon: Home, label: 'Dashboard' },
+    { path: '/customer/book', icon: Search, label: 'Book Coolie' },
+    { path: '/customer/track', icon: MapPin, label: 'Track Coolie' },
+    { path: '/customer/trains', icon: Train, label: 'Train Status' },
+    { path: '/customer/map', icon: Map, label: 'Station Map' },
+    { path: '/customer/businesses', icon: Store, label: 'Hotels & Restaurants' },
+    { path: '/customer/history', icon: Clock, label: 'My Bookings' },
+    { path: '/customer/profile', icon: User, label: 'My Profile' },
+    { path: '/customer/payment', icon: CreditCard, label: 'Payments' },
+    { path: '/customer/rate', icon: Star, label: 'Rate & Review' },
 ]
 
 const COOLIE_ITEMS = [
-    { path: '/coolie', icon: Home, label: 'Dashboard', badge: null },
-    { path: '/coolie/profile', icon: User, label: 'My Profile', badge: null },
-    { path: '/coolie/earnings', icon: DollarSign, label: 'Earnings', badge: null },
-    { path: '/coolie/leaderboard', icon: Award, label: 'Leaderboard', badge: null },
+    { path: '/coolie', icon: Home, label: 'Dashboard' },
+    { path: '/coolie/profile', icon: User, label: 'My Profile' },
+    { path: '/coolie/earnings', icon: DollarSign, label: 'Earnings' },
+    { path: '/coolie/leaderboard', icon: Award, label: 'Leaderboard' },
 ]
 
 const ADMIN_ITEMS = [
-    { path: '/admin', icon: Home, label: 'Dashboard', badge: null },
-    { path: '/admin/users', icon: Users, label: 'Users', badge: null },
-    { path: '/admin/coolies', icon: Briefcase, label: 'Coolies', badge: null },
-    { path: '/admin/businesses', icon: Building2, label: 'Businesses', badge: null },
-    { path: '/admin/bookings', icon: Clock, label: 'Bookings', badge: null },
-    { path: '/admin/disputes', icon: AlertTriangle, label: 'Disputes', badge: null },
-    { path: '/admin/analytics', icon: BarChart2, label: 'Analytics', badge: null },
+    { path: '/admin', icon: Home, label: 'Dashboard' },
+    { path: '/admin/users', icon: Users, label: 'Users' },
+    { path: '/admin/coolies', icon: Briefcase, label: 'Coolies' },
+    { path: '/admin/businesses', icon: Building2, label: 'Businesses' },
+    { path: '/admin/bookings', icon: Clock, label: 'Bookings' },
+    { path: '/admin/disputes', icon: AlertTriangle, label: 'Disputes' },
+    { path: '/admin/analytics', icon: BarChart2, label: 'Analytics' },
 ]
 
 const ROLE_CONFIG = {
@@ -67,9 +65,12 @@ const ROLE_CONFIG = {
     },
 }
 
-/* ── tiny hook: load GSAP once ── */
+// ── FIX: hasRun ref ensures GSAP entrance fires only once ──
 function useGSAP(cb) {
+    const hasRun = useRef(false)
     useEffect(() => {
+        if (hasRun.current) return
+        hasRun.current = true
         if (window.gsap) { cb(window.gsap); return }
         const s = document.createElement('script')
         s.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js'
@@ -78,136 +79,12 @@ function useGSAP(cb) {
     }, [])
 }
 
-export default function Sidebar({ role = 'customer' }) {
+function SidebarContent({ collapsed, cfg, items, user, coolieStatus, shiftStartTime, shiftSeconds, formatShift, timeStr, dateStr, role, hoveredPath, setHoveredPath, setMobileOpen, handleItemEnter, handleItemLeave, handleLogout, orb1Ref, orb2Ref, glowLineRef, logoRef, itemsRef }) {
     const location = useLocation()
-    const navigate = useNavigate()
-    const { user, logout, coolieStatus, shiftStartTime } = useApp()
-    const [collapsed, setCollapsed] = useState(false)
-    const [mobileOpen, setMobileOpen] = useState(false)
-    const [hoveredPath, setHoveredPath] = useState(null)
-    const [time, setTime] = useState(new Date())
-    const [shiftSeconds, setShiftSeconds] = useState(0)
-
-    const sidebarRef = useRef(null)
-    const logoRef = useRef(null)
-    const itemsRef = useRef([])
-    const orb1Ref = useRef(null)
-    const orb2Ref = useRef(null)
-    const toggleRef = useRef(null)
-    const glowLineRef = useRef(null)
-
-    const cfg = ROLE_CONFIG[role] || ROLE_CONFIG.customer
-    const items = role === 'admin' ? ADMIN_ITEMS : role === 'coolie' ? COOLIE_ITEMS : CUSTOMER_ITEMS
-
-    /* live clock */
-    useEffect(() => {
-        const id = setInterval(() => setTime(new Date()), 1000)
-        return () => clearInterval(id)
-    }, [])
-
-    /* shift clock for coolies */
-    useEffect(() => {
-        if (role === 'coolie' && shiftStartTime) {
-            const updateShift = () => {
-                const diff = Math.floor((Date.now() - shiftStartTime) / 1000)
-                setShiftSeconds(diff > 0 ? diff : 0)
-            }
-            updateShift()
-            const id = setInterval(updateShift, 1000)
-            return () => clearInterval(id)
-        } else {
-            setShiftSeconds(0)
-        }
-    }, [role, shiftStartTime])
-
-    const formatShift = (s) => {
-        const h = String(Math.floor(s / 3600)).padStart(2, '0')
-        const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0')
-        const sec = String(s % 60).padStart(2, '0')
-        return `${h}:${m}:${sec}`
-    }
-
-    /* ── GSAP entrance ── */
-    useGSAP(gsap => {
-        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-
-        tl.fromTo(sidebarRef.current,
-            { x: -80, opacity: 0 },
-            { x: 0, opacity: 1, duration: 0.6 }
-        )
-            .fromTo(logoRef.current,
-                { y: -20, opacity: 0 },
-                { y: 0, opacity: 1, duration: 0.5 }, '-=0.3'
-            )
-            .fromTo(itemsRef.current.filter(Boolean),
-                { x: -30, opacity: 0 },
-                { x: 0, opacity: 1, duration: 0.4, stagger: 0.06 }, '-=0.2'
-            )
-
-        /* orb float animations */
-        if (orb1Ref.current) {
-            gsap.to(orb1Ref.current, {
-                y: '+=18', x: '+=8', duration: 4,
-                yoyo: true, repeat: -1, ease: 'sine.inOut'
-            })
-        }
-        if (orb2Ref.current) {
-            gsap.to(orb2Ref.current, {
-                y: '-=14', x: '-=6', duration: 3.2,
-                yoyo: true, repeat: -1, ease: 'sine.inOut', delay: 0.8
-            })
-        }
-
-        /* glow line pulse */
-        if (glowLineRef.current) {
-            gsap.to(glowLineRef.current, {
-                opacity: 0.15, duration: 1.8,
-                yoyo: true, repeat: -1, ease: 'sine.inOut'
-            })
-        }
-    })
-
-    /* ── collapse animation ── */
-    const handleCollapse = () => {
-        if (!window.gsap) { setCollapsed(c => !c); return }
-        const next = !collapsed
-        window.gsap.to(sidebarRef.current, {
-            width: next ? 72 : 256,
-            duration: 0.35,
-            ease: 'power2.inOut',
-            onComplete: () => setCollapsed(next)
-        })
-        setCollapsed(next)
-    }
-
-    /* ── nav item hover ── */
-    const handleItemEnter = (el) => {
-        if (!window.gsap || !el) return
-        window.gsap.to(el, { x: 4, duration: 0.2, ease: 'power2.out' })
-    }
-    const handleItemLeave = (el) => {
-        if (!window.gsap || !el) return
-        window.gsap.to(el, { x: 0, duration: 0.2, ease: 'power2.out' })
-    }
-
-    /* ── logout ── */
-    const handleLogout = () => {
-        if (window.gsap) {
-            window.gsap.to(sidebarRef.current, {
-                x: -80, opacity: 0, duration: 0.4, ease: 'power2.in',
-                onComplete: () => { logout(); navigate('/') }
-            })
-        } else { logout(); navigate('/') }
-    }
-
-    const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    const dateStr = time.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
-
-    /* ═══════════════════════════════════════════
-       SIDEBAR CONTENT
-    ════════════════════════════════════════════ */
-    const Content = () => (
+    return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
+
+
 
             {/* ── ambient orbs ── */}
             <div ref={orb1Ref} style={{
@@ -308,21 +185,21 @@ export default function Sidebar({ role = 'customer' }) {
                         </div>
                     </div>
                     <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{ 
-                            width: 6, height: 6, borderRadius: '50%', 
-                            background: coolieStatus === 'offline' ? '#ef4444' : '#22c55e', 
-                            boxShadow: `0 0 6px ${coolieStatus === 'offline' ? '#ef4444' : '#22c55e'}`, 
-                            flexShrink: 0 
+                        <div style={{
+                            width: 6, height: 6, borderRadius: '50%',
+                            background: coolieStatus === 'offline' ? '#ef4444' : '#22c55e',
+                            boxShadow: `0 0 6px ${coolieStatus === 'offline' ? '#ef4444' : '#22c55e'}`,
+                            flexShrink: 0
                         }} />
                         <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                             {role === 'coolie' ? coolieStatus : 'Online'} · ACTIVE
                         </div>
                     </div>
                     {role === 'coolie' && coolieStatus !== 'offline' && shiftStartTime && (
-                        <div style={{ 
-                            marginTop: 10, padding: '8px 10px', borderRadius: 10, 
+                        <div style={{
+                            marginTop: 10, padding: '8px 10px', borderRadius: 10,
                             background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.15)',
-                            display: 'flex', alignItems: 'center', justifyBetween: 'space-between'
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                         }}>
                             <div style={{ flex: 1 }}>
                                 <p style={{ fontSize: 8, color: '#22c55e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Current Shift</p>
@@ -346,7 +223,6 @@ export default function Sidebar({ role = 'customer' }) {
                 <style>{`
                 @keyframes ringPulse { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.15);opacity:0.1} }
                 @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-                @keyframes badgePop { 0%{transform:scale(0)} 80%{transform:scale(1.15)} 100%{transform:scale(1)} }
                 nav::-webkit-scrollbar { display:none }
             `}</style>
 
@@ -407,33 +283,16 @@ export default function Sidebar({ role = 'customer' }) {
                                 <Icon size={15} color={active ? cfg.accent : 'rgba(255,255,255,0.45)'} strokeWidth={active ? 2.2 : 1.8} />
                             </div>
                             {!collapsed && (
-                                <>
-                                    <span style={{
-                                        fontSize: 13, fontWeight: active ? 600 : 400,
-                                        color: active ? '#fff' : 'rgba(255,255,255,0.5)',
-                                        fontFamily: "'DM Sans',sans-serif",
-                                        letterSpacing: '-0.01em',
-                                        flex: 1,
-                                        transition: 'color 0.2s',
-                                    }}>
-                                        {item.label}
-                                    </span>
-                                    {item.badge && (
-                                        <span style={{
-                                            fontSize: 9, fontWeight: 700, letterSpacing: '0.04em',
-                                            padding: '2px 6px', borderRadius: 99,
-                                            background: /^\d+$/.test(item.badge)
-                                                ? `rgba(${cfg.accentRgb},0.25)`
-                                                : 'rgba(34,197,94,0.2)',
-                                            color: /^\d+$/.test(item.badge) ? cfg.accent : '#22c55e',
-                                            border: `1px solid ${/^\d+$/.test(item.badge) ? `rgba(${cfg.accentRgb},0.3)` : 'rgba(34,197,94,0.3)'}`,
-                                            animation: 'badgePop 0.4s ease',
-                                            flexShrink: 0,
-                                        }}>
-                                            {item.badge}
-                                        </span>
-                                    )}
-                                </>
+                                <span style={{
+                                    fontSize: 13, fontWeight: active ? 600 : 400,
+                                    color: active ? '#fff' : 'rgba(255,255,255,0.5)',
+                                    fontFamily: "'DM Sans',sans-serif",
+                                    letterSpacing: '-0.01em',
+                                    flex: 1,
+                                    transition: 'color 0.2s',
+                                }}>
+                                    {item.label}
+                                </span>
                             )}
                         </Link>
                     )
@@ -498,10 +357,141 @@ export default function Sidebar({ role = 'customer' }) {
             </div>
         </div>
     )
+}
 
-    /* ═══════════════════════════════════
-       RENDER
-    ══════════════════════════════════════════ */
+
+export default function Sidebar({ role = 'customer' }) {
+    const location = useLocation()
+    const navigate = useNavigate()
+    const { user, logout, coolieStatus, shiftStartTime } = useApp()
+    const [collapsed, setCollapsed] = useState(false)
+    const [mobileOpen, setMobileOpen] = useState(false)
+    const [hoveredPath, setHoveredPath] = useState(null)
+    const [time, setTime] = useState(new Date())
+    const [shiftSeconds, setShiftSeconds] = useState(0)
+
+    const sidebarRef = useRef(null)
+    const logoRef = useRef(null)
+    const itemsRef = useRef([])
+    const orb1Ref = useRef(null)
+    const orb2Ref = useRef(null)
+    const toggleRef = useRef(null)
+    const glowLineRef = useRef(null)
+
+    const cfg = ROLE_CONFIG[role] || ROLE_CONFIG.customer
+    const items = role === 'admin' ? ADMIN_ITEMS : role === 'coolie' ? COOLIE_ITEMS : CUSTOMER_ITEMS
+
+    /* live clock */
+    useEffect(() => {
+        const id = setInterval(() => setTime(new Date()), 1000)
+        return () => clearInterval(id)
+    }, [])
+
+    /* shift clock for coolies */
+    useEffect(() => {
+        if (role === 'coolie' && shiftStartTime) {
+            const updateShift = () => {
+                const diff = Math.floor((Date.now() - shiftStartTime) / 1000)
+                setShiftSeconds(diff > 0 ? diff : 0)
+            }
+            updateShift()
+            const id = setInterval(updateShift, 1000)
+            return () => clearInterval(id)
+        } else {
+            setShiftSeconds(0)
+        }
+    }, [role, shiftStartTime])
+
+    const formatShift = (s) => {
+        const h = String(Math.floor(s / 3600)).padStart(2, '0')
+        const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0')
+        const sec = String(s % 60).padStart(2, '0')
+        return `${h}:${m}:${sec}`
+    }
+
+    /* ── GSAP entrance — runs once only ── */
+    useGSAP(gsap => {
+        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+
+        tl.fromTo(sidebarRef.current,
+            { x: -80, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.6 }
+        )
+            .fromTo(logoRef.current,
+                { y: -20, opacity: 0 },
+                { y: 0, opacity: 1, duration: 0.5 }, '-=0.3'
+            )
+            .fromTo(itemsRef.current.filter(Boolean),
+                { x: -30, opacity: 0 },
+                { x: 0, opacity: 1, duration: 0.4, stagger: 0.06 }, '-=0.2'
+            )
+
+        /* orb float animations */
+        if (orb1Ref.current) {
+            gsap.to(orb1Ref.current, {
+                y: '+=18', x: '+=8', duration: 4,
+                yoyo: true, repeat: -1, ease: 'sine.inOut'
+            })
+        }
+        if (orb2Ref.current) {
+            gsap.to(orb2Ref.current, {
+                y: '-=14', x: '-=6', duration: 3.2,
+                yoyo: true, repeat: -1, ease: 'sine.inOut', delay: 0.8
+            })
+        }
+
+        /* glow line pulse */
+        if (glowLineRef.current) {
+            gsap.to(glowLineRef.current, {
+                opacity: 0.15, duration: 1.8,
+                yoyo: true, repeat: -1, ease: 'sine.inOut'
+            })
+        }
+    })
+
+    /* ── collapse animation ── */
+    const handleCollapse = () => {
+        if (!window.gsap) { setCollapsed(c => !c); return }
+        const next = !collapsed
+        window.gsap.to(sidebarRef.current, {
+            width: next ? 72 : 256,
+            duration: 0.35,
+            ease: 'power2.inOut',
+            onComplete: () => setCollapsed(next)
+        })
+        setCollapsed(next)
+    }
+
+    /* ── nav item hover ── */
+    const handleItemEnter = (el) => {
+        if (!window.gsap || !el) return
+        window.gsap.to(el, { x: 4, duration: 0.2, ease: 'power2.out' })
+    }
+    const handleItemLeave = (el) => {
+        if (!window.gsap || !el) return
+        window.gsap.to(el, { x: 0, duration: 0.2, ease: 'power2.out' })
+    }
+
+    /* ── logout ── */
+    const handleLogout = () => {
+        if (window.gsap) {
+            window.gsap.to(sidebarRef.current, {
+                x: -80, opacity: 0, duration: 0.4, ease: 'power2.in',
+                onComplete: () => { logout(); navigate('/') }
+            })
+        } else { logout(); navigate('/') }
+    }
+
+    const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const dateStr = time.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
+
+    const contentProps = {
+        collapsed, cfg, items, user, coolieStatus, shiftStartTime, shiftSeconds, formatShift,
+        timeStr, dateStr, role, hoveredPath, setHoveredPath, setMobileOpen,
+        handleItemEnter, handleItemLeave, handleLogout,
+        orb1Ref, orb2Ref, glowLineRef, logoRef, itemsRef,
+    }
+
     return (
         <>
             {/* ── DESKTOP ── */}
@@ -520,7 +510,7 @@ export default function Sidebar({ role = 'customer' }) {
                 }}
                 className="md-sidebar"
             >
-                <Content />
+                <SidebarContent {...contentProps} />
 
                 {/* collapse toggle */}
                 <button
@@ -585,7 +575,7 @@ export default function Sidebar({ role = 'customer' }) {
                         >
                             <X size={14} color='rgba(255,255,255,0.6)' />
                         </button>
-                        <Content />
+                        <SidebarContent {...contentProps} />
                     </div>
                     <div
                         style={{ flex: 1, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}

@@ -76,9 +76,9 @@ export default function NearbyBusinesses() {
                 {/* Filters */}
                 <div className="flex flex-wrap gap-3 mb-6">
                     <div className="relative flex-1 min-w-[200px]">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#757684]" />
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or cuisine..."
-                            className="w-full border border-[#C4C5D5] rounded-lg pl-8 pr-3 py-2 text-sm outline-none focus:border-[#00288E]" />
+                            className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-700/50 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none bg-slate-800/50 text-white placeholder:text-slate-400 transition-all" />
                     </div>
                     <div className="flex gap-2">
                         {[['all', 'All'], ['restaurant', '🍽️ Restaurants'], ['hotel', '🏨 Hotels']].map(([v, l]) => (

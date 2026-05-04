@@ -7,16 +7,18 @@ const {
     getAllCoolies, 
     getCoolieProfile, 
     getProfile, 
-    updateProfile 
+    updateProfile,
+    updateCurrentStation
 } = require('../controllers/customer.controller');
 
 // Public
 router.get('/stations', getStations);
-router.get('/coolies', getAllCoolies);
 router.get('/coolies/:id', getCoolieProfile);
 
 // Protected (requires customer login)
+router.get('/coolies', protect, getAllCoolies);
 router.get('/profile', protect, getProfile);
 router.patch('/profile', protect, customerPhotoUpload, updateProfile);
+router.patch('/update-station', protect, updateCurrentStation);
 
 module.exports = router;

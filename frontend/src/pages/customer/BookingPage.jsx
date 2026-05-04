@@ -477,6 +477,36 @@ export default function BookingPage() {
                             </div>
                         </div>
 
+                        {/* Standard Pricing Guide */}
+                        <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-xl p-4">
+                            <h2 className="text-white font-bold text-xs flex items-center gap-1.5 mb-3">
+                                <span className="w-4 h-4 rounded bg-[#7B2FFF]/20 flex items-center justify-center">
+                                    <Package size={9} className="text-[#7B2FFF]" />
+                                </span>
+                                Standard Pricing Guide
+                            </h2>
+                            <p className="text-[#6B6188] text-[10px] leading-relaxed mb-3">
+                                Review standard platform pricing based on your luggage size. Use this as a reference before entering your custom amount.
+                            </p>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                {[
+                                    { label: 'Small Bag', price: '20' },
+                                    { label: 'Medium Bag', price: '25' },
+                                    { label: 'Large Bag', price: '30' },
+                                    { label: 'Medium Package', price: '40' },
+                                    { label: 'Large Package', price: '50' }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="bg-[#12102A] border border-[#1E1A40] rounded-lg p-2.5 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Package size={12} className="text-[#A855F7]" />
+                                            <span className="text-white text-xs font-semibold">{item.label}</span>
+                                        </div>
+                                        <span className="text-green-400 font-bold text-xs">₹{item.price}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Custom Amount Section */}
                         <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-2xl p-5 max-[767px]:p-4">
                             <h2 className="text-white font-bold text-sm flex items-center gap-2 mb-4 max-[767px]:text-base">

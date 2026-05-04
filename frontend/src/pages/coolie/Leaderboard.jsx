@@ -123,13 +123,12 @@ export default function Leaderboard() {
                                 className="flex items-center gap-3 mb-5 p-3 rounded-2xl"
                                 style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.07)' }}
                             >
-                                {/* Search */}
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <div className="relative flex-1 min-w-0">
+                                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                                     </svg>
                                     <input
-                                        className="bg-transparent text-slate-300 text-sm outline-none w-full placeholder-slate-500"
+                                        className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-700/50 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none bg-slate-800/50 text-white placeholder:text-slate-400 transition-all"
                                         placeholder="Search coolies by name, ID, station..."
                                         value={searchQuery}
                                         onChange={e => setSearchQuery(e.target.value)}

@@ -38,6 +38,20 @@ const heatColor = (val) => {
     return 'heat-peak'
 }
 
+const STATION_COORDS = {
+    'NDLS': { lat: 28.6429, lng: 77.2191 },
+    'BCT': { lat: 18.9696, lng: 72.8194 },
+    'MAS': { lat: 13.0827, lng: 80.2707 },
+    'HWH': { lat: 22.5839, lng: 88.3433 },
+    'SBC': { lat: 12.9781, lng: 77.5695 },
+    'HYB': { lat: 17.3916, lng: 78.4600 },
+    'PUNE': { lat: 18.5284, lng: 73.8739 },
+    'ADI': { lat: 23.0258, lng: 72.5976 },
+    'JP': { lat: 26.9196, lng: 75.7880 },
+    'LKO': { lat: 26.8285, lng: 80.9221 }
+};
+
+
 export default function StationMap() {
     const [stations, setStations] = useState([])
     const [coolies, setCoolies] = useState([])
@@ -145,48 +159,54 @@ export default function StationMap() {
                 </div>
 
                 {tab === 'map' ? (selectedStation &&
-                    <div className="grid lg:grid-cols-3 gap-6 max-[767px]:gap-3">
-                        <div className="lg:col-span-2 card overflow-hidden h-[480px] max-[767px]:h-[350px]">
-                            {selectedStation.lat && selectedStation.lng ? (
-                                <MapContainer center={[selectedStation.lat, selectedStation.lng]} zoom={17} style={{ height: '100%', width: '100%' }}>
-                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
+                    (() => {
+                        const lat = selectedStation.lat || STATION_COORDS[selectedStation.code]?.lat || 28.6429;
+                        const lng = selectedStation.lng || STATION_COORDS[selectedStation.code]?.lng || 77.2191;
+                        const hasCoords = selectedStation.lat || STATION_COORDS[selectedStation.code];
 
-                                {/* Platform overlays */}
-                                {PLATFORMS.map(p => (
-                                    <Rectangle
-                                        key={p.no}
-                                        bounds={p.bounds}
-                                        pathOptions={{ color: p.color, fillOpacity: 0.2, weight: 2 }}
-                                    >
-                                        <Popup><strong>Platform {p.no}</strong></Popup>
-                                    </Rectangle>
-                                ))}
+                        return (
+                            <div className="grid lg:grid-cols-3 gap-6 max-[767px]:gap-3">
+                                <div className="lg:col-span-2 card overflow-hidden h-[480px] max-[767px]:h-[350px]">
+                                    {hasCoords ? (
+                                        <MapContainer center={[lat, lng]} zoom={17} style={{ height: '100%', width: '100%' }}>
+                                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
 
-                                {/* Coolie markers */}
-                                {coolies.filter(c => c.station === selectedStation.name).map(c => (
-                                    <Marker key={c.id} position={[c.lat, c.lng]} icon={makeCoolieIcon(c.status)}>
-                                        <Popup>
-                                            <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 140 }}>
-                                                <strong>{c.name}</strong>
-                                                <br />⭐ {c.rating} • {c.totalBookings} trips
-                                                <br /><span style={{ color: c.status === 'available' ? '#22c55e' : '#eab308' }}>● {c.status}</span>
-                                                <br />₹{c.basePrice} base price
-                                                <br /><button
-                                                    style={{ marginTop: 6, background: '#f97316', color: 'white', border: 'none', padding: '4px 12px', borderRadius: 8, cursor: 'pointer', width: '100%' }}
-                                                    onClick={() => toast.success(`Booking ${c.name}...`)}
-                                                >Book Now</button>
-                                            </div>
-                                        </Popup>
-                                    </Marker>
-                                ))}
-                                </MapContainer>
-                            ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-500 gap-3">
-                                    <MapPin size={40} className="opacity-20" />
-                                    <p>Coordinates missing for this station</p>
+                                        {/* Platform overlays */}
+                                        {PLATFORMS.map(p => (
+                                            <Rectangle
+                                                key={p.no}
+                                                bounds={[[lat + (p.bounds[0][0] - 28.6412), lng + (p.bounds[0][1] - 77.2185)], [lat + (p.bounds[1][0] - 28.6412), lng + (p.bounds[1][1] - 77.2185)]]}
+                                                pathOptions={{ color: p.color, fillOpacity: 0.2, weight: 2 }}
+                                            >
+                                                <Popup><strong>Platform {p.no}</strong></Popup>
+                                            </Rectangle>
+                                        ))}
+
+                                        {/* Coolie markers */}
+                                        {coolies.filter(c => c.station === selectedStation.name).map(c => (
+                                            <Marker key={c.id} position={[c.lat || lat + (Math.random()-0.5)*0.005, c.lng || lng + (Math.random()-0.5)*0.005]} icon={makeCoolieIcon(c.status)}>
+                                                <Popup>
+                                                    <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 140 }}>
+                                                        <strong>{c.name}</strong>
+                                                        <br />⭐ {c.rating} • {c.totalBookings} trips
+                                                        <br /><span style={{ color: c.status === 'available' ? '#22c55e' : '#eab308' }}>● {c.status}</span>
+                                                        <br />₹{c.basePrice} base price
+                                                        <br /><button
+                                                            style={{ marginTop: 6, background: '#f97316', color: 'white', border: 'none', padding: '4px 12px', borderRadius: 8, cursor: 'pointer', width: '100%' }}
+                                                            onClick={() => toast.success(`Booking ${c.name}...`)}
+                                                        >Book Now</button>
+                                                    </div>
+                                                </Popup>
+                                            </Marker>
+                                        ))}
+                                        </MapContainer>
+                                    ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-500 gap-3">
+                                            <MapPin size={40} className="opacity-20" />
+                                            <p>Coordinates missing for this station</p>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
 
                         <div className="space-y-4 max-[767px]:space-y-3">
                             {/* Legend */}
@@ -224,8 +244,9 @@ export default function StationMap() {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                ) : (
+                            </div>
+                        );
+                    })()) : (
                     /* Busy Hour Heatmap */
                     <div className="card p-5 max-[767px]:p-3">
                         <h3 className="text-white font-bold mb-4 flex items-center gap-2 max-[767px]:text-sm max-[767px]:mb-3">

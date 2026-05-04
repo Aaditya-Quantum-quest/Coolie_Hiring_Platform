@@ -5,8 +5,9 @@ import {
     Building2, Utensils, MapPin, Phone, Clock, CreditCard,
     Image, Star, Wifi, Car, Wind, Users, UtensilsCrossed,
     Globe, FileText, Hash, Mail, Lock, User, Sparkles,
-    ArrowRight, Shield, Zap, CheckCircle2, Upload, Plus
+    ArrowRight, Shield, Zap, CheckCircle2, Upload, Plus, Loader2
 } from 'lucide-react';
+import { searchStation } from '../../services/railApiService';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -246,7 +247,7 @@ function Step1({ formData, update, onNext }) {
 }
 
 // ─── Step 2 ───────────────────────────────────────────────────────────────────
-function Step2({ formData, update, onBack, onNext }) {
+function Step2({ formData, update, onBack, onNext, handleStationSearch, handleStationSelect, stationSearchResults, stationSearchLoading, showStationDropdown }) {
     const isRestaurant = formData.business_type === 'restaurant';
     const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const PAYMENT = ['Cash', 'UPI', 'Card', 'Net Banking', 'Wallet'];
@@ -302,6 +303,70 @@ function Step2({ formData, update, onBack, onNext }) {
                         <Field label="State"><TextInput placeholder="State" value={formData.state} onChange={e => update('state', e.target.value)} /></Field>
                         <Field label="Pincode"><TextInput placeholder="110001" value={formData.pincode} onChange={e => update('pincode', e.target.value)} /></Field>
                     </Grid>
+                    <Grid>
+                        <div style={{ position: 'relative' }}>
+                            <Field label="Nearest Station Name">
+                                <div style={{ position: 'relative' }}>
+                                    <TextInput 
+                                        icon={MapPin} 
+                                        placeholder="Search station..." 
+                                        value={formData.nearest_station_name} 
+                                        onChange={e => {
+                                            update('nearest_station_name', e.target.value);
+                                            handleStationSearch(e.target.value);
+                                        }}
+                                    />
+                                    {stationSearchLoading && (
+                                        <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)' }}>
+                                            <Loader2 size={14} style={{ color: '#7B2FFF', animation: 'spin 1s linear infinite' }} />
+                                        </div>
+                                    )}
+                                </div>
+                            </Field>
+                            {showStationDropdown && stationSearchResults.length > 0 && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: 0,
+                                    right: 0,
+                                    background: 'rgba(30, 41, 59, 0.98)',
+                                    border: '1px solid rgba(123, 47, 255, 0.3)',
+                                    borderRadius: 8,
+                                    maxHeight: 200,
+                                    overflowY: 'auto',
+                                    zIndex: 100,
+                                    marginTop: 4
+                                }}>
+                                    {stationSearchResults.map((station, idx) => (
+                                        <div
+                                            key={idx}
+                                            style={{
+                                                padding: '10px 12px',
+                                                cursor: 'pointer',
+                                                borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                                                color: 'rgba(255, 255, 255, 0.8)',
+                                                fontSize: '0.85rem'
+                                            }}
+                                            onClick={() => handleStationSelect(station)}
+                                            onMouseEnter={(e) => e.target.style.background = 'rgba(123, 47, 255, 0.1)'}
+                                            onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                                        >
+                                            {station.station_name} ({station.station_code})
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <Field label="Nearest Station ID">
+                            <TextInput 
+                                icon={Hash} 
+                                placeholder="Auto-filled" 
+                                value={formData.nearest_station_id} 
+                                readOnly 
+                                style={{ background: 'rgba(255, 255, 255, 0.02)', cursor: 'not-allowed' }}
+                            />
+                        </Field>
+                    </Grid>
                 </div>
             </div>
 
@@ -315,10 +380,7 @@ function Step2({ formData, update, onBack, onNext }) {
                         <Field label="Primary Phone"><TextInput icon={Phone} type="tel" placeholder="+91 98765 43210" value={formData.phone_primary} onChange={e => update('phone_primary', e.target.value)} /></Field>
                         <Field label="WhatsApp"><TextInput icon={Phone} type="tel" placeholder="+91 98765 43210" value={formData.whatsapp_number} onChange={e => update('whatsapp_number', e.target.value)} /></Field>
                     </Grid>
-                    <Grid>
-                        <Field label="Alternate Phone"><TextInput icon={Phone} type="tel" placeholder="Optional" value={formData.phone_alternate} onChange={e => update('phone_alternate', e.target.value)} /></Field>
-                        <Field label="Website"><TextInput icon={Globe} placeholder="https://yourbusiness.com" value={formData.website_url} onChange={e => update('website_url', e.target.value)} /></Field>
-                    </Grid>
+                    <Field label="Alternate Phone"><TextInput icon={Phone} type="tel" placeholder="Optional" value={formData.phone_alternate} onChange={e => update('phone_alternate', e.target.value)} /></Field>
                 </div>
             </div>
 
@@ -333,6 +395,11 @@ function Step2({ formData, update, onBack, onNext }) {
                         <Field label="Closing Time"><TextInput icon={Clock} type="time" value={formData.closing_time} onChange={e => update('closing_time', e.target.value)} /></Field>
                     </Grid>
                     <Field label="Days Open"><ToggleGroup options={DAYS} selected={formData.days_open} onChange={v => update('days_open', v)} /></Field>
+                    {isRestaurant && (
+                        <Field label="Close on Holidays">
+                            <ToggleGroup options={['Yes', 'No']} selected={formData.closed_on_holidays ? 'Yes' : 'No'} onChange={v => update('closed_on_holidays', v === 'Yes')} multi={false} />
+                        </Field>
+                    )}
                 </div>
             </div>
 
@@ -580,8 +647,8 @@ export default function BusinessRegister() {
     const [formData, setFormData] = useState({
         business_type: '', business_name: '', full_name: '', email: '', password: '',
         gst_number: '', description: '', year_established: '',
-        latitude: '', longitude: '', full_address: '', city: '', state: '', pincode: '', nearest_station_id: '',
-        phone_primary: '', phone_alternate: '', whatsapp_number: '', website_url: '',
+        latitude: '', longitude: '', full_address: '', city: '', state: '', pincode: '', nearest_station_id: '', nearest_station_name: '',
+        phone_primary: '', phone_alternate: '', whatsapp_number: '',
         opening_time: '', closing_time: '', days_open: [], closed_on_holidays: false, payment_modes: [],
         cuisine_types: [], food_type: '', specialty_dishes: [], dining_options: [],
         avg_cost_for_two: '', seating_capacity: '',
@@ -594,6 +661,34 @@ export default function BusinessRegister() {
     const update = (field, value) => setFormData(p => ({ ...p, [field]: value }));
 
     const [error, setError] = useState(null);
+    const [stationSearchResults, setStationSearchResults] = useState([]);
+    const [stationSearchLoading, setStationSearchLoading] = useState(false);
+    const [showStationDropdown, setShowStationDropdown] = useState(false);
+
+    const handleStationSearch = async (query) => {
+        if (query.length < 2) {
+            setStationSearchResults([]);
+            setShowStationDropdown(false);
+            return;
+        }
+        setStationSearchLoading(true);
+        const result = await searchStation(query);
+        setStationSearchLoading(false);
+        if (result.status && result.data.length > 0) {
+            setStationSearchResults(result.data);
+            setShowStationDropdown(true);
+        } else {
+            setStationSearchResults([]);
+            setShowStationDropdown(false);
+        }
+    };
+
+    const handleStationSelect = (station) => {
+        update('nearest_station_name', station.station_name);
+        update('nearest_station_id', station.station_code);
+        setShowStationDropdown(false);
+        setStationSearchResults([]);
+    };
 
     const handleSubmit = async () => {
         setError(null);
@@ -696,7 +791,7 @@ export default function BusinessRegister() {
                 {/* Form card */}
                 <div className="fs-fade2 br-glass" style={{ overflow: 'hidden' }}>
                     {step === 1 && <Step1 formData={formData} update={update} onNext={() => setStep(2)} />}
-                    {step === 2 && <Step2 formData={formData} update={update} onBack={() => setStep(1)} onNext={() => setStep(3)} />}
+                    {step === 2 && <Step2 formData={formData} update={update} onBack={() => setStep(1)} onNext={() => setStep(3)} handleStationSearch={handleStationSearch} handleStationSelect={handleStationSelect} stationSearchResults={stationSearchResults} stationSearchLoading={stationSearchLoading} showStationDropdown={showStationDropdown} />}
                     {step === 3 && <Step3 formData={formData} onBack={() => setStep(2)} onSubmit={handleSubmit} error={error} />}
                 </div>
 

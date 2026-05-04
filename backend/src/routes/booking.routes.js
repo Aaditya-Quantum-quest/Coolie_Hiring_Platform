@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { createBooking, getMyBookings, rateBooking, payBooking, getBookingDetails, updateBookingStatus } = require('../controllers/booking.controller');
+const { createBooking, getMyBookings, rateBooking, payBooking, getBookingDetails, updateBookingStatus, createRazorpayOrder, verifyRazorpayPayment } = require('../controllers/booking.controller');
+
 const { protect } = require('../middleware/auth.middleware');
 const { luggagePhotoUpload } = require('../config/multer');
 
@@ -11,6 +12,9 @@ router.get('/my-bookings', getMyBookings);
 router.get('/:id', getBookingDetails);
 router.post('/:id/rate', rateBooking);
 router.post('/:id/pay', payBooking);
+router.post('/create-razorpay-order', createRazorpayOrder);
+router.post('/verify-razorpay-payment', verifyRazorpayPayment);
+
 router.post('/:id/status', updateBookingStatus);
 
 router.post('/upload-luggage', luggagePhotoUpload, (req, res) => {

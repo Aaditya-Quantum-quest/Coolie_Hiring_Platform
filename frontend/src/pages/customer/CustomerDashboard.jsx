@@ -10,33 +10,6 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import SearchBar from '../../components/ui/SearchBar'
 
-function SOSButton() {
-    const { addNotification, setActiveSOS } = useApp()
-    const [pressed, setPressed] = useState(false)
-
-    const handleSOS = () => {
-        setPressed(true)
-        setActiveSOS(true)
-        toast.error('🚨 SOS Alert Sent! Admin notified. Help is on the way!', { duration: 6000 })
-        addNotification('🚨 SOS triggered — Admin alerted, emergency contact notified')
-        setTimeout(() => { setPressed(false); setActiveSOS(false) }, 5000)
-    }
-
-    return (
-        <div className="fixed bottom-6 right-6 z-40 flex flex-col items-center gap-2 max-[767px]:bottom-20 max-[767px]:right-4">
-            <span className="text-xs text-slate-400 font-semibold bg-slate-800 px-2 py-1 rounded-lg max-[767px]:text-[10px] max-[767px]:px-1.5 max-[767px]:py-0.5">SOS</span>
-            <button
-                onClick={handleSOS}
-                className={`sos-btn max-[767px]:w-12 max-[767px]:h-12 ${pressed ? 'scale-95' : 'hover:scale-105'} transition-transform`}
-            >
-                <div className="flex flex-col items-center">
-                    <AlertTriangle size={20} className="max-[767px]:w-4 max-[767px]:h-4" />
-                    <span className="text-xs font-black max-[767px]:text-[10px]">SOS</span>
-                </div>
-            </button>
-        </div>
-    )
-}
 
 function StatCard({ icon, label, value, color, sub }) {
     return (
@@ -82,19 +55,53 @@ export default function CustomerDashboard() {
         loadData()
     }, [])
 
+    const updateStationAndFetchCoolies = async (stationName) => {
+        try {
+            await axios.patch('/api/customer/update-station', { current_station: stationName }, { withCredentials: true })
+            const coolRes = await axios.get('/api/customer/coolies', { withCredentials: true })
+            if (coolRes.data.success) setCoolies(coolRes.data.coolies)
+        } catch (err) {
+            console.error("Failed to sync station or fetch coolies:", err)
+        }
+    }
+
     const detectStation = () => {
         setDetecting(true)
         navigator.geolocation?.getCurrentPosition(
-            (pos) => {
-                const s = stations.length > 0 ? stations[0] : { name: 'New Delhi Railway Station' }
-                setDetectedStation(s)
-                toast.success(`📍 Station detected: ${s.name}!`)
-                setDetecting(false)
+            async (pos) => {
+                try {
+                    const res = await axios.get(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&localityLanguage=en`);
+                    const city = res.data.city || res.data.locality || 'New Delhi';
+                    
+                    // Try to match city with existing stations in DB
+                    let matchedStation = stations.find(s => 
+                        s.city?.toLowerCase() === city.toLowerCase() || 
+                        s.name.toLowerCase().includes(city.toLowerCase())
+                    );
+                    
+                    // Fallback to generated name if not found
+                    if (!matchedStation) {
+                        matchedStation = { name: `${city} Junction`, city: city };
+                    }
+                    
+                    setDetectedStation(matchedStation)
+                    toast.success(`📍 Station detected: ${matchedStation.name}!`)
+                    updateStationAndFetchCoolies(matchedStation.name)
+                } catch (err) {
+                    console.error("Reverse geocoding failed", err);
+                    const s = stations.length > 0 ? stations[0] : { name: 'New Delhi Railway Station' }
+                    setDetectedStation(s)
+                    toast.success(`📍 Station detected: ${s.name}!`)
+                    updateStationAndFetchCoolies(s.name)
+                } finally {
+                    setDetecting(false)
+                }
             },
             () => {
                 const s = stations.length > 0 ? stations[0] : { name: 'New Delhi Railway Station' }
                 setDetectedStation(s)
                 toast.success(`📍 Station detected: ${s.name} (Mock)`)
+                updateStationAndFetchCoolies(s.name)
                 setDetecting(false)
             }
         )
@@ -300,7 +307,7 @@ export default function CustomerDashboard() {
                 </div>
             </main>
 
-            <SOSButton />
+
         </div>
     )
 }

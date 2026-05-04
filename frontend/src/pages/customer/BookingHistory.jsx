@@ -61,9 +61,9 @@ export default function BookingHistory() {
                 <div className="flex flex-col sm:flex-row gap-3 mb-5 max-[767px]:gap-2 max-[767px]:mb-3">
                     {/* Search */}
                     <div className="relative w-full sm:flex-1 sm:max-w-xs">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 max-[767px]:w-3 max-[767px]:h-3 max-[767px]:left-2.5" />
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 max-[767px]:w-4 max-[767px]:h-4 max-[767px]:left-2.5" />
                         <input
-                            className="input-field pl-9 py-2 text-sm w-full max-[767px]:pl-8 max-[767px]:py-2 max-[767px]:text-xs max-[767px]:h-9"
+                            className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-700/50 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none bg-slate-800/50 text-white placeholder:text-slate-400 transition-all max-[767px]:pl-9 max-[767px]:py-2 max-[767px]:text-xs max-[767px]:h-9"
                             placeholder="Search booking or coolie..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}

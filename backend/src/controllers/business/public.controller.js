@@ -48,7 +48,7 @@ const getBusinessDetail = async (req, res) => {
 
         await db.query('UPDATE businesses SET profile_views = profile_views + 1 WHERE id = $1', [businessId]);
 
-        const biz = await db.query(`SELECT b.*, s.name as station_name FROM businesses b LEFT JOIN stations s ON s.id = b.nearest_station_id WHERE b.id = $1 AND b.status = 'approved'`, [businessId]);
+        const biz = await db.query(`SELECT b.*, s.name as station_name, bo.phone_primary as phone_number FROM businesses b LEFT JOIN stations s ON s.id = b.nearest_station_id LEFT JOIN business_owners bo ON bo.id = b.owner_id WHERE b.id = $1 AND b.status = 'approved'`, [businessId]);
         if (biz.rows.length === 0) return res.status(404).json({ success: false, error: { message: 'Business not found' } });
 
         const business = biz.rows[0];

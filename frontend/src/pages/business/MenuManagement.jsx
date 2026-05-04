@@ -115,8 +115,8 @@ export default function MenuManagement() {
 
             <div className="flex flex-wrap gap-3 mb-6">
                 <div className="relative flex-1 min-w-[180px]">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#757684]" />
-                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search dishes..." className="w-full border border-[#C4C5D5] rounded-lg pl-8 pr-3 py-2 text-sm outline-none focus:border-[#00288E]" />
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search dishes..." className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-700/50 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none bg-slate-800/50 text-white placeholder:text-slate-400 transition-all" />
                 </div>
                 <select value={category} onChange={e => setCategory(e.target.value)} className="border border-[#C4C5D5] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#00288E] bg-white">
                     <option value="">All Categories</option>

@@ -151,10 +151,10 @@ export default function Features() {
                     </div>
                     <div ref={el => featureCardsRef.current[5] = el} className="bg-[#12102A] border border-[#1E1A40] rounded-[14px] p-[20px]">
                         <div className="feature-icon w-[36px] h-[36px] bg-[#1A1535] rounded-full flex items-center justify-center text-[#7B2FFF] mb-4">
-                            <LifeBuoy size={18} />
+                            <Languages size={18} />
                         </div>
-                        <h3 className="text-[15px] font-bold text-white mb-2">On-call SOS</h3>
-                        <p className="text-[13px] text-[#B0A8CC]">Immediate physical intervention team at every major station for any emergency.</p>
+                        <h3 className="text-[15px] font-bold text-white mb-2">Multilingual Support</h3>
+                        <p className="text-[13px] text-[#B0A8CC]">Communicate seamlessly with porters in your preferred local language through our real-time translation.</p>
                     </div>
                     <div ref={el => featureCardsRef.current[6] = el} className="bg-[#12102A] border border-[#1E1A40] rounded-[14px] p-[20px]">
                         <div className="feature-icon w-[36px] h-[36px] bg-[#1A1535] rounded-full flex items-center justify-center text-[#7B2FFF] mb-4">

@@ -249,7 +249,7 @@ export default function TrainStatus() {
                     <div className="relative">
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-400 w-4 h-4 sm:w-5 sm:h-5" />
                         <input
-                            className="w-full pl-10 sm:pl-12 pr-3 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg border border-slate-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 outline-none bg-white dark:bg-slate-900 text-slate-800 dark:text-white placeholder:text-slate-400 transition-all"
+                            className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-700/50 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none bg-slate-800/50 text-white placeholder:text-slate-400 transition-all"
                             placeholder="Current Station (e.g. RMU)..."
                             value={fromStationQuery}
                             onChange={e => setFromStationQuery(e.target.value)}
@@ -279,7 +279,7 @@ export default function TrainStatus() {
                     <div className="relative">
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 w-4 h-4 sm:w-5 sm:h-5" />
                         <input
-                            className="w-full pl-10 sm:pl-12 pr-3 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 outline-none bg-white dark:bg-slate-900 text-slate-800 dark:text-white placeholder:text-slate-400 transition-all"
+                            className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-700/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none bg-slate-800/50 text-white placeholder:text-slate-400 transition-all"
                             placeholder="Destination Station (e.g. MB)..."
                             value={toStationQuery}
                             onChange={e => setToStationQuery(e.target.value)}
@@ -524,9 +524,9 @@ export default function TrainStatus() {
     const renderStationBoard = () => (
         <div className="space-y-4 sm:space-y-6">
             <div className="relative">
-                <Search size={15} className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
-                    className="input-field pl-9 sm:pl-10 text-sm"
+                    className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-700/50 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none bg-slate-800/50 text-white placeholder:text-slate-400 transition-all"
                     placeholder="Station name or code (e.g. NDLS)..."
                     value={stationQuery}
                     onChange={e => setStationQuery(e.target.value)}
@@ -613,12 +613,12 @@ export default function TrainStatus() {
             <div className="flex flex-col sm:flex-row gap-3 w-full">
                 {/* Input Container */}
                 <div className="flex-1 relative h-11 sm:h-12 md:h-12 lg:h-13"> {/* Responsive height */}
-                    <Hash
-                        size={{ base: 14, sm: 16, md: 18 }}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400/80 pointer-events-none z-10"
+                    <Search
+                        size={16}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10"
                     />
                     <input
-                        className="input-field w-full h-full pl-10 sm:pl-11 md:pl-12 pr-4 sm:pr-4 md:pr-5 text-sm sm:text-base rounded-lg border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-200 bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md"
+                        className="w-full pl-10 pr-3 py-2.5 h-full text-sm rounded-lg border border-slate-700/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none bg-slate-800/50 text-white placeholder:text-slate-400 transition-all shadow-sm hover:shadow-md"
                         placeholder="Enter 10-digit PNR Number..."
                         value={pnrNo}
                         maxLength={10}

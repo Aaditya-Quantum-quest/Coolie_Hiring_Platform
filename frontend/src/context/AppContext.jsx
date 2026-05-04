@@ -11,7 +11,6 @@ export const AppProvider = ({ children }) => {
     })
     const [role, setRole] = useState(() => localStorage.getItem('role') || null)
     const [notifications, setNotifications] = useState([])
-    const [activeSOS, setActiveSOS] = useState(false)
     const [shiftStartTime, setShiftStartTime] = useState(() => {
         const saved = localStorage.getItem('shiftStartTime')
         return saved ? parseInt(saved) : null
@@ -62,8 +61,8 @@ export const AppProvider = ({ children }) => {
 
     return (
         <AppContext.Provider value={{ 
-            user, role, notifications, activeSOS, shiftStartTime, coolieStatus,
-            setUser, setRole, login, logout, addNotification, setActiveSOS, setShiftStartTime, setCoolieStatus
+            user, role, notifications, shiftStartTime, coolieStatus,
+            setUser, setRole, login, logout, addNotification, setShiftStartTime, setCoolieStatus
         }}>
             {children}
         </AppContext.Provider>

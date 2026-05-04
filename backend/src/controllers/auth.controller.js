@@ -45,7 +45,12 @@ const registerCustomer = async (req, res) => {
             .status(201).json({
                 success: true,
                 message: 'Account created successfully!',
-                user: { ...customer, role: 'customer' },
+                user: { 
+                    ...customer, 
+                    role: 'customer',
+                    total_bookings: 0,
+                    avg_rating: '5.0'
+                },
             })
     } catch (err) {
         console.error('registerCustomer:', err)
@@ -86,6 +91,11 @@ const loginCustomer = async (req, res) => {
         // Success — reset attempts
         await authService.resetCustomerAttempts(customer.id)
 
+        // Fetch total bookings
+        const db = require('../config/db')
+        const bookingsRes = await db.query('SELECT COUNT(*)::int as total FROM bookings WHERE customer_id = $1', [customer.id])
+        const total_bookings = bookingsRes.rows[0].total
+
         const payload = { id: customer.id, email: customer.email, role: 'customer' }
         const { accessToken, refreshToken } = authService.generateTokens(payload)
         await authService.storeRefreshToken(customer.id, 'customer', refreshToken)
@@ -99,6 +109,8 @@ const loginCustomer = async (req, res) => {
                     id: customer.id, name: customer.name, email: customer.email,
                     phone: customer.phone, city: customer.city,
                     profile_photo_url: customer.profile_photo_url, role: 'customer',
+                    total_bookings: total_bookings,
+                    avg_rating: '5.0'
                 },
             })
     } catch (err) {

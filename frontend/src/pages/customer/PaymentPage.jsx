@@ -4,7 +4,7 @@ import Sidebar from '../../components/Sidebar'
 import axios from 'axios'
 import {
     CreditCard, CheckCircle, Lock,
-    Shield, Loader, Star, Building2, Zap
+    Shield, Loader, Star, Banknote, Zap
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -20,6 +20,20 @@ const BOOKING = {
     discount: 10,
     finalPrice: 90,
 }
+
+const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => {
+            resolve(true);
+        };
+        script.onerror = () => {
+            resolve(false);
+        };
+        document.body.appendChild(script);
+    });
+};
 
 /* ── Payment Success Overlay ─────────────────────────────── */
 function PaymentSuccess({ amount, onDone }) {
@@ -72,14 +86,10 @@ export default function PaymentPage() {
         finalPrice: b.amount,
     } : BOOKING
 
-    const [method, setMethod] = useState('upi')
+    const [method, setMethod] = useState('razorpay')
     const [upiId, setUpiId] = useState('')
     const [verifying, setVerifying] = useState(false)
     const [verified, setVerified] = useState(false)
-    const [cardNum, setCardNum] = useState('')
-    const [cardName, setCardName] = useState('')
-    const [cardExp, setCardExp] = useState('')
-    const [cardCvv, setCardCvv] = useState('')
     const [processing, setProcessing] = useState(false)
     const [success, setSuccess] = useState(false)
     const [countdown, setCountdown] = useState(300)
@@ -91,7 +101,6 @@ export default function PaymentPage() {
     }, [method])
 
     const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
-    const formatCard = (v) => v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
 
     const handleVerify = () => {
         if (!upiId.includes('@')) { toast.error('Enter a valid UPI ID'); return }
@@ -101,28 +110,108 @@ export default function PaymentPage() {
 
     const handlePay = async () => {
         if (method === 'upi' && !upiId.includes('@')) { toast.error('Enter a valid UPI ID'); return }
-        if (method === 'card' && (cardNum.replace(/\s/g, '').length < 16 || !cardName || !cardExp || !cardCvv)) {
-            toast.error('Fill all card details'); return
-        }
+        
         setProcessing(true)
         try {
-            if (booking.id !== 'BK-2024-1847') {
-                await axios.post(`/api/bookings/${booking.id}/pay`)
-            } else {
-                await new Promise(r => setTimeout(r, 2000))
+            if (method === 'razorpay') {
+                const res = await loadRazorpayScript();
+                if (!res) {
+                    toast.error("Razorpay SDK failed to load. Are you online?");
+                    setProcessing(false);
+                    return;
+                }
+                
+                let orderData = null;
+                if (booking.id !== 'BK-2024-1847') {
+                    const { data } = await axios.post('/api/bookings/create-razorpay-order', {
+                        amount: booking.finalPrice,
+                        bookingId: booking.id
+                    });
+                    if (!data.success) {
+                        toast.error("Failed to create order");
+                        setProcessing(false);
+                        return;
+                    }
+                    orderData = data.order;
+                } else {
+                    // Mock order for demo booking
+                    orderData = {
+                        id: 'order_demo_123',
+                        amount: booking.finalPrice * 100,
+                        currency: 'INR'
+                    };
+                }
+
+                const options = {
+                    key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder_key",
+                    amount: orderData.amount,
+                    currency: orderData.currency,
+                    name: "Coolie Hiring",
+                    description: "Booking Payment",
+                    order_id: orderData.id,
+                    handler: async function (response) {
+                        try {
+                            if (booking.id !== 'BK-2024-1847') {
+                                await axios.post('/api/bookings/verify-razorpay-payment', {
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    bookingId: booking.id
+                                });
+                            }
+                            setProcessing(false);
+                            setSuccess(true);
+                        } catch (err) {
+                            toast.error("Payment verification failed");
+                            setProcessing(false);
+                        }
+                    },
+                    prefill: {
+                        name: "Customer",
+                        email: "customer@example.com",
+                        contact: "9999999999"
+                    },
+                    theme: {
+                        color: "#7B2FFF"
+                    }
+                };
+
+                const paymentObject = new window.Razorpay(options);
+                paymentObject.on('payment.failed', function (response) {
+                    toast.error(response.error.description || "Payment Failed");
+                    setProcessing(false);
+                });
+                paymentObject.open();
+
+            } else if (method === 'cash') {
+                if (booking.id !== 'BK-2024-1847') {
+                    // Just mark as paid or handled, backend payBooking sets status to paid
+                    await axios.post(`/api/bookings/${booking.id}/pay`);
+                } else {
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+                setProcessing(false);
+                setSuccess(true);
+            } else if (method === 'upi') {
+                if (booking.id !== 'BK-2024-1847') {
+                    await axios.post(`/api/bookings/${booking.id}/pay`);
+                } else {
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+                setProcessing(false);
+                setSuccess(true);
             }
-            setProcessing(false)
-            setSuccess(true)
-        } catch {
-            setProcessing(false)
-            toast.error('Payment failed. Please try again.')
+        } catch (err) {
+            console.error(err);
+            setProcessing(false);
+            toast.error('Payment failed. Please try again.');
         }
     }
 
     const METHODS = [
+        { id: 'razorpay', icon: CreditCard, label: 'Online Payment', sub: 'Cards, NetBanking, Wallets' },
         { id: 'upi', icon: Zap, label: 'UPI', sub: 'Instant & Mobile-first' },
-        { id: 'card', icon: CreditCard, label: 'Cards', sub: 'Debit or Credit Card' },
-        { id: 'netbanking', icon: Building2, label: 'Net Banking', sub: 'Secure Bank Portal' },
+        { id: 'cash', icon: Banknote, label: 'Cash in Hand', sub: 'Pay directly to porter' },
     ]
 
     /* shared input class */
@@ -254,6 +343,22 @@ export default function PaymentPage() {
                                 })}
                             </div>
 
+                            {/* ── Razorpay ── */}
+                            {method === 'razorpay' && (
+                                <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-xl p-4 space-y-3">
+                                    <h3 className="text-white font-bold text-xs flex items-center gap-1.5">
+                                        <div className="w-6 h-6 rounded-md bg-[#7B2FFF]/20 flex items-center justify-center">
+                                            <CreditCard size={12} className="text-[#7B2FFF]" />
+                                        </div>
+                                        Online Payment Gateway
+                                    </h3>
+                                    <p className="text-[#6B6188] text-xs">
+                                        You will be redirected to the Razorpay secure checkout. 
+                                        You can pay using any Credit/Debit Card, Netbanking, UPI, or Wallet.
+                                    </p>
+                                </div>
+                            )}
+
                             {/* ── UPI ── */}
                             {method === 'upi' && (
                                 <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-xl p-4 space-y-3">
@@ -301,79 +406,19 @@ export default function PaymentPage() {
                                 </div>
                             )}
 
-                            {/* ── Card ── */}
-                            {method === 'card' && (
-                                <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-xl p-4 space-y-2.5">
+                            {/* ── Cash in Hand ── */}
+                            {method === 'cash' && (
+                                <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-xl p-4 space-y-3">
                                     <h3 className="text-white font-bold text-xs flex items-center gap-1.5">
                                         <div className="w-6 h-6 rounded-md bg-[#7B2FFF]/20 flex items-center justify-center">
-                                            <CreditCard size={12} className="text-[#7B2FFF]" />
+                                            <Banknote size={12} className="text-[#7B2FFF]" />
                                         </div>
-                                        Card Details
+                                        Cash in Hand
                                     </h3>
-
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            className={`${inp} pr-8`}
-                                            placeholder="1234 5678 9012 3456"
-                                            value={cardNum}
-                                            onChange={e => setCardNum(formatCard(e.target.value))}
-                                        />
-                                        <CreditCard size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#3a3560]" />
-                                    </div>
-
-                                    <input
-                                        type="text"
-                                        className={inp}
-                                        placeholder="Name on Card"
-                                        value={cardName}
-                                        onChange={e => setCardName(e.target.value)}
-                                    />
-
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <input
-                                            type="text"
-                                            className={inp}
-                                            placeholder="MM/YY"
-                                            maxLength={5}
-                                            value={cardExp}
-                                            onChange={e => {
-                                                let v = e.target.value.replace(/\D/g, '')
-                                                if (v.length >= 2) v = v.slice(0, 2) + '/' + v.slice(2, 4)
-                                                setCardExp(v)
-                                            }}
-                                        />
-                                        <input
-                                            type="password"
-                                            className={inp}
-                                            placeholder="CVV"
-                                            maxLength={3}
-                                            value={cardCvv}
-                                            onChange={e => setCardCvv(e.target.value.replace(/\D/g, ''))}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* ── Net Banking ── */}
-                            {method === 'netbanking' && (
-                                <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-xl p-4 space-y-2.5">
-                                    <h3 className="text-white font-bold text-xs flex items-center gap-1.5">
-                                        <div className="w-6 h-6 rounded-md bg-[#7B2FFF]/20 flex items-center justify-center">
-                                            <Building2 size={12} className="text-[#7B2FFF]" />
-                                        </div>
-                                        Select Your Bank
-                                    </h3>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {['SBI', 'HDFC', 'ICICI', 'Axis', 'Kotak', 'PNB'].map(bk => (
-                                            <button
-                                                key={bk}
-                                                className="py-2 rounded-lg bg-[#12102A] border border-[#1E1A40] text-[#B0A8CC] text-xs font-semibold hover:border-[#7B2FFF]/50 hover:text-white transition-all"
-                                            >
-                                                {bk}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    <p className="text-[#6B6188] text-xs leading-relaxed">
+                                        You can pay the porter directly at the station using cash or their personal UPI QR.
+                                        Please keep exact change if possible.
+                                    </p>
                                 </div>
                             )}
 
@@ -381,13 +426,16 @@ export default function PaymentPage() {
                             <div className="space-y-1.5">
                                 <button
                                     onClick={handlePay}
-                                    disabled={processing}
+                                    disabled={processing || (method === 'razorpay' && processing)}
                                     className="w-full py-3 rounded-xl bg-[#7B2FFF] text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#5B1FCC] transition-colors disabled:opacity-60 shadow-lg shadow-[#7B2FFF]/20"
                                 >
                                     {processing ? (
                                         <><Loader size={16} className="animate-spin" /> Processing...</>
                                     ) : (
-                                        <><Lock size={14} /> Pay ₹{booking.finalPrice} Securely</>
+                                        <>
+                                            <Lock size={14} /> 
+                                            {method === 'cash' ? 'Confirm Booking' : `Pay ₹${booking.finalPrice} Securely`}
+                                        </>
                                     )}
                                 </button>
                                 <p className="text-center text-[#3a3560] text-[9px] uppercase tracking-[0.2em] flex items-center justify-center gap-1">

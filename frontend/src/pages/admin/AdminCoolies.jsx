@@ -269,9 +269,9 @@ export default function AdminCoolies() {
                     <div className="mb-4 sm:mb-6 space-y-3">
                         <div className="flex gap-2">
                             <div className="relative flex-1">
-                                {/* <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" /> */}
+                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
-                                    className="input-field pl-9 w-full text-sm"
+                                    className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-700/50 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none bg-slate-800/50 text-white placeholder:text-slate-400 transition-all"
                                     placeholder="Search by name, ID, station..."
                                     value={search}
                                     onChange={e => setSearch(e.target.value)}

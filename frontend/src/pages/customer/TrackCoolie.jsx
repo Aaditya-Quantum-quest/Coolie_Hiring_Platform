@@ -195,9 +195,6 @@ export default function TrackCoolie() {
                                     </div>
                                 )}
                                 <div className="flex gap-2 mt-3 max-[767px]:mt-2">
-                                    <button onClick={() => toast.success('Calling coolie...')} className="flex-1 py-2 rounded-xl bg-green-500/10 text-green-400 border border-green-500/30 text-sm font-semibold hover:bg-green-500/20 transition-all flex items-center justify-center gap-1 max-[767px]:py-1.5 max-[767px]:text-xs max-[767px]:rounded-lg">
-                                        <Phone size={14} className="max-[767px]:w-3.5 max-[767px]:h-3.5" /> Call
-                                    </button>
                                     <button onClick={() => toast.success('Message sent!')} className="flex-1 py-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30 text-sm font-semibold hover:bg-blue-500/20 transition-all flex items-center justify-center gap-1 max-[767px]:py-1.5 max-[767px]:text-xs max-[767px]:rounded-lg">
                                         <MessageSquare size={14} className="max-[767px]:w-3.5 max-[767px]:h-3.5" /> Message
                                     </button>

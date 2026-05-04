@@ -55,12 +55,12 @@ const SearchBar = ({
           placeholder={placeholder}
           autoFocus={autoFocus}
           className={`
-            w-full pl-10 pr-20 py-3 rounded-xl
+            w-full pl-10 pr-20 py-2.5 text-sm rounded-lg
             bg-slate-800/50 border border-slate-700/50
-            text-slate-100 placeholder-slate-400
-            focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500
+            text-white placeholder-slate-400
+            focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500
             transition-all duration-200
-            ${isFocused ? 'bg-slate-800/70 border-indigo-500/50' : ''}
+            ${isFocused ? 'bg-slate-800/70 border-orange-500/50' : ''}
           `}
         />
 

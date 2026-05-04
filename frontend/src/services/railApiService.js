@@ -110,7 +110,47 @@ export async function searchTrain(q) {
 export async function getTrainsBetweenStations(from, to, date) {
   try {
     const res = await get('/api/v1/trains/between', { from, to, date })
-    return { status: true, data: { trains: res.trains || res.data || res } }
+    
+    // Extract the trains array
+    let trainArray = [];
+    if (res && res.data && Array.isArray(res.data.trains)) {
+        trainArray = res.data.trains;
+    } else if (res && Array.isArray(res.trains)) {
+        trainArray = res.trains;
+    } else if (Array.isArray(res)) {
+        trainArray = res;
+    } else if (res && res.data && Array.isArray(res.data)) {
+        trainArray = res.data;
+    }
+
+    // Normalize trains
+    const normalized = trainArray.map(t => {
+        const formatTime = (mins) => {
+            if (mins == null) return '--:--';
+            const h = Math.floor(mins / 60) % 24;
+            const m = mins % 60;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        };
+        const depTime = t.fromStationSchedule ? formatTime(t.fromStationSchedule.departureMinutes) : '--:--';
+        const arrTime = t.toStationSchedule ? formatTime(t.toStationSchedule.arrivalMinutes) : '--:--';
+        const durHours = t.travelTimeMinutes ? Math.floor(t.travelTimeMinutes / 60) : 0;
+        const durMins = t.travelTimeMinutes ? t.travelTimeMinutes % 60 : 0;
+        
+        return {
+            ...t,
+            train_name: t.trainName || t.train_name,
+            train_number: t.trainNumber || t.train_number,
+            departure_time: depTime,
+            arrival_time: arrTime,
+            from_sta: depTime,
+            to_sta: arrTime,
+            duration: t.travelTimeMinutes ? `${durHours}h ${durMins}m` : 'N/A',
+            classes: t.classes || ['SL', '3A', '2A', '1A'],
+            route: `${t.sourceStationCode || from} - ${t.destinationStationCode || to}`
+        }
+    });
+
+    return { status: true, data: { trains: normalized } }
   } catch (err) {
     console.error('RailRadar getTrainsBetweenStations failed:', err)
     throw err

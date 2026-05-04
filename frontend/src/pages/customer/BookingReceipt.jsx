@@ -199,8 +199,7 @@ export default function BookingReceipt() {
                                             <div>
                                                 <p className="text-white font-bold">{booking.coolieName}</p>
                                                 <div className="flex items-center gap-1.5 text-[#6B6188] text-xs mt-0.5">
-                                                    <Phone size={10} />
-                                                    <span>{booking.cooliePhone}</span>
+                                                    <span className="px-2 py-0.5 bg-[#7B2FFF]/20 text-[#A855F7] rounded-full text-[10px] uppercase font-bold tracking-widest">Verified Porter</span>
                                                 </div>
                                             </div>
                                         </div>

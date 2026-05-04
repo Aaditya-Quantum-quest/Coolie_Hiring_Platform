@@ -261,6 +261,33 @@ export default function BookingReceipt() {
                                             <span className="text-white font-bold">{booking.destination_station_name}</span>
                                         </div>
                                     </div>
+                                    
+                                    {/* Starting Position (From) */}
+                                    {booking.starting_position && (
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
+                                                <MapPin size={16} className="text-green-400" />
+                                            </div>
+                                            <div>
+                                                <span className="text-[#6B6188] text-[10px] block uppercase font-bold tracking-widest">📍 From (Starting Position)</span>
+                                                <span className="text-white font-bold">{booking.starting_position}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    {/* End Position (To) */}
+                                    {booking.end_position && (
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                                                <MapPin size={16} className="text-purple-400" />
+                                            </div>
+                                            <div>
+                                                <span className="text-[#6B6188] text-[10px] block uppercase font-bold tracking-widest">🎯 To (Destination)</span>
+                                                <span className="text-white font-bold">{booking.end_position}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
                                     <div className="flex items-start gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-[#7B2FFF]/10 flex items-center justify-center shrink-0">
                                             <Train size={16} className="text-[#7B2FFF]" />

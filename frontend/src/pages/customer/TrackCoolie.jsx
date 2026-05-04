@@ -194,11 +194,6 @@ export default function TrackCoolie() {
                                         <p className={`text-3xl font-mono font-black max-[767px]:text-2xl ${eta < 30 ? 'text-red-400 animate-pulse' : 'text-orange-400'}`}>{formatTime(eta)}</p>
                                     </div>
                                 )}
-                                <div className="flex gap-2 mt-3 max-[767px]:mt-2">
-                                    <button onClick={() => toast.success('Message sent!')} className="flex-1 py-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30 text-sm font-semibold hover:bg-blue-500/20 transition-all flex items-center justify-center gap-1 max-[767px]:py-1.5 max-[767px]:text-xs max-[767px]:rounded-lg">
-                                        <MessageSquare size={14} className="max-[767px]:w-3.5 max-[767px]:h-3.5" /> Message
-                                    </button>
-                                </div>
                             </div>
                         )}
 

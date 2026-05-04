@@ -251,7 +251,6 @@ const loginCoolie = async (req, res) => {
                     qr_code_url: coolie.qr_code_url,
                     rating_avg: coolie.rating_avg,
                     total_trips: coolie.total_trips,
-                    badge: coolie.badge,
                     is_verified: coolie.is_verified,
                     role: 'coolie',
                 },

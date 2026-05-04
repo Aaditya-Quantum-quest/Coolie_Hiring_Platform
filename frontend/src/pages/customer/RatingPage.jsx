@@ -48,13 +48,12 @@ export default function RatingPage() {
         image: null,
         totalRatings: b.coolieTrips || 0,
         avgRating: b.coolieRating || 0,
-        badge: b.coolieBadge,
         bookingId: b.id,
         date: `${b.date} ${b.time}`,
         amount: `₹${b.amount}`,
         station: b.station,
     } : {
-        name: 'Your Coolie', id: 'N/A', totalRatings: 234, avgRating: 4.8, badge: '', bookingId: 'BK-2024-1847', date: 'Today, 4:15 PM', amount: '₹90', station: 'New Delhi Railway Station'
+        name: 'Your Coolie', id: 'N/A', totalRatings: 234, avgRating: 4.8, bookingId: 'BK-2024-1847', date: 'Today, 4:15 PM', amount: '₹90', station: 'New Delhi Railway Station'
     }
 
     const [rating, setRating] = useState(0)
@@ -165,7 +164,6 @@ export default function RatingPage() {
                             <div className="flex-1">
                                 <h3 className="text-white font-bold text-lg">{COOLIE.name}</h3>
                                 <p className="text-slate-400 text-sm">{COOLIE.id} • {COOLIE.station}</p>
-                                <span className="badge text-xs mt-1 inline-block">{COOLIE.badge}</span>
                             </div>
                             <div className="text-right">
                                 <p className="text-2xl font-black gradient-text">{COOLIE.amount}</p>

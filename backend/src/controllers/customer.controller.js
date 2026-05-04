@@ -22,9 +22,9 @@ exports.getAllCoolies = async (req, res) => {
         const currentStation = customerResult.rows[0].current_station;
 
         let query = `
-            SELECT id, name, age, station_name as station, 
-                   rating_avg as rating, total_trips as "totalBookings", 
-                   badge, is_online as status, passport_photo_url as photo,
+            SELECT id, name, age, station_name as station,
+                   rating_avg as rating, total_trips as "totalBookings",
+                   is_online as status, passport_photo_url as photo,
                    languages_spoken as languages,
                    latitude as lat, longitude as lng
             FROM coolies
@@ -57,7 +57,7 @@ exports.getCoolieProfile = async (req, res) => {
         const result = await db.query(`
             SELECT id, name, age, station_name as station, 
                    rating_avg as rating, total_trips as "totalBookings", 
-                   badge, is_online as status, passport_photo_url as photo,
+                   is_online as status, passport_photo_url as photo,
                    languages_spoken as languages,
                    latitude as lat, longitude as lng
             FROM coolies WHERE id = $1

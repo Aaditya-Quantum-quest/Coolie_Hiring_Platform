@@ -224,7 +224,7 @@ const getCoolieById = async (id) => {
                 bank_name, ifsc_code, upi_id,
                 aadhaar_number_enc, secondary_doc_number_enc,
                 aadhaar_front_url, aadhaar_back_url, secondary_doc_front_url, secondary_doc_back_url,
-                rating_avg, total_trips, badge,
+                rating_avg, total_trips,
                 verification_status, is_verified, is_active, is_suspended, created_at
          FROM coolies WHERE id=$1`,
         [id]

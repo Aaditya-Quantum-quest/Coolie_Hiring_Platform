@@ -173,6 +173,8 @@ export default function BookingHistory() {
                                                 { label: 'Platform', val: b.platform },
                                                 { label: 'Initial Stn.', val: b.initialStation || 'N/A' },
                                                 { label: 'Dest. Stn.', val: b.station || 'N/A' },
+                                                ...(b.startingPosition ? [{ label: '📍 From', val: b.startingPosition }] : []),
+                                                ...(b.endPosition ? [{ label: '🎯 To', val: b.endPosition }] : []),
                                                 { label: 'Train No.', val: b.trainNo },
                                                 { label: 'Train Name', val: b.trainName || 'N/A' },
                                             ].map(({ label, val }) => (
@@ -199,7 +201,7 @@ export default function BookingHistory() {
                                             )}
                                             {(b.status === 'confirmed' || b.status === 'pending') && (
                                                 <button
-                                                    onClick={() => navigate('/customer/track', { state: { bookingId: b.id, booking: b, coolie: { name: b.coolieName, rating: b.coolieRating, totalBookings: b.coolieTrips, badge: b.coolieBadge } } })}
+                                                    onClick={() => navigate('/customer/track', { state: { bookingId: b.id, booking: b, coolie: { name: b.coolieName, rating: b.coolieRating, totalBookings: b.coolieTrips } } })}
                                                     className="btn-primary py-2 text-sm flex items-center justify-center gap-2 max-[767px]:py-1.5 max-[767px]:text-xs max-[767px]:gap-1.5"
                                                 >
                                                     <Navigation size={14} className="max-[767px]:w-3 max-[767px]:h-3" /> Track Coolie

@@ -110,7 +110,7 @@ export default function CoolieVerification() {
                             <Award size={20} className="text-orange-400" />
                         </div>
                         <div>
-                            <p className="text-white font-bold text-sm">{coolie.badge || 'Professional Porter'}</p>
+                            <p className="text-white font-bold text-sm">Professional Porter</p>
                             <p className="text-[#6B6188] text-xs">Certified Indian Railways Porter</p>
                         </div>
                     </div>

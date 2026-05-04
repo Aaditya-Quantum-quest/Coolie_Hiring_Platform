@@ -82,9 +82,22 @@ const getProfile = async (req, res) => {
 
         const coolie = result.rows[0];
 
+        // Calculate age from date_of_birth if age is missing or incorrect
+        let calculatedAge = coolie.age;
+        if (coolie.date_of_birth) {
+            const birthDate = new Date(coolie.date_of_birth);
+            const today = new Date();
+            calculatedAge = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                calculatedAge--;
+            }
+        }
+
         // Decrypt sensitive fields
         const decryptedData = {
             ...coolie,
+            age: calculatedAge,
             aadhaar_number: decrypt(coolie.aadhaar_number_enc),
             secondary_doc_number: decrypt(coolie.secondary_doc_number_enc),
             account_number: decrypt(coolie.account_number_enc)
@@ -113,7 +126,7 @@ const getPublicProfile = async (req, res) => {
         const { coolieId } = req.params;
 
         const result = await db.query(
-            `SELECT id, name, coolie_id, rating_avg, station_name, total_trips, is_online, profile_img_url, badge, working_platforms, age 
+            `SELECT id, name, coolie_id, rating_avg, station_name, total_trips, is_online, profile_img_url, working_platforms, age 
              FROM coolies 
              WHERE id::text = $1 OR coolie_id = $1`,
             [coolieId]
@@ -370,6 +383,61 @@ const getDashboardOverview = async (req, res) => {
     }
 };
 
+// Update Coolie Profile (whitelist only editable fields)
+const updateProfile = async (req, res) => {
+    try {
+        const { id } = req.user;
+        const updates = req.body;
+
+        // Whitelist of fields coolies are allowed to update
+        const allowedFields = ['phone', 'alt_phone', 'languages_spoken', 'working_platforms'];
+        const keys = Object.keys(updates);
+        const invalidKeys = keys.filter(k => !allowedFields.includes(k));
+
+        if (invalidKeys.length > 0) {
+            return res.status(403).json({
+                success: false,
+                message: `Cannot update restricted fields: ${invalidKeys.join(', ')}`
+            });
+        }
+
+        if (keys.length === 0) {
+            return res.status(400).json({ success: false, message: 'No valid fields to update' });
+        }
+
+        // Build dynamic SET clause
+        const setClauses = [];
+        const values = [];
+        let idx = 1;
+
+        for (const key of keys) {
+            if (key === 'languages_spoken' || key === 'working_platforms') {
+                // Ensure arrays
+                const arr = Array.isArray(updates[key]) ? updates[key] : [updates[key]];
+                setClauses.push(`${key} = $${idx}`);
+                values.push(arr);
+            } else {
+                setClauses.push(`${key} = $${idx}`);
+                values.push(updates[key]);
+            }
+            idx++;
+        }
+
+        values.push(id);
+        const query = `UPDATE coolies SET ${setClauses.join(', ')} WHERE id = $${idx} RETURNING phone, alt_phone, languages_spoken, working_platforms`;
+        const result = await db.query(query, values);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Coolie not found' });
+        }
+
+        res.status(200).json({ success: true, data: result.rows[0], message: 'Profile updated successfully' });
+    } catch (error) {
+        console.error('updateProfile error:', error);
+        res.status(500).json({ success: false, message: 'Server error updating profile' });
+    }
+};
+
 module.exports = {
     goOnline,
     goOffline,
@@ -380,5 +448,6 @@ module.exports = {
     getCompletedToday,
     getUpcomingRequests,
     getDashboardOverview,
-    getPublicProfile
+    getPublicProfile,
+    updateProfile
 };

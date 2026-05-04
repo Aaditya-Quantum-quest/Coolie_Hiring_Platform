@@ -1,16 +1,8 @@
 const db = require('../config/db');
-const Razorpay = require('razorpay');
-const crypto = require('crypto');
-
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
-});
-
 
 exports.createBooking = async (req, res) => {
     try {
-        const { station, initialStation, platform, amount, trainNo, trainName, luggageImgUrl, luggageCount } = req.body;
+        const { station, initialStation, platform, amount, trainNo, trainName, luggageImgUrl, luggageCount, startingPosition, endPosition } = req.body;
         const customerId = req.user.id;
         
         // Improve matching: station might be "Jaipur Junction (JP)"
@@ -45,10 +37,11 @@ exports.createBooking = async (req, res) => {
         const result = await db.query(`
             INSERT INTO bookings (
                 booking_ref, customer_id, coolie_id, initial_station_name, destination_station_name, platform, 
-                amount, train_no, train_name, luggage_img_url, luggage_count, otp, status, payment_status
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', 'pending')
+                amount, train_no, train_name, luggage_img_url, luggage_count, otp, status, payment_status,
+                starting_position, end_position
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', 'pending', $13, $14)
             RETURNING *
-        `, [bookingRef, customerId, coolieId, initialStation, station, platform, amount, trainNo, trainName, luggageImgUrl, luggageCount, otp]);
+        `, [bookingRef, customerId, coolieId, initialStation, station, platform, amount, trainNo, trainName, luggageImgUrl, luggageCount, otp, startingPosition, endPosition]);
 
         const booking = result.rows[0];
 
@@ -82,7 +75,7 @@ exports.getMyBookings = async (req, res) => {
     try {
         const customerId = req.user.id;
         const result = await db.query(`
-            SELECT b.*, c.name as "coolieName", c.rating_avg as "coolieRating", c.total_trips as "coolieTrips", c.badge as "coolieBadge"
+            SELECT b.*, c.name as "coolieName", c.rating_avg as "coolieRating", c.total_trips as "coolieTrips"
             FROM bookings b
             LEFT JOIN coolies c ON b.coolie_id = c.id
             WHERE b.customer_id = $1
@@ -96,7 +89,6 @@ exports.getMyBookings = async (req, res) => {
             coolieName: b.coolieName || 'Demo Coolie',
             coolieRating: b.coolieRating || 4.8,
             coolieTrips: b.coolieTrips || 0,
-            coolieBadge: b.coolieBadge || 'Verified Porter',
             initialStation: b.initial_station_name,
             station: b.destination_station_name,
             platform: b.platform,
@@ -113,7 +105,9 @@ exports.getMyBookings = async (req, res) => {
             otp: b.otp,
             trainNo: b.train_no,
             trainName: b.train_name,
-            luggageImgUrl: b.luggage_img_url
+            luggageImgUrl: b.luggage_img_url,
+            startingPosition: b.starting_position,
+            endPosition: b.end_position
         }));
 
         res.status(200).json({ success: true, bookings });
@@ -193,73 +187,6 @@ exports.payBooking = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
-
-exports.createRazorpayOrder = async (req, res) => {
-    try {
-        const { amount, bookingId } = req.body;
-        
-        const options = {
-            amount: amount * 100, // amount in the smallest currency unit
-            currency: "INR",
-            receipt: `receipt_${bookingId}`,
-        };
-
-        const order = await razorpay.orders.create(options);
-        
-        if (!order) {
-            return res.status(500).json({ success: false, message: 'Failed to create Razorpay order' });
-        }
-
-        res.status(200).json({ success: true, order });
-    } catch (error) {
-        console.error('createRazorpayOrder error:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-exports.verifyRazorpayPayment = async (req, res) => {
-    try {
-        const { 
-            razorpay_order_id, 
-            razorpay_payment_id, 
-            razorpay_signature,
-            bookingId 
-        } = req.body;
-
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
-
-        const expectedSignature = crypto
-            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-            .update(body.toString())
-            .digest("hex");
-
-        const isAuthentic = expectedSignature === razorpay_signature;
-
-        if (isAuthentic) {
-            // Update booking payment status
-            const result = await db.query(
-                'UPDATE bookings SET payment_status = $1 WHERE booking_ref = $2 RETURNING *',
-                ['paid', bookingId]
-            );
-
-            if (result.rowCount === 0) {
-                return res.status(404).json({ success: false, message: 'Booking not found' });
-            }
-
-            res.status(200).json({ 
-                success: true, 
-                message: 'Payment verified successfully',
-                booking: result.rows[0]
-            });
-        } else {
-            res.status(400).json({ success: false, message: 'Invalid payment signature' });
-        }
-    } catch (error) {
-        console.error('verifyRazorpayPayment error:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
 
 exports.updateBookingStatus = async (req, res) => {
     try {

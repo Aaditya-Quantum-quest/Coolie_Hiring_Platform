@@ -121,7 +121,6 @@ CREATE TABLE IF NOT EXISTS coolies (
     -- Performance
     rating_avg              NUMERIC(3,2) DEFAULT 0.00,
     total_trips             INTEGER DEFAULT 0,
-    badge                   VARCHAR(50),
 
     created_at              TIMESTAMPTZ DEFAULT NOW(),
     updated_at              TIMESTAMPTZ DEFAULT NOW()
@@ -174,6 +173,8 @@ CREATE TABLE IF NOT EXISTS bookings (
     coolie_arrived_at   TIMESTAMPTZ,
     trip_started_at     TIMESTAMPTZ,
     trip_ended_at       TIMESTAMPTZ,
+    starting_position   VARCHAR(200),
+    end_position        VARCHAR(200),
     created_at          TIMESTAMPTZ DEFAULT NOW(),
     updated_at          TIMESTAMPTZ DEFAULT NOW()
 );

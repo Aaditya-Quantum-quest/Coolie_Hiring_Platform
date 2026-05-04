@@ -15,7 +15,6 @@ const getNearbyConnectedCoolies = async (lat, lng, radiusMeters = 3000) => {
                 c.name, 
                 c.rating_avg as rating, 
                 c.total_trips as "totalBookings",
-                c.badge,
                 c.latitude as lat, 
                 c.longitude as lng,
                 (6371000 * acos(
@@ -41,16 +40,15 @@ const getNearbyConnectedCoolies = async (lat, lng, radiusMeters = 3000) => {
         
         const validQuery = `
             WITH NearbyCoolies AS (
-                SELECT 
-                    c.id, 
-                    c.name, 
-                    c.rating_avg as rating, 
+                SELECT
+                    c.id,
+                    c.name,
+                    c.rating_avg as rating,
                     c.total_trips as "totalBookings",
-                    c.badge,
-                    c.latitude as lat, 
+                    c.latitude as lat,
                     c.longitude as lng,
                     (6371000 * acos(
-                        least(1.0, greatest(-1.0, 
+                        least(1.0, greatest(-1.0,
                             cos(radians($1)) * cos(radians(c.latitude)) *
                             cos(radians(c.longitude) - radians($2)) +
                             sin(radians($1)) * sin(radians(c.latitude))

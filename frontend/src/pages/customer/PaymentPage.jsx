@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from '../../components/Sidebar'
 import axios from 'axios'
 import {
-    CreditCard, CheckCircle, Lock,
+    CheckCircle, Lock,
     Shield, Loader, Star, Banknote, Zap
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -13,27 +13,12 @@ const BOOKING = {
     coolie: 'Rajesh Kumar',
     coolieRating: 4.8,
     coolieTrips: 1240,
-    badge: 'Verified Elite Porter',
     pickup: 'New Delhi Rly Stn',
     dropoff: 'Main Exit Gate',
     basePrice: 100,
     discount: 10,
     finalPrice: 90,
 }
-
-const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-        const script = document.createElement("script");
-        script.src = "https://checkout.razorpay.com/v1/checkout.js";
-        script.onload = () => {
-            resolve(true);
-        };
-        script.onerror = () => {
-            resolve(false);
-        };
-        document.body.appendChild(script);
-    });
-};
 
 /* ── Payment Success Overlay ─────────────────────────────── */
 function PaymentSuccess({ amount, onDone }) {
@@ -78,7 +63,6 @@ export default function PaymentPage() {
         coolie: b.coolieName,
         coolieRating: b.coolieRating,
         coolieTrips: b.coolieTrips,
-        badge: b.coolieBadge,
         pickup: b.station,
         dropoff: b.destination,
         basePrice: b.amount,
@@ -86,7 +70,7 @@ export default function PaymentPage() {
         finalPrice: b.amount,
     } : BOOKING
 
-    const [method, setMethod] = useState('razorpay')
+    const [method, setMethod] = useState('upi')
     const [upiId, setUpiId] = useState('')
     const [verifying, setVerifying] = useState(false)
     const [verified, setVerified] = useState(false)
@@ -113,77 +97,7 @@ export default function PaymentPage() {
         
         setProcessing(true)
         try {
-            if (method === 'razorpay') {
-                const res = await loadRazorpayScript();
-                if (!res) {
-                    toast.error("Razorpay SDK failed to load. Are you online?");
-                    setProcessing(false);
-                    return;
-                }
-                
-                let orderData = null;
-                if (booking.id !== 'BK-2024-1847') {
-                    const { data } = await axios.post('/api/bookings/create-razorpay-order', {
-                        amount: booking.finalPrice,
-                        bookingId: booking.id
-                    });
-                    if (!data.success) {
-                        toast.error("Failed to create order");
-                        setProcessing(false);
-                        return;
-                    }
-                    orderData = data.order;
-                } else {
-                    // Mock order for demo booking
-                    orderData = {
-                        id: 'order_demo_123',
-                        amount: booking.finalPrice * 100,
-                        currency: 'INR'
-                    };
-                }
-
-                const options = {
-                    key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder_key",
-                    amount: orderData.amount,
-                    currency: orderData.currency,
-                    name: "Coolie Hiring",
-                    description: "Booking Payment",
-                    order_id: orderData.id,
-                    handler: async function (response) {
-                        try {
-                            if (booking.id !== 'BK-2024-1847') {
-                                await axios.post('/api/bookings/verify-razorpay-payment', {
-                                    razorpay_order_id: response.razorpay_order_id,
-                                    razorpay_payment_id: response.razorpay_payment_id,
-                                    razorpay_signature: response.razorpay_signature,
-                                    bookingId: booking.id
-                                });
-                            }
-                            setProcessing(false);
-                            setSuccess(true);
-                        } catch (err) {
-                            toast.error("Payment verification failed");
-                            setProcessing(false);
-                        }
-                    },
-                    prefill: {
-                        name: "Customer",
-                        email: "customer@example.com",
-                        contact: "9999999999"
-                    },
-                    theme: {
-                        color: "#7B2FFF"
-                    }
-                };
-
-                const paymentObject = new window.Razorpay(options);
-                paymentObject.on('payment.failed', function (response) {
-                    toast.error(response.error.description || "Payment Failed");
-                    setProcessing(false);
-                });
-                paymentObject.open();
-
-            } else if (method === 'cash') {
+            if (method === 'cash') {
                 if (booking.id !== 'BK-2024-1847') {
                     // Just mark as paid or handled, backend payBooking sets status to paid
                     await axios.post(`/api/bookings/${booking.id}/pay`);
@@ -209,7 +123,6 @@ export default function PaymentPage() {
     }
 
     const METHODS = [
-        { id: 'razorpay', icon: CreditCard, label: 'Online Payment', sub: 'Cards, NetBanking, Wallets' },
         { id: 'upi', icon: Zap, label: 'UPI', sub: 'Instant & Mobile-first' },
         { id: 'cash', icon: Banknote, label: 'Cash in Hand', sub: 'Pay directly to porter' },
     ]
@@ -251,7 +164,7 @@ export default function PaymentPage() {
                                             <span className="flex items-center gap-0.5 bg-yellow-400/10 text-yellow-400 rounded-full px-1.5 py-0.5 text-[9px] font-bold">
                                                 <Star size={8} fill="currentColor" /> {booking.coolieRating}
                                             </span>
-                                            <span className="text-[#6B6188] text-[9px] truncate">{booking.badge}</span>
+                                            <span className="text-[#6B6188] text-[9px] truncate">{booking.coolieTrips} trips</span>
                                         </div>
                                     </div>
                                     {/* Amount inline on mobile */}
@@ -343,22 +256,6 @@ export default function PaymentPage() {
                                 })}
                             </div>
 
-                            {/* ── Razorpay ── */}
-                            {method === 'razorpay' && (
-                                <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-xl p-4 space-y-3">
-                                    <h3 className="text-white font-bold text-xs flex items-center gap-1.5">
-                                        <div className="w-6 h-6 rounded-md bg-[#7B2FFF]/20 flex items-center justify-center">
-                                            <CreditCard size={12} className="text-[#7B2FFF]" />
-                                        </div>
-                                        Online Payment Gateway
-                                    </h3>
-                                    <p className="text-[#6B6188] text-xs">
-                                        You will be redirected to the Razorpay secure checkout. 
-                                        You can pay using any Credit/Debit Card, Netbanking, UPI, or Wallet.
-                                    </p>
-                                </div>
-                            )}
-
                             {/* ── UPI ── */}
                             {method === 'upi' && (
                                 <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-xl p-4 space-y-3">
@@ -426,7 +323,7 @@ export default function PaymentPage() {
                             <div className="space-y-1.5">
                                 <button
                                     onClick={handlePay}
-                                    disabled={processing || (method === 'razorpay' && processing)}
+                                    disabled={processing}
                                     className="w-full py-3 rounded-xl bg-[#7B2FFF] text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#5B1FCC] transition-colors disabled:opacity-60 shadow-lg shadow-[#7B2FFF]/20"
                                 >
                                     {processing ? (

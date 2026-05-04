@@ -119,7 +119,6 @@ export default function CustomerDashboard() {
     const filteredCoolies = coolies.filter(coolie => coolie.status === 'available').filter(coolie => {
         const matchesSearch = searchQuery === '' ||
             coolie.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            coolie.badge?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             coolie.station?.toLowerCase().includes(searchQuery.toLowerCase())
         if (!matchesSearch) return false
         switch (searchFilter) {
@@ -221,7 +220,6 @@ export default function CustomerDashboard() {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap max-[767px]:gap-1">
                                             <p className="text-white font-semibold max-[767px]:text-sm">{coolie.name}</p>
-                                            <span className="badge text-xs max-[767px]:text-[10px] max-[767px]:px-1.5 max-[767px]:py-px">{coolie.badge}</span>
                                         </div>
                                         <div className="flex items-center gap-3 text-xs text-slate-400 mt-1 flex-wrap max-[767px]:gap-2 max-[767px]:text-[10px] max-[767px]:mt-0.5">
                                             <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400" />{coolie.rating}</span>

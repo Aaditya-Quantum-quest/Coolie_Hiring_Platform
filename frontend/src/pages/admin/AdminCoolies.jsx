@@ -48,7 +48,6 @@ function CoolieCard({ c, onView, onVerifyKYC, onFinalApprove, onToggleSuspend, a
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                         <p className="text-white font-semibold text-sm truncate">{c.name}</p>
-                        {c.badge && <Star size={11} className="text-yellow-400 fill-yellow-400 shrink-0" />}
                     </div>
                     <p className="text-slate-500 text-xs font-mono">{c.displayId}</p>
                 </div>
@@ -373,9 +372,6 @@ export default function AdminCoolies() {
                                                                 <p className="text-white font-semibold text-sm leading-tight">
                                                                     {c.name}
                                                                 </p>
-                                                                {c.badge && (
-                                                                    <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                                                                )}
                                                             </div>
                                                             <p className="text-slate-500 text-xs font-mono">{c.displayId}</p>
                                                         </div>

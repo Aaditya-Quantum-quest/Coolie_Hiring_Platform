@@ -86,7 +86,7 @@ const getAllCoolies = async (req, res) => {
         let query = `
             SELECT id, coolie_id, name, email, phone, station_name, city,
                    passport_photo_url, verification_status, is_verified, is_active, is_suspended,
-                   rating_avg, total_trips, badge, created_at
+                   rating_avg, total_trips, created_at
             FROM coolies WHERE 1=1`
         const params = []
 

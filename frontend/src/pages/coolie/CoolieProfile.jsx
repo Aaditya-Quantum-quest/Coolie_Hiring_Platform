@@ -3,14 +3,14 @@ import { QRCodeCanvas } from 'qrcode.react'
 import Sidebar from '../../components/Sidebar'
 import {
     User, Phone, MapPin, Shield, Star, Edit3, Camera,
-    Check, X, CreditCard, Download, QrCode, Award, Zap, Package
+    Check, X, CreditCard, Download, Briefcase, Share2, Zap, Package , ShieldCheck , Plus , Mail , Globe , Calendar , Clock , Building2, FileText , Eye, Image
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useApp } from '../../context/AppContext'
 import { coolieProfileService } from '../../services/coolieService'
 
 export default function CoolieProfile() {
-    const { user } = useApp()
+    const {     user } = useApp()
 
     const downloadQR = () => {
         const canvas = document.getElementById('coolie-qr-canvas');
@@ -27,14 +27,20 @@ export default function CoolieProfile() {
     };
 
     const [loading, setLoading] = useState(true)
+    const calculateAge = (dob) => {
+        if (!dob) return '—'
+        const birthDate = new Date(dob)
+        const diff = Date.now() - birthDate.getTime()
+        return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25))
+    }
+
     const [profile, setProfile] = useState({
         name: user?.name || 'Coolie',
         id: user?.coolie_id || 'PENDING',
-        badge: user?.badge || 'New Member',
         station: user?.station_name || 'N/A',
         stationZone: 'Zone: Indian Railways',
         platforms: user?.working_platforms || [],
-        age: user?.age || '—',
+        age: user?.age || (user?.date_of_birth ? calculateAge(user.date_of_birth) : '—'),
         languages: user?.languages_spoken || [],
         memberSince: user?.created_at
             ? new Date(user.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -60,6 +66,15 @@ export default function CoolieProfile() {
         secondary_doc_front_url: '',
         secondary_doc_back_url: '',
         passport_photo_url: '',
+        phone: user?.phone || '—',
+        altPhone: user?.alt_phone || '—',
+        dateOfBirth: user?.date_of_birth || '—',
+        address: user?.address || '—',
+        city: user?.city || '—',
+        state: user?.state || '—',
+        pincode: user?.pincode || '—',
+        stationCode: user?.station_code || '—',
+        gender: user?.gender || '—',
     })
 
     useEffect(() => {
@@ -86,14 +101,17 @@ export default function CoolieProfile() {
 
                 if (response.success && response.data) {
                     const data = response.data
+                    console.log('DEBUG: Profile data received:', data)
+                    console.log('DEBUG: date_of_birth:', data.date_of_birth)
+                    console.log('DEBUG: age:', data.age)
+                    console.log('DEBUG: calculated age:', calculateAge(data.date_of_birth))
                     setProfile(prev => ({
                         ...prev,
                         name: data.name || user?.name || 'Coolie',
                         id: data.coolie_id || user?.coolie_id || 'PENDING',
-                        badge: data.badge || user?.badge || 'New Member',
                         station: data.station_name || user?.station_name || 'N/A',
                         platforms: data.working_platforms || user?.working_platforms || [],
-                        age: data.age || user?.age || '—',
+                        age: data.age || (data.date_of_birth ? calculateAge(data.date_of_birth) : (user?.age || '—')),
                         languages: data.languages_spoken || user?.languages_spoken || [],
                         memberSince: data.created_at
                             ? new Date(data.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -116,7 +134,16 @@ export default function CoolieProfile() {
                             ? new Date(data.level2_approved_at).toLocaleDateString()
                             : data.created_at
                                 ? new Date(data.created_at).toLocaleDateString()
-                                : '—'
+                                : '—',
+                        phone: data.phone || user?.phone || '—',
+                        altPhone: data.alt_phone || user?.alt_phone || '—',
+                        dateOfBirth: data.date_of_birth || user?.date_of_birth || '—',
+                        address: data.address || user?.address || '—',
+                        city: data.city || user?.city || '—',
+                        state: data.state || user?.state || '—',
+                        pincode: data.pincode || user?.pincode || '—',
+                        stationCode: data.station_code || user?.station_code || '—',
+                        gender: data.gender || user?.gender || '—',
                     }))
                 }
             } catch (error) {
@@ -146,6 +173,9 @@ export default function CoolieProfile() {
 
     const [editingField, setEditingField] = useState(null)
     const [editVal, setEditVal] = useState('')
+    const [langInput, setLangInput] = useState('')
+    const [platformInput, setPlatformInput] = useState('')
+    const [fullscreenDoc, setFullscreenDoc] = useState(null)
 
     const startEdit = (field, value) => {
         setEditingField(field)
@@ -159,8 +189,19 @@ export default function CoolieProfile() {
             return
         }
 
+        const fieldMap = {
+            phone: 'phone',
+            altPhone: 'alt_phone',
+        }
+        const backendField = fieldMap[editingField] || editingField
+        const whitelist = ['phone', 'alt_phone']
+        if (!whitelist.includes(backendField)) {
+            toast.error('This field cannot be updated')
+            return
+        }
+
         try {
-            const updateData = { [editingField]: editVal }
+            const updateData = { [backendField]: editVal }
             await coolieProfileService.updateProfile(coolieId, updateData)
             setProfile(p => ({ ...p, [editingField]: editVal }))
             setEditingField(null)
@@ -176,14 +217,92 @@ export default function CoolieProfile() {
         setEditVal('')
     }
 
-    const togglePlatform = (pf) => {
-        setProfile(p => ({
-            ...p,
-            platforms: p.platforms.includes(pf)
-                ? p.platforms.filter(x => x !== pf)
-                : [...p.platforms, pf]
-        }))
+    const saveLanguages = async (newLanguages) => {
+        const coolieId = user?.coolie_id || user?.id
+        if (!coolieId || coolieId === 'pending-id' || coolieId === 'undefined') {
+            toast.error('Invalid coolie ID')
+            return
+        }
+        try {
+            await coolieProfileService.updateProfile(coolieId, { languages_spoken: newLanguages })
+            setProfile(p => ({ ...p, languages: newLanguages }))
+            toast.success('Languages updated!')
+        } catch (error) {
+            console.error('Error updating languages:', error)
+            toast.error('Failed to update languages')
+        }
     }
+
+    const savePlatforms = async (newPlatforms) => {
+        const coolieId = user?.coolie_id || user?.id
+        if (!coolieId || coolieId === 'pending-id' || coolieId === 'undefined') {
+            toast.error('Invalid coolie ID')
+            return
+        }
+        try {
+            await coolieProfileService.updateProfile(coolieId, { working_platforms: newPlatforms })
+            setProfile(p => ({ ...p, platforms: newPlatforms }))
+            toast.success('Platforms updated!')
+        } catch (error) {
+            console.error('Error updating platforms:', error)
+            toast.error('Failed to update platforms')
+        }
+    }
+
+    const addLanguage = () => {
+        const lang = langInput.trim()
+        if (!lang) return
+        if (profile.languages.includes(lang)) {
+            toast.error('Language already added')
+            return
+        }
+        const updated = [...profile.languages, lang]
+        setLangInput('')
+        saveLanguages(updated)
+    }
+
+    const removeLanguage = (lang) => {
+        const updated = profile.languages.filter(l => l !== lang)
+        saveLanguages(updated)
+    }
+
+    const addPlatform = () => {
+        const pf = platformInput.trim()
+        if (!pf) return
+        if (profile.platforms.includes(pf)) {
+            toast.error('Platform already added')
+            return
+        }
+        const updated = [...profile.platforms, pf]
+        setPlatformInput('')
+        savePlatforms(updated)
+    }
+
+    const removePlatform = (pf) => {
+        const updated = profile.platforms.filter(p => p !== pf)
+        savePlatforms(updated)
+    }
+
+    const openFullscreen = (doc) => {
+        if (doc.url) {
+            setFullscreenDoc(doc)
+        }
+    }
+
+    const closeFullscreen = () => {
+        setFullscreenDoc(null)
+    }
+
+    // ESC key handler for fullscreen document
+    useEffect(() => {
+        const handleEsc = (e) => {
+            if (e.key === 'Escape' && fullscreenDoc) {
+                closeFullscreen()
+            }
+        }
+        window.addEventListener('keydown', handleEsc)
+        return () => window.removeEventListener('keydown', handleEsc)
+    }, [fullscreenDoc])
 
     const Field = ({ label, field, editable = false }) => {
         const val = profile[field]
@@ -323,7 +442,7 @@ export default function CoolieProfile() {
                             
                             <div className="bg-[#1C1C2D]/80 backdrop-blur-xl border border-white/10 rounded-[3rem] p-10 md:p-14 flex flex-col lg:flex-row items-center lg:items-end gap-12 relative overflow-hidden shadow-2xl">
                                 
-                                {/* Profile Image & Badge */}
+                                {/* Profile Image */}
                                 <div className="relative shrink-0">
                                     <div className="w-40 h-40 md:w-48 md:h-48 rounded-full border-[6px] border-[#2D2D44] overflow-hidden bg-[#12102A] shadow-[0_0_50px_rgba(123,47,255,0.3)] transition-all duration-700 group-hover:scale-105 group-hover:rotate-2">
                                         <img
@@ -335,9 +454,6 @@ export default function CoolieProfile() {
                                     <button className="absolute bottom-2 right-2 w-12 h-12 bg-[#7B2FFF] rounded-full border-4 border-[#1C1C2D] flex items-center justify-center text-white hover:bg-[#9D5BFF] hover:scale-110 transition-all shadow-xl z-20">
                                         <Camera size={20} />
                                     </button>
-                                    <div className="absolute -top-4 -left-4 bg-yellow-400 text-black px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-tighter shadow-lg rotate-[-12deg] z-10 border-2 border-[#1C1C2D]">
-                                        {profile.badge || 'PRO'} LEVEL
-                                    </div>
                                 </div>
 
                                 {/* Name & Quick Stats */}
@@ -352,10 +468,6 @@ export default function CoolieProfile() {
                                     
                                     <div className="flex flex-wrap justify-center lg:justify-start gap-6 mb-10 text-slate-400 font-medium">
                                         <span className="flex items-center gap-2.5 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
-                                            <Briefcase size={20} className="text-[#7B2FFF]" /> 
-                                            Senior Logistics Specialist
-                                        </span>
-                                        <span className="flex items-center gap-2.5 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
                                             <MapPin size={20} className="text-[#A855F7]" /> 
                                             {profile.station}
                                         </span>
@@ -366,12 +478,6 @@ export default function CoolieProfile() {
                                     </div>
 
                                     <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
-                                        <button 
-                                            onClick={() => startEdit('name', profile.name)}
-                                            className="px-10 py-4 bg-[#5D46FF] hover:bg-[#725DFF] text-white rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-3 transition-all shadow-[0_10px_30px_rgba(93,70,255,0.4)] hover:-translate-y-1 active:translate-y-0"
-                                        >
-                                            <Edit3 size={20} /> Edit Profile
-                                        </button>
                                         <button 
                                             onClick={() => toast.success('Profile link copied!')}
                                             className="px-10 py-4 bg-[#2D2D44] hover:bg-[#3D3D5A] text-slate-300 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-3 transition-all hover:-translate-y-1 active:translate-y-0"
@@ -432,32 +538,40 @@ export default function CoolieProfile() {
                                             <p className="text-[#7B2FFF] text-[10px] font-bold uppercase">{profile.stationZone || 'Main Terminal'}</p>
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Experience</p>
-                                            <p className="text-white font-black text-xl tracking-tight">4+ Years</p>
-                                            <p className="text-orange-400 text-[10px] font-bold uppercase">Senior Grade</p>
-                                        </div>
-                                        <div className="space-y-1">
                                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Deliveries</p>
                                             <p className="text-white font-black text-xl tracking-tight">{profile.totalTrips.toLocaleString()}+</p>
                                             <p className="text-green-400 text-[10px] font-bold uppercase">99% Success</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Vehicle</p>
-                                            <p className="text-white font-black text-xl tracking-tight">Dolly S3</p>
-                                            <p className="text-slate-500 text-[10px] font-bold uppercase">Standard Issue</p>
                                         </div>
                                     </div>
                                     <div className="mt-10 pt-10 border-t border-white/5">
                                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Platform Coverage</p>
                                         <div className="flex flex-wrap gap-2">
-                                            {['01', '02', '05', '08', '12', '14'].map(pf => (
-                                                <span key={pf} className="w-10 h-10 rounded-xl bg-[#0A0814] border border-white/5 flex items-center justify-center text-xs font-black text-white hover:border-[#7B2FFF] hover:text-[#7B2FFF] cursor-default transition-all">
+                                            {profile.platforms.map(pf => (
+                                                <span key={pf} className="relative group/pf w-10 h-10 rounded-xl bg-[#0A0814] border border-white/5 flex items-center justify-center text-xs font-black text-white hover:border-[#7B2FFF] hover:text-[#7B2FFF] cursor-default transition-all">
                                                     {pf}
+                                                    <button
+                                                        onClick={() => removePlatform(pf)}
+                                                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover/pf:opacity-100 transition-opacity"
+                                                    >
+                                                        <X size={10} />
+                                                    </button>
                                                 </span>
                                             ))}
-                                            <button className="w-10 h-10 rounded-xl bg-white/5 border border-dashed border-white/10 flex items-center justify-center text-slate-500 hover:text-white transition-all">
-                                                <Plus size={16} />
-                                            </button>
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    value={platformInput}
+                                                    onChange={e => setPlatformInput(e.target.value)}
+                                                    onKeyDown={e => e.key === 'Enter' && addPlatform()}
+                                                    placeholder="Add"
+                                                    className="w-16 h-10 rounded-xl bg-[#0A0814] border border-white/10 text-white text-xs font-bold text-center outline-none focus:border-[#7B2FFF] placeholder:text-[10px] placeholder:text-slate-600"
+                                                />
+                                                <button
+                                                    onClick={addPlatform}
+                                                    className="w-10 h-10 rounded-xl bg-white/5 border border-dashed border-white/10 flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all"
+                                                >
+                                                    <Plus size={16} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -470,43 +584,151 @@ export default function CoolieProfile() {
                                         </div>
                                         <h2 className="text-2xl font-black text-white tracking-tight">Personal Profile</h2>
                                     </div>
-                                    <div className="space-y-8">
+                                    <div className="space-y-6">
+                                        {/* Name — read only */}
                                         <div className="flex justify-between items-center group/item">
-                                            <div>
+                                            <div className="flex-1">
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Full Name</p>
+                                                <p className="text-white font-bold">{profile.name}</p>
+                                            </div>
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                <User size={14} />
+                                            </div>
+                                        </div>
+
+                                        {/* Email — read only */}
+                                        <div className="flex justify-between items-center group/item">
+                                            <div className="flex-1">
                                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email Address</p>
-                                                <p className="text-white font-bold group-hover/item:text-[#7B2FFF] transition-colors">{user?.email || 'alex.m@coolieseva.com'}</p>
+                                                <p className="text-white font-bold">{user?.email || profile.email || '—'}</p>
                                             </div>
                                             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
                                                 <Mail size={14} />
                                             </div>
                                         </div>
+
+                                        {/* Phone — editable */}
                                         <div className="flex justify-between items-center group/item">
-                                            <div>
+                                            <div className="flex-1">
                                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Phone Number</p>
-                                                <p className="text-white font-bold group-hover/item:text-[#7B2FFF] transition-colors">{user?.phone || '+91 98765 43210'}</p>
+                                                {editingField === 'phone' ? (
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <input
+                                                            autoFocus
+                                                            className="flex-1 bg-[#1E1A40] border border-[#7B2FFF] rounded-lg px-3 py-1.5 text-white text-sm outline-none"
+                                                            value={editVal}
+                                                            onChange={e => setEditVal(e.target.value)}
+                                                        />
+                                                        <button onClick={saveEdit} className="w-7 h-7 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center hover:bg-green-500/40 transition-colors">
+                                                            <Check size={13} />
+                                                        </button>
+                                                        <button onClick={cancelEdit} className="w-7 h-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500/40 transition-colors">
+                                                            <X size={13} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-white font-bold">{profile.phone}</p>
+                                                        <button
+                                                            onClick={() => startEdit('phone', profile.phone === '—' ? '' : profile.phone)}
+                                                            className="text-[#6B6188] hover:text-[#A855F7] transition-all"
+                                                        >
+                                                            <Edit3 size={13} />
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
                                                 <Phone size={14} />
                                             </div>
                                         </div>
+
+                                        {/* Alt Phone — read only (display only) */}
                                         <div className="flex justify-between items-center group/item">
-                                            <div>
-                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Languages</p>
-                                                <p className="text-white font-bold group-hover/item:text-[#7B2FFF] transition-colors">
-                                                    {profile.languages.join(', ') || 'English, Hindi, Punjabi'}
-                                                </p>
+                                            <div className="flex-1">
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Alternate Phone</p>
+                                                <p className="text-white font-bold">{profile.altPhone}</p>
                                             </div>
                                             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
-                                                <Globe size={14} />
+                                                <Phone size={14} />
                                             </div>
                                         </div>
+
+                                        {/* DOB — read only */}
                                         <div className="flex justify-between items-center group/item">
-                                            <div>
-                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Age & Gender</p>
-                                                <p className="text-white font-bold group-hover/item:text-[#7B2FFF] transition-colors">{profile.age} Years • Male</p>
+                                            <div className="flex-1">
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Date of Birth</p>
+                                                <p className="text-white font-bold">{profile.dateOfBirth !== '—' ? new Date(profile.dateOfBirth).toLocaleDateString('en-IN') : '—'}</p>
                                             </div>
                                             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
                                                 <Calendar size={14} />
+                                            </div>
+                                        </div>
+
+                                        {/* Age & Gender — read only */}
+                                        <div className="flex justify-between items-center group/item">
+                                            <div className="flex-1">
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Age & Gender</p>
+                                                <p className="text-white font-bold">{profile.age} Years • {profile.gender ? (profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)) : (user?.gender ? (user.gender.charAt(0).toUpperCase() + user.gender.slice(1)) : '—')}</p>
+                                            </div>
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                <Calendar size={14} />
+                                            </div>
+                                        </div>
+
+                                        {/* Address — read only */}
+                                        <div className="flex justify-between items-center group/item">
+                                            <div className="flex-1">
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Address</p>
+                                                <p className="text-white font-bold text-sm">{profile.address}</p>
+                                                <p className="text-[#6B6188] text-xs">{profile.city}, {profile.state} — {profile.pincode}</p>
+                                            </div>
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                <MapPin size={14} />
+                                            </div>
+                                        </div>
+
+                                        {/* Station Code — read only */}
+                                        <div className="flex justify-between items-center group/item">
+                                            <div className="flex-1">
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Station Code</p>
+                                                <p className="text-white font-bold">{profile.stationCode}</p>
+                                            </div>
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                <MapPin size={14} />
+                                            </div>
+                                        </div>
+
+                                        {/* Languages — editable add/remove */}
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Languages Spoken</p>
+                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                {profile.languages.map(lang => (
+                                                    <span key={lang} className="relative group/lang inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1E1A40] border border-white/10 text-white text-xs font-semibold">
+                                                        {lang}
+                                                        <button
+                                                            onClick={() => removeLanguage(lang)}
+                                                            className="text-slate-500 hover:text-red-400 transition-colors"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    value={langInput}
+                                                    onChange={e => setLangInput(e.target.value)}
+                                                    onKeyDown={e => e.key === 'Enter' && addLanguage()}
+                                                    placeholder="Add language..."
+                                                    className="flex-1 bg-[#0A0814] border border-white/10 rounded-xl px-4 py-2 text-white text-sm outline-none focus:border-[#7B2FFF] placeholder:text-slate-600"
+                                                />
+                                                <button
+                                                    onClick={addLanguage}
+                                                    className="w-9 h-9 rounded-xl bg-[#7B2FFF]/10 border border-[#7B2FFF]/20 flex items-center justify-center text-[#7B2FFF] hover:bg-[#7B2FFF] hover:text-white transition-all"
+                                                >
+                                                    <Plus size={16} />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -536,14 +758,6 @@ export default function CoolieProfile() {
                                         <p className="text-[10px] opacity-70 font-bold uppercase mt-1">Verified on {profile.verifiedDate}</p>
                                     </div>
                                     
-                                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Health Inspection</span>
-                                            <Clock size={16} />
-                                        </div>
-                                        <p className="text-xl font-black">DUE IN 14 DAYS</p>
-                                        <p className="text-[10px] opacity-70 font-bold uppercase mt-1">Renewal Required soon</p>
-                                    </div>
                                 </div>
                             </div>
 
@@ -601,9 +815,6 @@ export default function CoolieProfile() {
                                     <p className="text-slate-500 font-medium">Official Government Verification Proofs</p>
                                 </div>
                             </div>
-                            <button className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3 transition-all">
-                                Manage Vault <Plus size={16} />
-                            </button>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -613,7 +824,7 @@ export default function CoolieProfile() {
                                 { label: 'Secondary Proof', url: profile.secondary_doc_front_url },
                                 { label: 'License Copy', url: profile.secondary_doc_back_url }
                             ].map((doc, i) => (
-                                <div key={i} className="group/item relative aspect-[1.4/1] rounded-[2rem] bg-[#0A0814] border border-white/5 overflow-hidden cursor-pointer hover:border-[#7B2FFF]/50 transition-all duration-500">
+                                <div key={i} className="group/item relative aspect-[1.4/1] rounded-[2rem] bg-[#0A0814] border border-white/5 overflow-hidden cursor-pointer hover:border-[#7B2FFF]/50 transition-all duration-500" onClick={() => openFullscreen(doc)}>
                                     {doc.url ? (
                                         <img src={doc.url} alt={doc.label} className="w-full h-full object-cover opacity-40 group-hover/item:opacity-100 group-hover/item:scale-110 transition-all duration-700" />
                                     ) : (
@@ -638,6 +849,66 @@ export default function CoolieProfile() {
                     </div>
                 )}
             </main>
+
+            {/* ── FULLSCREEN DOCUMENT VIEWER ── */}
+            {fullscreenDoc && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/95 backdrop-blur-md" onClick={closeFullscreen} />
+                    <div className="relative z-10 max-w-xl max-h-[85vh] w-full">
+                        <div className="bg-[#1C1C35] border border-white/10 rounded-[1.5rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+                            {/* Header */}
+                            <div className="flex items-center justify-between p-4 border-b border-white/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg bg-[#7B2FFF]/10 flex items-center justify-center text-[#7B2FFF]">
+                                        <FileText size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-black text-white">{fullscreenDoc.label}</h3>
+                                        <p className="text-slate-400 text-xs">Click outside or press ESC to close</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={closeFullscreen}
+                                    className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            
+                            {/* Document Image */}
+                            <div className="p-4 bg-black/20">
+                                <div className="relative w-full">
+                                    <img
+                                        src={fullscreenDoc.url}
+                                        alt={fullscreenDoc.label}
+                                        className="w-full h-auto max-h-[65vh] object-contain rounded-lg"
+                                    />
+                                </div>
+                            </div>
+                            
+                            {/* Footer Actions */}
+                            <div className="flex items-center justify-between p-4 border-t border-white/10">
+                                <div className="flex items-center gap-3">
+                                    <a
+                                        href={fullscreenDoc.url}
+                                        download={`${fullscreenDoc.label.replace(/\s+/g, '_')}.jpg`}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-[#7B2FFF]/10 hover:bg-[#7B2FFF]/20 text-[#7B2FFF] rounded-lg text-sm font-semibold transition-all"
+                                    >
+                                        <Download size={14} />
+                                        Download
+                                    </a>
+                                </div>
+                                <button
+                                    onClick={closeFullscreen}
+                                    className="px-4 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold transition-all"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── EDITING OVERLAY ── */}
             {editingField && (

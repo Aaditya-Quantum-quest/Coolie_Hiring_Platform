@@ -742,40 +742,40 @@ export default function RegisterPage() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg-dark)' }}>
+        <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg-dark)', position: 'relative' }}>
 
-            {/* Go Back Button */}
-            <div className="fixed top-4 sm:top-30 left-4 z-50">
+            {/* Go Back Button - Responsive */}
+            <div className="fixed top-4 left-4 z-50 md:top-6 md:left-6 lg:top-28 lg:left-8">
                 <button
                     onClick={handleGoBack}
-                    className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-700/80 hover:border-slate-600/50 hover:text-white transition-all duration-200 group"
+                    className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2.5 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-700/80 hover:border-slate-600/50 hover:text-white transition-all duration-200 group shadow-lg"
                     title="Go back to previous page"
                 >
-                    <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
-                    <span className="text-xs sm:text-sm font-medium hidden sm:block">Go Back</span>
+                    <ArrowLeft size={16} className="md:w-[18px] md:h-[18px] transition-transform group-hover:-translate-x-1" />
+                    <span className="text-xs md:text-sm font-medium">Go Back</span>
                 </button>
             </div>
 
-            {/* ── Animated Left Panel ── */}
+            {/* ── Animated Left Panel ── Hidden on mobile/tablet */}
             <div className="hidden lg:flex lg:w-1/2 xl:w-1/2">
                 <AnimatedLeftPanel />
             </div>
 
             {/* ── Right Form Panel ── */}
-            <div className="w-full lg:w-1/2 xl:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-8" style={{ background: 'var(--bg-dark)' }}>
+            <div className="w-full lg:w-1/2 xl:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-y-auto" style={{ background: 'var(--bg-dark)' }}>
 
-                {/* Mobile logo */}
-                <div className="lg:hidden flex justify-center mb-6">
-                    <div className="login-logo-icon" style={{ width: '40px', height: '40px', fontSize: '18px' }}>C</div>
-                    <span className="login-logo-text" style={{ fontSize: '20px', marginLeft: '8px' }}>CoolieSeva</span>
+                {/* Mobile logo - Only show on small screens */}
+                <div className="lg:hidden fixed top-16 left-1/2 transform -translate-x-1/2 z-40 flex items-center gap-2 sm:top-20">
+                    <div className="login-logo-icon" style={{ width: '36px', height: '36px', fontSize: '16px' }}>C</div>
+                    <span className="login-logo-text" style={{ fontSize: '22px' }}>CoolieSeva</span>
                 </div>
 
-                <div className="login-form-container w-full max-w-md">
-                    <h1 className="login-heading text-center lg:text-left">Create Account</h1>
-                    <p className="login-subheading text-center lg:text-left">Join CoolieSeva and start your journey</p>
+                <div className="login-form-container w-full max-w-md mt-24 sm:mt-28 lg:mt-0 pb-8">
+                    <h1 className="login-heading text-2xl sm:text-3xl md:text-4xl text-center lg:text-left">Create Account</h1>
+                    <p className="login-subheading text-sm sm:text-base text-center lg:text-left">Join CoolieSeva and start your journey</p>
 
                     {/* Account Type Toggle */}
-                    <div className="reg-type-toggle">
+                    <div className="reg-type-toggle grid grid-cols-2 gap-2 sm:gap-3">
                         {[
                             { val: 'customer', icon: <User size={16} />, label: 'Customer', sub: 'Hire a coolie' },
                             { val: 'coolie', icon: <Briefcase size={16} />, label: 'Coolie', sub: 'Earn money' },
@@ -787,8 +787,8 @@ export default function RegisterPage() {
                             >
                                 {t.icon}
                                 <div style={{ textAlign: 'left' }}>
-                                    <p style={{ fontWeight: '700', fontSize: '14px' }}>{t.label}</p>
-                                    <p style={{ fontSize: '11px', opacity: 0.7 }}>{t.sub}</p>
+                                    <p className="text-xs sm:text-sm font-bold">{t.label}</p>
+                                    <p className="text-[10px] sm:text-[11px] opacity-70">{t.sub}</p>
                                 </div>
                             </button>
                         ))}
@@ -796,17 +796,17 @@ export default function RegisterPage() {
 
                     {/* ── Coolie: Step Progress + Steps ── */}
                     {type === 'coolie' && (
-                        <div className="reg-progress">
+                        <div className="reg-progress flex items-center justify-center gap-1 sm:gap-2 my-4 sm:my-5">
                             {[1, 2, 3].map(s => (
                                 <React.Fragment key={s}>
-                                    <div className={`reg-step ${step >= s ? 'reg-step-active' : ''}`}>
+                                    <div className={`reg-step ${step >= s ? 'reg-step-active' : ''} flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2`}>
                                         {step > s
-                                            ? <CheckCircle size={13} />
-                                            : <span className="reg-step-num">{s}</span>
+                                            ? <CheckCircle size={12} className="sm:w-[13px] sm:h-[13px]" />
+                                            : <span className="reg-step-num text-[10px] sm:text-xs">{s}</span>
                                         }
-                                        {s === 1 ? 'Basic' : s === 2 ? 'Address' : 'Identity'}
+                                        <span className="text-[10px] sm:text-xs">{s === 1 ? 'Basic' : s === 2 ? 'Address' : 'Identity'}</span>
                                     </div>
-                                    {s < 3 && <div className="reg-step-connector" />}
+                                    {s < 3 && <div className="reg-step-connector w-4 sm:w-6 md:w-8" />}
                                 </React.Fragment>
                             ))}
                         </div>
@@ -814,22 +814,22 @@ export default function RegisterPage() {
 
                     {/* ── STEP 1 ── */}
                     {step === 1 && (
-                        <div className="login-form space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="login-form space-y-3 sm:space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="login-field">
-                                    <label className="login-label">Full Name *</label>
+                                    <label className="login-label text-xs sm:text-sm">Full Name *</label>
                                     <div className="login-input-wrap">
-                                        <User size={14} className="login-input-icon" />
-                                        <input className="input-field login-input" placeholder="Your full name"
+                                        <User size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                        <input className="input-field login-input text-sm sm:text-base" placeholder="Your full name"
                                             value={form.name} onChange={e => update('name', e.target.value)} />
                                     </div>
                                     <ErrorMsg field="name" />
                                 </div>
                                 <div className="login-field">
-                                    <label className="login-label">Phone *</label>
+                                    <label className="login-label text-xs sm:text-sm">Phone *</label>
                                     <div className="login-input-wrap">
-                                        <Phone size={14} className="login-input-icon" />
-                                        <input className="input-field login-input" placeholder="10-digit mobile"
+                                        <Phone size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                        <input className="input-field login-input text-sm sm:text-base" placeholder="10-digit mobile"
                                             value={form.phone} onChange={e => update('phone', e.target.value)} maxLength={10} />
                                     </div>
                                     <ErrorMsg field="phone" />
@@ -837,24 +837,24 @@ export default function RegisterPage() {
                             </div>
 
                             <div className="login-field">
-                                <label className="login-label">Email Address *</label>
+                                <label className="login-label text-xs sm:text-sm">Email Address *</label>
                                 <div className="login-input-wrap">
-                                    <Mail size={14} className="login-input-icon" />
-                                    <input type="email" className="input-field login-input" placeholder="your@email.com"
+                                    <Mail size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                    <input type="email" className="input-field login-input text-sm sm:text-base" placeholder="your@email.com"
                                         value={form.email} onChange={e => update('email', e.target.value)} />
                                 </div>
                                 <ErrorMsg field="email" />
                             </div>
 
                             <div className="login-field">
-                                <label className="login-label">Password *</label>
+                                <label className="login-label text-xs sm:text-sm">Password *</label>
                                 <div className="login-input-wrap">
-                                    <Lock size={14} className="login-input-icon" />
-                                    <input type={showPass ? 'text' : 'password'} className="input-field login-input"
+                                    <Lock size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                    <input type={showPass ? 'text' : 'password'} className="input-field login-input text-sm sm:text-base"
                                         style={{ paddingRight: '44px' }} placeholder="Min. 8 characters"
                                         value={form.password} onChange={e => update('password', e.target.value)} />
                                     <button type="button" onClick={() => setShowPass(!showPass)} className="login-eye-btn">
-                                        {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                                        {showPass ? <EyeOff size={13} className="sm:w-[14px] sm:h-[14px]" /> : <Eye size={13} className="sm:w-[14px] sm:h-[14px]" />}
                                     </button>
                                 </div>
                                 <ErrorMsg field="password" />
@@ -863,27 +863,27 @@ export default function RegisterPage() {
                             {type === 'coolie' && (
                                 <>
                                     <div className="login-field">
-                                        <label className="login-label">Alternate Phone</label>
+                                        <label className="login-label text-xs sm:text-sm">Alternate Phone</label>
                                         <div className="login-input-wrap">
-                                            <Phone size={14} className="login-input-icon" />
-                                            <input className="input-field login-input" placeholder="Secondary mobile"
+                                            <Phone size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                            <input className="input-field login-input text-sm sm:text-base" placeholder="Secondary mobile"
                                                 value={form.alt_phone} onChange={e => update('alt_phone', e.target.value)} maxLength={10} />
                                         </div>
                                         <ErrorMsg field="alt_phone" />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         <div className="login-field">
-                                            <label className="login-label">Date of Birth *</label>
+                                            <label className="login-label text-xs sm:text-sm">Date of Birth *</label>
                                             <div className="login-input-wrap">
-                                                <input type="date" className="input-field login-input"
+                                                <input type="date" className="input-field login-input text-sm sm:text-base"
                                                     value={form.date_of_birth} onChange={e => update('date_of_birth', e.target.value)} />
                                             </div>
                                             <ErrorMsg field="date_of_birth" />
                                         </div>
                                         <div className="login-field">
-                                            <label className="login-label">Gender *</label>
+                                            <label className="login-label text-xs sm:text-sm">Gender *</label>
                                             <div className="login-input-wrap">
-                                                <select className="input-field login-input"
+                                                <select className="input-field login-input text-sm sm:text-base"
                                                     value={form.gender} onChange={e => update('gender', e.target.value)}>
                                                     <option value="male">Male</option>
                                                     <option value="female">Female</option>
@@ -899,25 +899,25 @@ export default function RegisterPage() {
                             {/* Emergency Contact (customer only) */}
                             {type === 'customer' && (
                                 <div className="login-field">
-                                    <label className="login-label">Emergency Contact</label>
+                                    <label className="login-label text-xs sm:text-sm">Emergency Contact</label>
                                     <div className="login-input-wrap">
-                                        <Phone size={14} className="login-input-icon" />
-                                        <input className="input-field login-input" placeholder="Emergency contact number"
+                                        <Phone size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                        <input className="input-field login-input text-sm sm:text-base" placeholder="Emergency contact number"
                                             value={form.emergencyContact} onChange={e => update('emergencyContact', e.target.value)} />
                                     </div>
                                 </div>
                             )}
 
                             {type === 'coolie' ? (
-                                <button onClick={handleNext} className="btn-primary login-submit-btn">
-                                    Continue <ArrowRight size={16} />
+                                <button onClick={handleNext} className="btn-primary login-submit-btn w-full py-3 sm:py-4 text-sm sm:text-base mt-4 sm:mt-5">
+                                    Continue <ArrowRight size={15} className="sm:w-4 sm:h-4" />
                                 </button>
                             ) : (
                                 <form onSubmit={handleSubmit}>
-                                    <button type="submit" disabled={loading} className="btn-primary login-submit-btn">
+                                    <button type="submit" disabled={loading} className="btn-primary login-submit-btn w-full py-3 sm:py-4 text-sm sm:text-base mt-4 sm:mt-5">
                                         {loading
-                                            ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            : <><Rocket size={15} /> Create Account</>
+                                            ? <span className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            : <><Rocket size={14} className="sm:w-[15px] sm:h-[15px]" /> Create Account</>
                                         }
                                     </button>
                                 </form>
@@ -927,45 +927,45 @@ export default function RegisterPage() {
 
                     {/* ── STEP 2 ── */}
                     {step === 2 && type === 'coolie' && (
-                        <div className="login-form space-y-4">
+                        <div className="login-form space-y-3 sm:space-y-4">
 
                             <div className="login-field relative" ref={suggestionRef}>
-                                <label className="login-label">Home Station *</label>
+                                <label className="login-label text-xs sm:text-sm">Home Station *</label>
                                 <div className="login-input-wrap">
-                                    <MapPin size={14} className="login-input-icon" />
+                                    <MapPin size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
                                     <input
-                                        className="input-field login-input"
+                                        className="input-field login-input text-sm sm:text-base"
                                         placeholder="Search station (e.g. RMU, NDLS)"
                                         value={form.station_name}
                                         onChange={e => handleStationSearch(e.target.value)}
                                         onFocus={() => { if (stationSuggestions.length > 0) setShowSuggestions(true) }}
                                     />
                                     {searchingStations && (
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                                            <div className="w-4 h-4 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
+                                        <div className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2">
+                                            <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
                                         </div>
                                     )}
                                 </div>
                                 <ErrorMsg field="station_name" />
                                 {form.station_code && (
-                                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', marginLeft: '4px' }}>
+                                    <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1 ml-1">
                                         Selected Code: <span className="text-orange-400 font-bold">{form.station_code}</span>
                                     </p>
                                 )}
                                 {showSuggestions && stationSuggestions.length > 0 && (
-                                    <div className="absolute left-0 right-0 top-[100%] mt-1 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden z-[100] shadow-2xl max-h-[220px] overflow-y-auto">
+                                    <div className="absolute left-0 right-0 top-[100%] mt-1 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden z-[100] shadow-2xl max-h-[180px] sm:max-h-[220px] overflow-y-auto">
                                         {stationSuggestions.map((s, idx) => (
                                             <button
                                                 key={idx}
                                                 type="button"
-                                                className="w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors border-b border-slate-800 last:border-none flex items-center justify-between group"
+                                                className="w-full text-left px-3 py-2 sm:px-4 sm:py-3 hover:bg-slate-800 transition-colors border-b border-slate-800 last:border-none flex items-center justify-between group"
                                                 onClick={() => selectStation(s)}
                                             >
                                                 <div>
-                                                    <p className="text-white font-semibold group-hover:text-orange-400 transition-colors">{s.station_name}</p>
-                                                    <p className="text-slate-500 text-xs uppercase">{s.station_code}</p>
+                                                    <p className="text-white text-xs sm:text-sm font-semibold group-hover:text-orange-400 transition-colors">{s.station_name}</p>
+                                                    <p className="text-slate-500 text-[10px] sm:text-xs uppercase">{s.station_code}</p>
                                                 </div>
-                                                <ArrowRight size={14} className="text-slate-600 group-hover:translate-x-1 transition-all" />
+                                                <ArrowRight size={12} className="sm:w-[14px] sm:h-[14px] text-slate-600 group-hover:translate-x-1 transition-all" />
                                             </button>
                                         ))}
                                     </div>
@@ -973,30 +973,30 @@ export default function RegisterPage() {
                             </div>
 
                             <div className="login-field">
-                                <label className="login-label">Home Address *</label>
+                                <label className="login-label text-xs sm:text-sm">Home Address *</label>
                                 <div className="login-input-wrap">
-                                    <MapPin size={14} className="login-input-icon" />
-                                    <input className="input-field login-input" placeholder="House no, Street, Area"
+                                    <MapPin size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                    <input className="input-field login-input text-sm sm:text-base" placeholder="House no, Street, Area"
                                         value={form.address} onChange={e => update('address', e.target.value)} />
                                 </div>
                                 <ErrorMsg field="address" />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="login-field">
-                                    <label className="login-label">City *</label>
+                                    <label className="login-label text-xs sm:text-sm">City *</label>
                                     <div className="login-input-wrap">
-                                        <Building2 size={14} className="login-input-icon" />
-                                        <input className="input-field login-input" placeholder="City"
+                                        <Building2 size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                        <input className="input-field login-input text-sm sm:text-base" placeholder="City"
                                             value={form.city} onChange={e => update('city', e.target.value)} />
                                     </div>
                                     <ErrorMsg field="city" />
                                 </div>
                                 <div className="login-field">
-                                    <label className="login-label">State *</label>
+                                    <label className="login-label text-xs sm:text-sm">State *</label>
                                     <div className="login-input-wrap">
-                                        <MapPin size={14} className="login-input-icon" />
-                                        <input className="input-field login-input" placeholder="State"
+                                        <MapPin size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                        <input className="input-field login-input text-sm sm:text-base" placeholder="State"
                                             value={form.state} onChange={e => update('state', e.target.value)} />
                                     </div>
                                     <ErrorMsg field="state" />
@@ -1004,17 +1004,17 @@ export default function RegisterPage() {
                             </div>
 
                             <div className="login-field">
-                                <label className="login-label">Pincode *</label>
+                                <label className="login-label text-xs sm:text-sm">Pincode *</label>
                                 <div className="login-input-wrap">
-                                    <MapPin size={14} className="login-input-icon" />
-                                    <input className="input-field login-input" placeholder="6-digit pincode"
+                                    <MapPin size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                    <input className="input-field login-input text-sm sm:text-base" placeholder="6-digit pincode"
                                         value={form.pincode} onChange={e => update('pincode', e.target.value)} maxLength={6} />
                                 </div>
                                 <ErrorMsg field="pincode" />
                             </div>
 
-                            <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-                                <button type="button" onClick={() => setStep(1)} className="btn-secondary" style={{ flex: 1 }}>
+                            <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-5">
+                                <button type="button" onClick={() => setStep(1)} className="btn-secondary flex-1 py-2.5 sm:py-3 text-sm sm:text-base">
                                     ← Back
                                 </button>
                                 <button type="button" onClick={() => {
@@ -1022,8 +1022,8 @@ export default function RegisterPage() {
                                         toast.error('Please fill all address details'); return;
                                     }
                                     setStep(3)
-                                }} className="btn-primary login-submit-btn" style={{ flex: 2 }}>
-                                    Continue <ArrowRight size={16} />
+                                }} className="btn-primary login-submit-btn flex-[2] py-2.5 sm:py-3 text-sm sm:text-base">
+                                    Continue <ArrowRight size={15} className="sm:w-4 sm:h-4" />
                                 </button>
                             </div>
                         </div>
@@ -1031,46 +1031,45 @@ export default function RegisterPage() {
 
                     {/* ── STEP 3 ── */}
                     {step === 3 && type === 'coolie' && (
-                        <form onSubmit={handleSubmit} className="login-form space-y-6">
+                        <form onSubmit={handleSubmit} className="login-form space-y-4 sm:space-y-5 md:space-y-6">
 
                             {/* Section: Profile Photo */}
                             <div className="login-section">
-                                <h3 className="section-title text-[14px] font-bold text-white mb-3">1. Passport Photo</h3>
-                                <label className="reg-upload-box" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', border: '2px dashed var(--border-color)', borderRadius: '12px' }}>
+                                <h3 className="section-title text-xs sm:text-sm md:text-[14px] font-bold text-white mb-2 sm:mb-3">1. Passport Photo</h3>
+                                <label className="reg-upload-box cursor-pointer flex flex-col items-center justify-center p-4 sm:p-5 border-2 border-dashed border-slate-700 rounded-xl hover:border-slate-600 transition-colors">
                                     <input type="file" accept=".jpg,.jpeg,.png" style={{ display: 'none' }}
                                         onChange={(e) => setPhotoFile(e.target.files[0])} />
                                     {photoFile ? (
                                         <div className="flex flex-col items-center">
-                                            <CheckCircle size={24} className="text-green-500 mb-2" />
-                                            <p className="text-sm font-medium text-white">{photoFile.name}</p>
+                                            <CheckCircle size={20} className="sm:w-6 sm:h-6 text-green-500 mb-2" />
+                                            <p className="text-xs sm:text-sm font-medium text-white text-center">{photoFile.name}</p>
                                         </div>
                                     ) : (
                                         <div className="flex flex-col items-center text-slate-400">
-                                            <Upload size={24} className="mb-2" />
-                                            <p className="text-sm">Upload passport size photo</p>
+                                            <Upload size={20} className="sm:w-6 sm:h-6 mb-2" />
+                                            <p className="text-xs sm:text-sm">Upload passport size photo</p>
                                         </div>
                                     )}
                                 </label>
                             </div>
 
                             {/* Section: Basic Stats */}
-                            <div className="login-section grid grid-cols-2 gap-4">
+                            <div className="login-section grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="login-field">
-                                    <label className="login-label">Age *</label>
+                                    <label className="login-label text-xs sm:text-sm">Age *</label>
                                     <div className="login-input-wrap">
-                                        <User size={14} className="login-input-icon" />
-                                        <input type="number" className="input-field login-input" placeholder="Age"
+                                        <User size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                        <input type="number" className="input-field login-input text-sm sm:text-base" placeholder="Age"
                                             value={form.age} onChange={e => update('age', e.target.value)} min="18" max="65" />
                                     </div>
                                     <ErrorMsg field="age" />
                                 </div>
                                 <div className="login-field">
-                                    <label className="login-label">Languages Known</label>
-                                    <div className="flex flex-wrap gap-2 mt-2">
+                                    <label className="login-label text-xs sm:text-sm">Languages Known</label>
+                                    <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2">
                                         {['Hindi', 'English', 'Punjabi', 'Bengali'].map(lang => (
                                             <button type="button" key={lang} onClick={() => toggleLang(lang)}
-                                                className={`reg-lang-tag ${form.languages.includes(lang) ? 'reg-lang-tag-active' : ''}`}
-                                                style={{ fontSize: '11px', padding: '4px 10px' }}>
+                                                className={`reg-lang-tag ${form.languages.includes(lang) ? 'reg-lang-tag-active' : ''} text-[10px] sm:text-[11px] px-2 py-1 sm:px-2.5 sm:py-1.5`}>
                                                 {lang}
                                             </button>
                                         ))}
@@ -1079,40 +1078,40 @@ export default function RegisterPage() {
                             </div>
 
                             {/* Section: Aadhaar Card */}
-                            <div className="login-section p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50">
-                                <h3 className="section-title text-[13px] font-bold text-orange-400 mb-4 flex items-center gap-2">
-                                    <Shield size={16} /> Aadhaar Card (Primary ID)
+                            <div className="login-section p-3 sm:p-4 bg-slate-800/50 rounded-xl sm:rounded-2xl border border-slate-700/50">
+                                <h3 className="section-title text-xs sm:text-[13px] font-bold text-orange-400 mb-3 sm:mb-4 flex items-center gap-2">
+                                    <Shield size={14} className="sm:w-4 sm:h-4" /> Aadhaar Card (Primary ID)
                                 </h3>
-                                <div className="login-field mb-4">
-                                    <label className="login-label">Aadhaar Number *</label>
+                                <div className="login-field mb-3 sm:mb-4">
+                                    <label className="login-label text-xs sm:text-sm">Aadhaar Number *</label>
                                     <div className="login-input-wrap">
-                                        <CreditCard size={14} className="login-input-icon" />
-                                        <input className="input-field login-input" placeholder="12-digit number"
+                                        <CreditCard size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                        <input className="input-field login-input text-sm sm:text-base" placeholder="12-digit number"
                                             value={form.aadhaar_number} onChange={e => update('aadhaar_number', e.target.value)} maxLength={12} />
                                     </div>
                                     <ErrorMsg field="aadhaar_number" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                                    <label className="reg-upload-box h-20 sm:h-24 border-dashed border-2 flex items-center justify-center rounded-lg sm:rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
                                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setAadhaarFront(e.target.files[0])} />
-                                        {aadhaarFront ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400" />Front Side</div>}
+                                        {aadhaarFront ? <CheckCircle size={20} className="sm:w-6 sm:h-6 text-green-500" /> : <div className="text-center text-[10px] sm:text-xs text-slate-500"><Upload size={16} className="sm:w-[18px] sm:h-[18px] mx-auto mb-1 text-slate-400" />Front Side</div>}
                                     </label>
-                                    <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
+                                    <label className="reg-upload-box h-20 sm:h-24 border-dashed border-2 flex items-center justify-center rounded-lg sm:rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
                                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setAadhaarBack(e.target.files[0])} />
-                                        {aadhaarBack ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400" />Back Side</div>}
+                                        {aadhaarBack ? <CheckCircle size={20} className="sm:w-6 sm:h-6 text-green-500" /> : <div className="text-center text-[10px] sm:text-xs text-slate-500"><Upload size={16} className="sm:w-[18px] sm:h-[18px] mx-auto mb-1 text-slate-400" />Back Side</div>}
                                     </label>
                                 </div>
                             </div>
 
                             {/* Section: Secondary ID */}
-                            <div className="login-section p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50">
-                                <h3 className="section-title text-[13px] font-bold text-blue-400 mb-4 flex items-center gap-2">
-                                    <Shield size={16} /> Secondary Document
+                            <div className="login-section p-3 sm:p-4 bg-slate-800/50 rounded-xl sm:rounded-2xl border border-slate-700/50">
+                                <h3 className="section-title text-xs sm:text-[13px] font-bold text-blue-400 mb-3 sm:mb-4 flex items-center gap-2">
+                                    <Shield size={14} className="sm:w-4 sm:h-4" /> Secondary Document
                                 </h3>
-                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                                     <div className="login-field">
-                                        <label className="login-label">ID Type *</label>
-                                        <select className="input-field login-input h-[42px]" value={form.secondary_doc_type}
+                                        <label className="login-label text-xs sm:text-sm">ID Type *</label>
+                                        <select className="input-field login-input h-[38px] sm:h-[42px] text-sm sm:text-base" value={form.secondary_doc_type}
                                             onChange={e => update('secondary_doc_type', e.target.value)}>
                                             <option value="voter_id">Voter ID</option>
                                             <option value="pan">PAN Card</option>
@@ -1122,49 +1121,49 @@ export default function RegisterPage() {
                                         <ErrorMsg field="secondary_doc_type" />
                                     </div>
                                     <div className="login-field">
-                                        <label className="login-label">ID Number *</label>
-                                        <input className="input-field login-input h-[42px]" placeholder="Doc Number"
+                                        <label className="login-label text-xs sm:text-sm">ID Number *</label>
+                                        <input className="input-field login-input h-[38px] sm:h-[42px] text-sm sm:text-base" placeholder="Doc Number"
                                             value={form.secondary_doc_number} onChange={e => update('secondary_doc_number', e.target.value)} />
                                         <ErrorMsg field="secondary_doc_number" />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                                    <label className="reg-upload-box h-20 sm:h-24 border-dashed border-2 flex items-center justify-center rounded-lg sm:rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
                                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setSecondaryFront(e.target.files[0])} />
-                                        {secondaryFront ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400" />Front Photo</div>}
+                                        {secondaryFront ? <CheckCircle size={20} className="sm:w-6 sm:h-6 text-green-500" /> : <div className="text-center text-[10px] sm:text-xs text-slate-500"><Upload size={16} className="sm:w-[18px] sm:h-[18px] mx-auto mb-1 text-slate-400" />Front Photo</div>}
                                     </label>
-                                    <label className="reg-upload-box h-24 border-dashed border-2 flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
+                                    <label className="reg-upload-box h-20 sm:h-24 border-dashed border-2 flex items-center justify-center rounded-lg sm:rounded-xl cursor-pointer hover:bg-slate-800 transition-all">
                                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setSecondaryBack(e.target.files[0])} />
-                                        {secondaryBack ? <CheckCircle size={24} className="text-green-500" /> : <div className="text-center text-xs text-slate-500"><Upload size={18} className="mx-auto mb-1 text-slate-400" />Back Photo</div>}
+                                        {secondaryBack ? <CheckCircle size={20} className="sm:w-6 sm:h-6 text-green-500" /> : <div className="text-center text-[10px] sm:text-xs text-slate-500"><Upload size={16} className="sm:w-[18px] sm:h-[18px] mx-auto mb-1 text-slate-400" />Back Photo</div>}
                                     </label>
                                 </div>
                             </div>
 
                             {/* Section: Bank Details */}
                             <div className="login-section">
-                                <h3 className="section-title text-[14px] font-bold text-white flex items-center gap-2 mb-4">
-                                    <Landmark size={16} /> Bank & Payment
+                                <h3 className="section-title text-xs sm:text-sm md:text-[14px] font-bold text-white flex items-center gap-2 mb-3 sm:mb-4">
+                                    <Landmark size={14} className="sm:w-4 sm:h-4" /> Bank & Payment
                                 </h3>
-                                <div className="space-y-4">
+                                <div className="space-y-3 sm:space-y-4">
                                     <div className="login-field">
-                                        <label className="login-label">Bank Name</label>
+                                        <label className="login-label text-xs sm:text-sm">Bank Name</label>
                                         <div className="login-input-wrap">
-                                            <Building2 size={14} className="login-input-icon" />
-                                            <input className="input-field login-input" placeholder="e.g. SBI, HDFC"
+                                            <Building2 size={13} className="login-input-icon sm:w-[14px] sm:h-[14px]" />
+                                            <input className="input-field login-input text-sm sm:text-base" placeholder="e.g. SBI, HDFC"
                                                 value={form.bank_name} onChange={e => update('bank_name', e.target.value)} />
                                         </div>
                                         <ErrorMsg field="bank_name" />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         <div className="login-field">
-                                            <label className="login-label">IFSC Code</label>
-                                            <input className="input-field login-input" placeholder="IFSC"
+                                            <label className="login-label text-xs sm:text-sm">IFSC Code</label>
+                                            <input className="input-field login-input text-sm sm:text-base" placeholder="IFSC"
                                                 value={form.ifsc_code} onChange={e => update('ifsc_code', e.target.value)} />
                                             <ErrorMsg field="ifsc_code" />
                                         </div>
                                         <div className="login-field">
-                                            <label className="login-label">UPI ID</label>
-                                            <input className="input-field login-input" placeholder="yourname@upi"
+                                            <label className="login-label text-xs sm:text-sm">UPI ID</label>
+                                            <input className="input-field login-input text-sm sm:text-base" placeholder="yourname@upi"
                                                 value={form.upi_id} onChange={e => update('upi_id', e.target.value)} />
                                             <ErrorMsg field="upi_id" />
                                         </div>
@@ -1172,89 +1171,41 @@ export default function RegisterPage() {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '12px', marginTop: '30px' }}>
-                                <button type="button" onClick={() => setStep(2)} className="btn-secondary" style={{ flex: 1 }}>
+                            <div className="flex gap-2 sm:gap-3 mt-6 sm:mt-8">
+                                <button type="button" onClick={() => setStep(2)} className="btn-secondary flex-1 py-2.5 sm:py-3 text-sm sm:text-base">
                                     ← Back
                                 </button>
-                                <button type="submit" disabled={loading} className="btn-primary login-submit-btn" style={{ flex: 2 }}>
+                                <button type="submit" disabled={loading} className="btn-primary login-submit-btn flex-[2] py-2.5 sm:py-3 text-sm sm:text-base">
                                     {loading
-                                        ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        : <><Rocket size={15} /> Submit Registration</>
+                                        ? <span className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        : <><Rocket size={14} className="sm:w-[15px] sm:h-[15px]" /> Submit Registration</>
                                     }
                                 </button>
                             </div>
                         </form>
                     )}
 
-                    <p className="login-footer-text" style={{ marginTop: '20px' }}>
+                    <p className="login-footer-text text-xs sm:text-sm mt-4 sm:mt-5">
                         Already have an account?{' '}
                         <Link to="/login" className="login-footer-link">Login here</Link>
                     </p>
 
                     {/* Business Owner Section */}
-                    <div style={{
-                        marginTop: '24px',
-                        padding: '16px 20px',
-                        borderRadius: '12px',
-                        background: 'linear-gradient(135deg, rgba(123, 47, 255, 0.15) 0%, rgba(168, 85, 247, 0.1) 100%)',
-                        border: '1px solid rgba(123, 47, 255, 0.3)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '12px',
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{
-                                width: '44px',
-                                height: '44px',
-                                borderRadius: '10px',
-                                background: 'linear-gradient(135deg, #7B2FFF 0%, #A855F7 100%)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                boxShadow: '0 0 20px rgba(123, 47, 255, 0.3)',
-                            }}>
-                                <Building2 size={22} color="white" />
+                    <div className="mt-4 sm:mt-6 p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-900/15 to-purple-800/10 border border-purple-700/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                                <Building2 size={18} className="sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
                             </div>
                             <div>
-                                <p style={{
-                                    fontSize: '14px',
-                                    fontWeight: '700',
-                                    color: '#fff',
-                                    marginBottom: '2px',
-                                }}>Are you a Business Owner?</p>
-                                <p style={{
-                                    fontSize: '12px',
-                                    color: 'rgba(255,255,255,0.6)',
-                                }}>Register your Restaurant or Hotel</p>
+                                <p className="text-xs sm:text-sm md:text-[14px] font-bold text-white mb-0.5">Are you a Business Owner?</p>
+                                <p className="text-[10px] sm:text-xs text-slate-400">Register your Restaurant or Hotel</p>
                             </div>
                         </div>
                         <Link
                             to="/register/business"
-                            style={{
-                                padding: '10px 18px',
-                                borderRadius: '8px',
-                                background: '#7B2FFF',
-                                color: '#fff',
-                                fontSize: '13px',
-                                fontWeight: '600',
-                                textDecoration: 'none',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                transition: 'all 0.2s',
-                                whiteSpace: 'nowrap',
-                            }}
-                            onMouseEnter={e => {
-                                e.target.style.background = '#5B1FCC';
-                                e.target.style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseLeave={e => {
-                                e.target.style.background = '#7B2FFF';
-                                e.target.style.transform = 'translateY(0)';
-                            }}
+                            className="w-full sm:w-auto px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 shadow-md"
                         >
-                            Register <ArrowRight size={14} />
+                            Register <ArrowRight size={12} className="sm:w-[14px] sm:h-[14px]" />
                         </Link>
                     </div>
                 </div>

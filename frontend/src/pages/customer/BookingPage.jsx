@@ -33,6 +33,8 @@ export default function BookingPage() {
         customAmount: '',
         luggageCount: 1,
         luggageImgUrl: '',
+        startingPosition: '',
+        endPosition: '',
     })
     const [preview, setPreview] = useState(null)
     const [analyzing, setAnalyzing] = useState(false)
@@ -217,7 +219,9 @@ export default function BookingPage() {
                 trainName: form.trainName,
                 dateTime: form.dateTime,
                 luggageCount: form.luggageCount,
-                luggageImgUrl: form.luggageImgUrl
+                luggageImgUrl: form.luggageImgUrl,
+                startingPosition: form.startingPosition,
+                endPosition: form.endPosition
             }
 
             const res = await axios.post('/api/bookings', bookingData, { withCredentials: true });
@@ -361,15 +365,34 @@ export default function BookingPage() {
                                     </div>
                                 </div>
 
-                                {/* Platform */}
+                                {/* Starting Position (From) */}
                                 <div>
-                                    <label className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1.5 block">Platform No.</label>
+                                    <label className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1.5 block">
+                                        From (Starting Position)
+
+                                    </label>
                                     <input
                                         className="w-full bg-[#12102A] border border-[#1E1A40] rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-[#7B2FFF] placeholder-[#3a3560] transition-colors"
-                                        placeholder="04"
-                                        value={form.platform}
-                                        onChange={e => update('platform', e.target.value)}
+                                        placeholder="e.g., Platform 5, Coach B3"
+                                        value={form.startingPosition}
+                                        onChange={e => update('startingPosition', e.target.value)}
+                                        maxLength={200}
                                     />
+                                    <p className="text-[9px] text-[#6B6188] mt-1">Where should the coolie meet you?</p>
+                                </div>
+                                {/* End Position (To) */}
+                                <div>
+                                    <label className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1.5 block">
+                                        To (Destination)
+                                    </label>
+                                    <input
+                                        className="w-full bg-[#12102A] border border-[#1E1A40] rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-[#7B2FFF] placeholder-[#3a3560] transition-colors"
+                                        placeholder="e.g., Exit Gate B, Parking Area"
+                                        value={form.endPosition}
+                                        onChange={e => update('endPosition', e.target.value)}
+                                        maxLength={200}
+                                    />
+                                    <p className="text-[9px] text-[#6B6188] mt-1">Where do you want to go?</p>
                                 </div>
 
                                 {/* Train No */}
@@ -418,6 +441,17 @@ export default function BookingPage() {
                                             onChange={e => update('trainName', e.target.value)}
                                         />
                                     </div>
+                                </div>
+
+                                {/* Platform */}
+                                <div>
+                                    <label className="text-[10px] text-[#6B6188] uppercase tracking-wider mb-1.5 block">Platform No.</label>
+                                    <input
+                                        className="w-full bg-[#12102A] border border-[#1E1A40] rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-[#7B2FFF] placeholder-[#3a3560] transition-colors"
+                                        placeholder="04"
+                                        value={form.platform}
+                                        onChange={e => update('platform', e.target.value)}
+                                    />
                                 </div>
 
                                 {/* Date & Time */}

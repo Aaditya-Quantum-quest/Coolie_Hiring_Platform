@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ShieldCheck, Star, MapPin, Award, User, CheckCircle, Train, Activity } from 'lucide-react'
 import axios from 'axios'
+import { getAssetUrl } from '../../utils/assets'
 
 export default function CoolieVerification() {
     const { id } = useParams()
@@ -65,7 +66,7 @@ export default function CoolieVerification() {
                         <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-[#7B2FFF] to-[#1E1A40] p-[2px] shadow-[0_0_40px_rgba(123,47,255,0.2)]">
                             <div className="w-full h-full rounded-[22px] bg-[#0E0C1E] flex items-center justify-center overflow-hidden">
                                 {coolie.profile_img_url ? (
-                                    <img src={coolie.profile_img_url} alt={coolie.name} className="w-full h-full object-cover" />
+                                    <img src={getAssetUrl(coolie.profile_img_url)} alt={coolie.name} className="w-full h-full object-cover" />
                                 ) : (
                                     <User size={40} className="text-[#6B6188]" />
                                 )}

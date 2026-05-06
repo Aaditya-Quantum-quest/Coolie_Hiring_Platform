@@ -5,8 +5,8 @@ const {
     loginAdmin,
     getPendingCoolies, getCoolieDetail, getAllCoolies,
     approveCoolieLevel1, approveCoolieLevel2,
-    rejectCoolie, suspendCoolie,
-    getAllCustomers, banCustomer,
+    rejectCoolie, suspendCoolie, deleteCoolie,
+    getAllCustomers, banCustomer, deleteCustomer,
     getDashboardStats, getLiveBookings, getRevenueData, getStationCoverage, getUrgentDisputes,
 } = require('../controllers/admin.controller')
 
@@ -61,12 +61,18 @@ router.post('/coolies/:id/reject', protectAdmin, [
 // PATCH /api/admin/coolies/:id/suspend
 router.patch('/coolies/:id/suspend', protectAdmin, suspendCoolie)
 
+// DELETE /api/admin/coolies/:id — Super Admin only 🚨
+router.delete('/coolies/:id', protectAdmin, requireSuperAdmin, deleteCoolie)
+
 // ─── CUSTOMER MANAGEMENT ────────────────────────────────────
 // GET /api/admin/customers
 router.get('/customers', protectAdmin, getAllCustomers)
 
 // PATCH /api/admin/customers/:id/ban
 router.patch('/customers/:id/ban', protectAdmin, banCustomer)
+
+// DELETE /api/admin/customers/:id — Super Admin only 🚨
+router.delete('/customers/:id', protectAdmin, requireSuperAdmin, deleteCustomer)
 
 // ─── BOOKINGS MANAGEMENT ──────────────────────────────────────
 router.get('/bookings', protectAdmin, require('../controllers/admin.controller').getAllBookingsAdmin)

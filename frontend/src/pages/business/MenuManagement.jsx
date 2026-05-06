@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import BusinessLayout from '../../components/business/BusinessLayout';
 import { useBusinessAuth } from '../../context/BusinessAuthContext';
-import { Plus, Search, Edit2, Trash2, X } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Utensils, Flame, Circle, CheckCircle2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getAssetUrl } from '../../utils/assets';
 
 const CATEGORIES = ['Starter', 'Main Course', 'Dessert', 'Beverage', 'Snack', 'Bread', 'Rice', 'Other'];
 
@@ -37,9 +38,10 @@ const AddDishModal = ({ dish, onClose, onSave, authFetch }) => {
                         {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                     </select>
                     <div className="flex gap-2">
-                        {[['veg', '🟢 Veg'], ['non-veg', '🔴 Non-Veg'], ['egg', '🟡 Egg']].map(([v, l]) => (
+                        {[['veg', 'Veg', '#22c55e'], ['non-veg', 'Non-Veg', '#ef4444'], ['egg', 'Egg', '#f59e0b']].map(([v, l, c]) => (
                             <button key={v} type="button" onClick={() => setForm(p => ({ ...p, food_type: v }))}
-                                className={`flex-1 py-2 rounded-lg border text-xs font-medium transition-all ${form.food_type === v ? 'bg-[#00288E] text-white border-[#00288E]' : 'border-[#C4C5D5] text-[#444653]'}`}>
+                                className={`flex-1 py-2 rounded-lg border text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${form.food_type === v ? 'bg-[#00288E] text-white border-[#00288E]' : 'border-[#C4C5D5] text-[#444653]'}`}>
+                                <Circle size={8} fill={form.food_type === v ? 'white' : c} stroke={form.food_type === v ? 'white' : c} />
                                 {l}
                             </button>
                         ))}
@@ -54,9 +56,10 @@ const AddDishModal = ({ dish, onClose, onSave, authFetch }) => {
                         <input type="file" accept="image/*" onChange={e => setPhoto(e.target.files[0])} className="w-full text-sm" />
                     </div>
                     <div className="flex gap-4">
-                        {[['is_available', 'Available'], ['is_best_seller', '🔥 Best Seller']].map(([k, l]) => (
+                        {[['is_available', 'Available'], ['is_best_seller', 'Best Seller']].map(([k, l]) => (
                             <label key={k} className="flex items-center gap-2 text-sm text-[#444653] cursor-pointer">
                                 <input type="checkbox" checked={form[k]} onChange={e => setForm(p => ({ ...p, [k]: e.target.checked }))} className="w-4 h-4 accent-[#00288E]" />
+                                {k === 'is_best_seller' && <Flame size={14} className="text-orange-500" />}
                                 {l}
                             </label>
                         ))}
@@ -134,7 +137,7 @@ export default function MenuManagement() {
                 <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-[#00288E] border-t-transparent rounded-full animate-spin" /></div>
             ) : dishes.length === 0 ? (
                 <div className="text-center py-20">
-                    <p className="text-4xl mb-3">🍽️</p>
+                    <Utensils size={48} className="mx-auto mb-4 text-[#C4C5D5] opacity-30" />
                     <p className="text-[#0b1c30] font-semibold mb-1">No dishes added yet</p>
                     <p className="text-[#757684] text-sm">Add your first dish to get started!</p>
                 </div>
@@ -143,7 +146,7 @@ export default function MenuManagement() {
                     {dishes.map(dish => (
                         <div key={dish.id} className={`bg-white rounded-xl border shadow-sm overflow-hidden flex ${!dish.is_available ? 'opacity-70' : 'border-[#E5EEFF]'}`}
                             style={{ borderLeft: `4px solid ${dish.food_type === 'veg' ? '#22c55e' : dish.food_type === 'egg' ? '#f59e0b' : '#ef4444'}` }}>
-                            {dish.photo_url && <img src={`${dish.photo_url}`} alt={dish.dish_name} className="w-24 h-full object-cover shrink-0" />}
+                            {dish.photo_url && <img src={getAssetUrl(dish.photo_url)} alt={dish.dish_name} className="w-24 h-full object-cover shrink-0" />}
                             <div className="flex-1 p-4">
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
@@ -154,7 +157,7 @@ export default function MenuManagement() {
                                 </div>
                                 {dish.description && <p className="text-[#757684] text-xs mt-1 line-clamp-2">{dish.description}</p>}
                                 <div className="flex items-center gap-2 mt-3 flex-wrap">
-                                    {dish.is_best_seller && <span className="px-2 py-0.5 bg-orange-100 text-orange-600 rounded-full text-[10px] font-bold">🔥 Best Seller</span>}
+                                    {dish.is_best_seller && <span className="px-2 py-0.5 bg-orange-100 text-orange-600 rounded-full text-[10px] font-bold flex items-center gap-1"><Flame size={10}/> Best Seller</span>}
                                     <div className="flex items-center gap-2 ml-auto">
                                         <button onClick={() => toggleAvailability(dish)}
                                             className={`relative w-9 h-5 rounded-full transition-colors ${dish.is_available ? 'bg-[#00288E]' : 'bg-[#C4C5D5]'}`}>

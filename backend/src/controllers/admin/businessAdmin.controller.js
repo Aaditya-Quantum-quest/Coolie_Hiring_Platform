@@ -210,4 +210,45 @@ const getStats = async (req, res) => {
     }
 };
 
-module.exports = { getAll, getOne, approveLevel1, approveLevel2, reject, deactivate, getStats };
+const deleteBusiness = async (req, res) => {
+    const client = await db.connect();
+    try {
+        const { businessId } = req.params;
+        await client.query('BEGIN');
+
+        // Delete dependencies
+        await client.query('DELETE FROM dishes WHERE business_id = $1', [businessId]);
+        await client.query('DELETE FROM restaurant_details WHERE business_id = $1', [businessId]);
+        
+        // Delete room photos and room types
+        await client.query('DELETE FROM room_photos WHERE room_type_id IN (SELECT id FROM room_types WHERE business_id = $1)', [businessId]);
+        await client.query('DELETE FROM room_types WHERE business_id = $1', [businessId]);
+        await client.query('DELETE FROM hotel_details WHERE business_id = $1', [businessId]);
+        
+        // Delete hall photos and halls
+        await client.query('DELETE FROM hall_photos WHERE hall_id IN (SELECT id FROM halls WHERE business_id = $1)', [businessId]);
+        await client.query('DELETE FROM halls WHERE business_id = $1', [businessId]);
+        
+        await client.query('DELETE FROM business_photos WHERE business_id = $1', [businessId]);
+        await client.query('DELETE FROM business_reviews WHERE business_id = $1', [businessId]);
+        
+        // Delete the business
+        const result = await client.query('DELETE FROM businesses WHERE id = $1 RETURNING business_name', [businessId]);
+        
+        if (result.rowCount === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, message: 'Business not found.' });
+        }
+
+        await client.query('COMMIT');
+        res.status(200).json({ success: true, message: `Business "${result.rows[0].business_name}" and all related data deleted completely.` });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('deleteBusiness:', err);
+        res.status(500).json({ success: false, message: 'Server error during deletion.' });
+    } finally {
+        client.release();
+    }
+};
+
+module.exports = { getAll, getOne, approveLevel1, approveLevel2, reject, deactivate, getStats, deleteBusiness };

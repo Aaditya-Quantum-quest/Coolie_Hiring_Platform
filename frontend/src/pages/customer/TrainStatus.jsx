@@ -10,8 +10,6 @@ import {
     searchTrain,
     getLiveTrainStatus,
     getLiveTrainSchedule,
-    getLiveStation,
-    getPNRStatus,
     searchStation,
     getTrainsBetweenStations
 } from '../../services/railApiService'
@@ -97,16 +95,6 @@ export default function TrainStatus() {
     const [fromStationSuggestions, setFromStationSuggestions] = useState([])
     const [toStationSuggestions, setToStationSuggestions] = useState([])
 
-    // Station Board State
-    const [stationQuery, setStationQuery] = useState('')
-    const [stationSuggestions, setStationSuggestions] = useState([])
-    const [stationBoard, setStationBoard] = useState(null)
-    const [selectedStation, setSelectedStation] = useState(null)
-
-    // PNR State
-    const [pnrNo, setPnrNo] = useState('')
-    const [pnrStatus, setPnrStatus] = useState(null)
-
     // ── Handlers ──
     const extractStationCode = (query) => {
         const match = query.match(/\((.*?)\)/);
@@ -143,16 +131,6 @@ export default function TrainStatus() {
 
 
 
-    useEffect(() => {
-        if (stationQuery.length < 3) { setStationSuggestions([]); return }
-        const timer = setTimeout(async () => {
-            try {
-                const res = await searchStation(stationQuery)
-                if (res.status && res.data) setStationSuggestions(res.data)
-            } catch (err) { console.error(err) }
-        }, 500)
-        return () => clearTimeout(timer)
-    }, [stationQuery])
 
     // From Station Debounce
     useEffect(() => {
@@ -204,29 +182,6 @@ export default function TrainStatus() {
 
     const refreshLiveStatus = () => {
         if (selectedTrain) fetchLiveStatus(selectedTrain.train_number)
-    }
-
-    const fetchStationBoard = async (stationCode) => {
-        setLoading(true)
-        try {
-            const res = await getLiveStation(stationCode, 2)
-            if (res.status) setStationBoard(res.data)
-            else toast.error('No trains found at this station')
-        } catch (err) {
-            toast.error('Service unavailable, try again')
-        } finally { setLoading(false) }
-    }
-
-    const fetchPNR = async () => {
-        if (pnrNo.length !== 10) { toast.error('Please enter a valid 10-digit PNR'); return }
-        setLoading(true)
-        try {
-            const res = await getPNRStatus(pnrNo)
-            if (res.status) setPnrStatus(res.data)
-            else toast.error(res.message || 'PNR not found')
-        } catch (err) {
-            toast.error('Service unavailable, try again')
-        } finally { setLoading(false) }
     }
 
     // ── UI Helpers ──
@@ -521,201 +476,6 @@ export default function TrainStatus() {
         </div>
     )
 
-    const renderStationBoard = () => (
-        <div className="space-y-4 sm:space-y-6">
-            <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                    className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-700/50 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none bg-slate-800/50 text-white placeholder:text-slate-400 transition-all"
-                    placeholder="Station name or code (e.g. NDLS)..."
-                    value={stationQuery}
-                    onChange={e => setStationQuery(e.target.value)}
-                />
-                {stationSuggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 z-50 bg-slate-800 border border-slate-700 rounded-xl mt-1 overflow-hidden shadow-2xl max-h-60 overflow-y-auto">
-                        {stationSuggestions.map((s, i) => (
-                            <div
-                                key={i}
-                                className="px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-slate-700 cursor-pointer flex justify-between items-center transition-colors border-b border-slate-700/50 last:border-0"
-                                onClick={() => {
-                                    setSelectedStation(s)
-                                    setStationQuery(`${s.station_name} (${s.station_code})`)
-                                    setStationSuggestions([])
-                                    fetchStationBoard(s.station_code)
-                                }}
-                            >
-                                <div className="min-w-0">
-                                    <p className="text-white font-bold text-xs sm:text-sm truncate">{s.station_name}</p>
-                                    <p className="text-slate-400 text-xs">{s.station_code}</p>
-                                </div>
-                                <ArrowRight size={13} className="text-orange-500 flex-shrink-0 ml-2" />
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {loading && <LoadingSpinner />}
-
-            {stationBoard && !loading && (
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-white font-bold text-sm sm:text-base truncate mr-2">
-                            {stationBoard.station_name || stationQuery}
-                            <span className="text-slate-400 font-normal ml-1 text-xs">(Next 2h)</span>
-                        </h3>
-                        <span className="text-xs text-slate-500 flex-shrink-0">{stationBoard.trains?.length || 0} trains</span>
-                    </div>
-                    <div className="grid gap-2 sm:gap-3">
-                        {stationBoard.trains?.map((t, i) => (
-                            <div
-                                key={i}
-                                className="card p-3 sm:p-4 hover:border-orange-500/30 cursor-pointer transition-colors active:bg-slate-800/80"
-                                onClick={() => {
-                                    setActiveTab('live')
-                                    setTrainQuery(`${t.train_name} (${t.train_number})`)
-                                    fetchLiveStatus(t.train_number)
-                                }}
-                            >
-                                <div className="flex items-center gap-2 sm:gap-4">
-                                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                                        <Train size={14} className="text-orange-400" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-white font-bold text-xs sm:text-sm truncate">{t.train_name}</p>
-                                        <p className="text-slate-500 text-[10px] font-mono">#{t.train_number}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2 sm:gap-6 flex-shrink-0">
-                                        <div className="text-center hidden xs:block">
-                                            <p className="text-[9px] text-slate-500 uppercase font-bold">Plt.</p>
-                                            <p className="text-orange-400 font-black text-sm">{t.platform || 'TBA'}</p>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-[9px] text-slate-500 uppercase font-bold">Arr.</p>
-                                            <p className="text-white font-bold text-xs sm:text-sm">{t.sta || '--:--'}</p>
-                                        </div>
-                                        <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusTheme(t.delay > 0 ? 'delayed' : 'on time').bg} ${getStatusTheme(t.delay > 0 ? 'delayed' : 'on time').color}`}>
-                                            {t.delay > 0 ? `+${t.delay}m` : 'On Time'}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
-    )
-
-    const renderPNRLookup = () => (
-        <div className="space-y-4 sm:space-y-6">
-            {/* PNR input — stacked on mobile, row on sm+ */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full">
-                {/* Input Container */}
-                <div className="flex-1 relative h-11 sm:h-12 md:h-12 lg:h-13"> {/* Responsive height */}
-                    <Search
-                        size={16}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10"
-                    />
-                    <input
-                        className="w-full pl-10 pr-3 py-2.5 h-full text-sm rounded-lg border border-slate-700/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none bg-slate-800/50 text-white placeholder:text-slate-400 transition-all shadow-sm hover:shadow-md"
-                        placeholder="Enter 10-digit PNR Number..."
-                        value={pnrNo}
-                        maxLength={10}
-                        onChange={e => setPnrNo(e.target.value.replace(/\D/g, ''))}
-                        inputMode="numeric"
-                        aria-label="PNR Number"
-                        type="tel" // Better for numeric input on mobile
-                    />
-                </div>
-
-                {/* Button */}
-                <button
-                    type="button"
-                    onClick={fetchPNR}
-                    className="btn-primary px-6 sm:px-8 h-11 rounded-lg font-bold text-sm whitespace-nowrap"
-                    aria-label="Check PNR Status"
-                >
-                    Check Status
-                </button>
-            </div>
-
-            {loading && <LoadingSpinner />}
-
-            {pnrStatus && !loading && (
-                <div className="card overflow-hidden">
-                    {/* Header */}
-                    <div className="p-4 sm:p-5 bg-gradient-to-r from-orange-500 to-amber-500 text-white">
-                        <div className="flex justify-between items-start mb-3 sm:mb-4">
-                            <div>
-                                <p className="text-orange-100 text-[10px] uppercase tracking-widest font-bold">PNR Number</p>
-                                <h3 className="text-2xl sm:text-3xl font-black tracking-wide">{pnrStatus.pnr}</h3>
-                            </div>
-                            <div className="bg-white/20 p-1.5 sm:p-2 rounded-lg sm:rounded-xl backdrop-blur-md">
-                                <Train size={18} />
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-x-6 gap-y-1">
-                            <div>
-                                <p className="text-orange-100 text-[9px] uppercase font-bold">Train</p>
-                                <p className="font-bold text-sm">{pnrStatus.train_name} ({pnrStatus.train_number})</p>
-                            </div>
-                            <div>
-                                <p className="text-orange-100 text-[9px] uppercase font-bold">Date</p>
-                                <p className="font-bold text-sm">{pnrStatus.doj}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
-                        {/* Journey endpoints */}
-                        <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                            <div className="p-3 sm:p-4 bg-slate-900/50 rounded-xl sm:rounded-2xl border border-slate-700/50">
-                                <p className="text-[9px] text-slate-500 uppercase font-bold mb-0.5">From</p>
-                                <p className="text-white font-bold text-xs sm:text-sm">{pnrStatus.from_station}</p>
-                                <p className="text-slate-500 text-[10px]">{pnrStatus.boarding_station}</p>
-                            </div>
-                            <div className="p-3 sm:p-4 bg-slate-900/50 rounded-xl sm:rounded-2xl border border-slate-700/50 text-right">
-                                <p className="text-[9px] text-slate-500 uppercase font-bold mb-0.5">To</p>
-                                <p className="text-white font-bold text-xs sm:text-sm">{pnrStatus.to_station}</p>
-                                <p className="text-slate-500 text-[10px]">{pnrStatus.reservation_upto}</p>
-                            </div>
-                        </div>
-
-                        {/* Passengers */}
-                        <div className="space-y-2">
-                            <p className="text-slate-500 text-[10px] uppercase font-bold px-1">Passengers</p>
-                            {pnrStatus.passengers?.map((p, i) => (
-                                <div key={i} className="flex items-center justify-between p-3 sm:p-4 bg-slate-800/50 rounded-xl sm:rounded-2xl border border-slate-700/50">
-                                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-700 flex items-center justify-center text-white flex-shrink-0">
-                                            <User size={12} />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="text-white font-bold text-xs sm:text-sm">Passenger {i + 1}</p>
-                                            <p className="text-slate-500 text-[10px]">Coach: {p.booking_coach_id || 'TBA'}</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right flex-shrink-0">
-                                        <p className="text-orange-400 font-black text-xs sm:text-sm">{p.current_status}</p>
-                                        <p className="text-slate-500 text-[10px]">Berth: {p.booking_berth_no || '--'}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Chart status */}
-                        <div className="bg-slate-900/50 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3">
-                            <Info size={14} className="text-blue-400 flex-shrink-0" />
-                            <p className="text-xs text-slate-400">
-                                Charting: <span className="text-white font-bold">{pnrStatus.chart_prepared ? 'Prepared ✓' : 'Not Prepared'}</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    )
 
     return (
         <div className="min-h-screen bg-slate-900 flex">
@@ -736,8 +496,6 @@ export default function TrainStatus() {
                 <div className="flex p-1 bg-slate-800/50 rounded-xl sm:rounded-2xl mb-4 sm:mb-8 border border-slate-700/50 w-full sm:w-fit">
                     {[
                         { id: 'live', icon: <Activity size={13} />, label: 'Live' },
-                        { id: 'station', icon: <List size={13} />, label: 'Station' },
-                        { id: 'pnr', icon: <Hash size={13} />, label: 'PNR' },
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -748,8 +506,8 @@ export default function TrainStatus() {
                                 }`}
                         >
                             {tab.icon}
-                            <span className="hidden xs:inline sm:inline">{tab.label === 'Live' ? 'Live Status' : tab.label === 'Station' ? 'Station Board' : 'PNR Status'}</span>
-                            <span className="xs:hidden">{tab.label}</span>
+                            <span className="hidden xs:inline sm:inline">Live Status</span>
+                            <span className="xs:hidden">Live</span>
                         </button>
                     ))}
                 </div>
@@ -757,8 +515,6 @@ export default function TrainStatus() {
                 {/* Tab Content */}
                 <div className="max-w-4xl w-full">
                     {activeTab === 'live' && renderLiveStatus()}
-                    {activeTab === 'station' && renderStationBoard()}
-                    {activeTab === 'pnr' && renderPNRLookup()}
                 </div>
             </main>
         </div>

@@ -406,6 +406,54 @@ const rejectCoolie = async (coolieDbId, adminId, reason) => {
     await sendRejectionEmail(coolie?.email, coolie?.name, reason).catch(console.error)
 }
 
+// ─── PASSWORD RESET ────────────────────────────────────────
+const generateResetToken = () => Math.floor(100000 + Math.random() * 900000).toString()
+
+const createPasswordResetToken = async (email, userType) => {
+    const token = generateResetToken()
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+    await pool.query(
+        'DELETE FROM password_reset_tokens WHERE email = $1 AND user_type = $2',
+        [email, userType]
+    )
+    await pool.query(
+        'INSERT INTO password_reset_tokens (email, token, expires_at, user_type) VALUES ($1, $2, $3, $4)',
+        [email, token, expiresAt, userType]
+    )
+    return token
+}
+
+const findPasswordResetToken = async (token) => {
+    const result = await pool.query(
+        'SELECT * FROM password_reset_tokens WHERE token = $1 AND is_used = FALSE AND expires_at > NOW()',
+        [token]
+    )
+    return result.rows[0] || null
+}
+
+const markResetTokenAsUsed = async (token) => {
+    await pool.query(
+        'UPDATE password_reset_tokens SET is_used = TRUE WHERE token = $1',
+        [token]
+    )
+}
+
+const updateCustomerPassword = async (email, newPassword) => {
+    const hashedPassword = await hashPassword(newPassword)
+    await pool.query(
+        'UPDATE customers SET password_hash = $1, login_attempts = 0, locked_until = NULL WHERE email = $2',
+        [hashedPassword, email]
+    )
+}
+
+const updateCooliePassword = async (email, newPassword) => {
+    const hashedPassword = await hashPassword(newPassword)
+    await pool.query(
+        'UPDATE coolies SET password_hash = $1, login_attempts = 0, locked_until = NULL WHERE email = $2',
+        [hashedPassword, email]
+    )
+}
+
 module.exports = {
 
     generateTokens, storeRefreshToken, verifyRefreshToken, deleteRefreshToken,
@@ -422,6 +470,9 @@ module.exports = {
     findAdminByEmail, getAdminById,
     getPendingCoolies, getCoolieForAdmin,
     approveLevel1, approveLevel2, rejectCoolie,
-    // const
+    // password reset
+    generateResetToken, createPasswordResetToken, findPasswordResetToken, 
+    markResetTokenAsUsed, updateCustomerPassword, updateCooliePassword,
+    // constants
     MAX_ATTEMPTS,
 }

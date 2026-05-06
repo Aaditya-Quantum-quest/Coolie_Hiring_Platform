@@ -205,9 +205,6 @@ export default function CustomerDashboard() {
                     <div className="lg:col-span-2">
                         <div className={`flex items-center justify-between mb-4 max-[767px]:mb-2`}>
                             <h2 className="text-lg font-bold text-white max-[767px]:text-sm">Available Coolies Nearby</h2>
-                            <Link to="/customer/book" className={`text-orange-400 text-sm hover:underline flex items-center gap-1 max-[767px]:text-xs`}>
-                                View all <ArrowRight size={14} className={`max-[767px]:w-3 max-[767px]:h-3`} />
-                            </Link>
                         </div>
 
                         <div className={`space-y-3 max-[767px]:space-y-2`}>
@@ -261,9 +258,7 @@ export default function CustomerDashboard() {
                             <div className={`grid grid-cols-2 gap-2 max-[767px]:gap-1.5`}>
                                 {[
                                     { icon: <Train size={18} className="text-orange-400" />, label: 'Train Status', path: '/customer/trains' },
-                                    { icon: <Map size={18} className="text-cyan-400" />, label: 'Station Map', path: '/customer/map' },
                                     { icon: <ClipboardList size={18} className="text-blue-400" />, label: 'My Bookings', path: '/customer/history' },
-                                    { icon: <Star size={18} className="text-yellow-400" />, label: 'Give Rating', path: '/customer/rate' },
                                 ].map(qa => (
                                     <button
                                         key={qa.path}

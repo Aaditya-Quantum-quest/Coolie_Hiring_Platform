@@ -601,6 +601,43 @@ const getWeeklySummary = async (req, res) => {
     }
 };
 
+// Accept Booking
+const acceptBooking = async (req, res) => {
+    try {
+        const { id } = req.params; // booking_ref
+        const coolieId = req.user.id;
+        
+        // Update booking status to accepted
+        const result = await db.query(
+            'UPDATE bookings SET status = $1, updated_at = NOW() WHERE booking_ref = $2 AND coolie_id = $3 RETURNING *',
+            ['accepted', id, coolieId]
+        );
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ success: false, message: 'Booking not found or not assigned to you' });
+        }
+        
+        const booking = result.rows[0];
+        
+        // Emit notification to customer
+        if (req.io) {
+            const socketData = {
+                id: booking.booking_ref,
+                coolie: req.user.name || 'Coolie',
+                status: 'accepted',
+                message: 'Your booking has been accepted!'
+            };
+            req.io.to(`customer_${booking.customer_id}`).emit('booking:accepted', socketData);
+            console.log(`[Socket] Booking ${booking.booking_ref} acceptance emitted to customer_${booking.customer_id}`);
+        }
+        
+        res.status(200).json({ success: true, booking, message: 'Booking accepted successfully!' });
+    } catch (error) {
+        console.error('acceptBooking error:', error);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+};
+
 module.exports = {
     goOnline,
     goOffline,
@@ -615,5 +652,6 @@ module.exports = {
     updateProfile,
     getEarnings,
     getTransactions,
-    getWeeklySummary
+    getWeeklySummary,
+    acceptBooking
 };

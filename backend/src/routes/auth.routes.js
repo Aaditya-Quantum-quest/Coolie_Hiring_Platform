@@ -9,6 +9,8 @@ const {
     getMe,
     refreshAccessToken,
     logout,
+    requestPasswordReset,
+    resetPassword,
 } = require('../controllers/auth.controller')
 
 const { protect } = require('../middleware/auth.middleware')
@@ -52,5 +54,12 @@ router.post('/refresh', refreshAccessToken)
 
 // POST /api/auth/logout — protected, clears cookies
 router.post('/logout', protect, logout)
+
+// ─── PASSWORD RESET ───────────────────────────────────────
+// POST /api/auth/forgot-password — request password reset OTP
+router.post('/forgot-password', requestPasswordReset)
+
+// POST /api/auth/reset-password — reset password with OTP
+router.post('/reset-password', resetPassword)
 
 module.exports = router

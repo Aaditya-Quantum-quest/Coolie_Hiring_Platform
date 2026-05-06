@@ -182,9 +182,9 @@ export default function LoginPage() {
 
                         {/* Forgot password */}
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-4px' }}>
-                            <button type="button" className="login-forgot-btn text-xs sm:text-sm">
+                            <Link to="/forgot-password" className="login-forgot-btn text-xs sm:text-sm">
                                 Forgot Password?
-                            </button>
+                            </Link>
                         </div>
 
                         {/* Submit */}

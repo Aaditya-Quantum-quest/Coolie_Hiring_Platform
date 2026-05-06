@@ -43,7 +43,7 @@ export default function BookingPage() {
     const [searchingStation, setSearchingStation] = useState(false)
     const [searchingTrain, setSearchingTrain] = useState(false)
     const [booked, setBooked] = useState(false)
-    const [otp] = useState(Math.floor(1000 + Math.random() * 9000))
+    const [bookingResult, setBookingResult] = useState(null)
 
     // Search Suggestions
     const [initialStationSuggestions, setInitialStationSuggestions] = useState([])
@@ -205,7 +205,17 @@ export default function BookingPage() {
             return
         }
 
-        const finalAmount = form.customAmount ? parseInt(form.customAmount) : 100;
+        const finalAmount = form.customAmount ? Math.max(1, parseInt(form.customAmount) || 0) : 100;
+        
+        if (finalAmount < 1) {
+            toast.error('Please enter a valid amount (minimum ₹1)')
+            return
+        }
+        
+        if (finalAmount > 10000) {
+            toast.error('Maximum amount allowed is ₹10,000')
+            return
+        }
 
         setSubmitting(true)
 
@@ -227,16 +237,9 @@ export default function BookingPage() {
             const res = await axios.post('/api/bookings', bookingData, { withCredentials: true });
 
             if (res.data.success) {
+                setBookingResult(res.data.booking)
                 setBooked(true)
                 addNotification(`🎉 Booking confirmed! OTP: ${res.data.booking.otp}`)
-
-                // Store the booking ref for the receipt
-                const bookingRef = res.data.booking.booking_ref;
-
-                // Auto navigate to history after delay
-                setTimeout(() => {
-                    navigate('/customer/history')
-                }, 3000)
             }
         } catch (err) {
             console.error('Booking failed:', err)
@@ -259,14 +262,14 @@ export default function BookingPage() {
                             <p className="text-[#6B6188] mb-5">Your porter is on the way</p>
                             <div className="bg-[#12102A] rounded-xl p-4 mb-4">
                                 <p className="text-[#6B6188] text-sm mb-1">Your OTP (Share with porter)</p>
-                                <p className="text-5xl font-black text-[#7B2FFF] tracking-[12px] font-mono">{otp}</p>
+                                <p className="text-5xl font-black text-[#7B2FFF] tracking-[12px] font-mono">{bookingResult?.otp || '----'}</p>
                             </div>
                             <div className="space-y-2 text-sm text-left mb-5">
                                 <div className="flex justify-between"><span className="text-[#6B6188]">Platform</span><span className="text-white">{form.platform}</span></div>
                                 <div className="flex justify-between"><span className="text-[#6B6188]">Price Paid</span><span className="text-green-400 font-bold">₹{form.customAmount || 100}</span></div>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => navigate('/customer/track')} className="flex-1 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-[#5B1FCC] transition-colors">
+                                <button onClick={() => navigate('/customer/track', { state: { bookingId: bookingResult?.booking_ref, booking: bookingResult } })} className="flex-1 py-2.5 rounded-xl bg-[#7B2FFF] text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-[#5B1FCC] transition-colors">
                                     <Navigation size={14} /> Track Porter
                                 </button>
                                 <button onClick={() => navigate('/customer')} className="flex-1 py-2.5 rounded-xl border border-[#1E1A40] text-[#B0A8CC] text-sm hover:border-[#7B2FFF] transition-colors">
@@ -508,36 +511,6 @@ export default function BookingPage() {
                                         <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhoto} />
                                     </label>
                                 </div>
-                            </div>
-                        </div>
-
-                        {/* Standard Pricing Guide */}
-                        <div className="bg-[#0E0C1E] border border-[#1E1A40] rounded-xl p-4">
-                            <h2 className="text-white font-bold text-xs flex items-center gap-1.5 mb-3">
-                                <span className="w-4 h-4 rounded bg-[#7B2FFF]/20 flex items-center justify-center">
-                                    <Package size={9} className="text-[#7B2FFF]" />
-                                </span>
-                                Standard Pricing Guide
-                            </h2>
-                            <p className="text-[#6B6188] text-[10px] leading-relaxed mb-3">
-                                Review standard platform pricing based on your luggage size. Use this as a reference before entering your custom amount.
-                            </p>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                {[
-                                    { label: 'Small Bag', price: '20' },
-                                    { label: 'Medium Bag', price: '25' },
-                                    { label: 'Large Bag', price: '30' },
-                                    { label: 'Medium Package', price: '40' },
-                                    { label: 'Large Package', price: '50' }
-                                ].map((item, idx) => (
-                                    <div key={idx} className="bg-[#12102A] border border-[#1E1A40] rounded-lg p-2.5 flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Package size={12} className="text-[#A855F7]" />
-                                            <span className="text-white text-xs font-semibold">{item.label}</span>
-                                        </div>
-                                        <span className="text-green-400 font-bold text-xs">₹{item.price}</span>
-                                    </div>
-                                ))}
                             </div>
                         </div>
 

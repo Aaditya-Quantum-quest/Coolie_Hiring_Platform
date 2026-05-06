@@ -8,6 +8,7 @@ import {
 import toast from 'react-hot-toast'
 import { useApp } from '../../context/AppContext'
 import { coolieProfileService } from '../../services/coolieService'
+import { getAssetUrl } from '../../utils/assets'
 
 export default function CoolieProfile() {
     const {     user } = useApp()
@@ -446,7 +447,7 @@ export default function CoolieProfile() {
                                 <div className="relative shrink-0">
                                     <div className="w-40 h-40 md:w-48 md:h-48 rounded-full border-[6px] border-[#2D2D44] overflow-hidden bg-[#12102A] shadow-[0_0_50px_rgba(123,47,255,0.3)] transition-all duration-700 group-hover:scale-105 group-hover:rotate-2">
                                         <img
-                                            src={profile.passport_photo_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.name}`}
+                                            src={getAssetUrl(profile.passport_photo_url) || `https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.name}`}
                                             alt="avatar"
                                             className="w-full h-full object-cover"
                                         />
@@ -826,7 +827,7 @@ export default function CoolieProfile() {
                             ].map((doc, i) => (
                                 <div key={i} className="group/item relative aspect-[1.4/1] rounded-[2rem] bg-[#0A0814] border border-white/5 overflow-hidden cursor-pointer hover:border-[#7B2FFF]/50 transition-all duration-500" onClick={() => openFullscreen(doc)}>
                                     {doc.url ? (
-                                        <img src={doc.url} alt={doc.label} className="w-full h-full object-cover opacity-40 group-hover/item:opacity-100 group-hover/item:scale-110 transition-all duration-700" />
+                                        <img src={getAssetUrl(doc.url)} alt={doc.label} className="w-full h-full object-cover opacity-40 group-hover/item:opacity-100 group-hover/item:scale-110 transition-all duration-700" />
                                     ) : (
                                         <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-slate-700 group-hover/item:text-slate-400 transition-colors">
                                             <Image size={40} strokeWidth={1.5} />
@@ -879,7 +880,7 @@ export default function CoolieProfile() {
                             <div className="p-4 bg-black/20">
                                 <div className="relative w-full">
                                     <img
-                                        src={fullscreenDoc.url}
+                                        src={getAssetUrl(fullscreenDoc.url)}
                                         alt={fullscreenDoc.label}
                                         className="w-full h-auto max-h-[65vh] object-contain rounded-lg"
                                     />
@@ -890,7 +891,7 @@ export default function CoolieProfile() {
                             <div className="flex items-center justify-between p-4 border-t border-white/10">
                                 <div className="flex items-center gap-3">
                                     <a
-                                        href={fullscreenDoc.url}
+                                        href={getAssetUrl(fullscreenDoc.url)}
                                         download={`${fullscreenDoc.label.replace(/\s+/g, '_')}.jpg`}
                                         className="flex items-center gap-2 px-3 py-1.5 bg-[#7B2FFF]/10 hover:bg-[#7B2FFF]/20 text-[#7B2FFF] rounded-lg text-sm font-semibold transition-all"
                                     >

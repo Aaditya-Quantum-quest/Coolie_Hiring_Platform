@@ -298,6 +298,38 @@ const sendBusinessRejectionEmail = async (to, ownerName, businessName, reason) =
     })
 }
 
+/**
+ * Send password reset OTP email to customers and coolies.
+ */
+const sendPasswordResetEmail = async (to, name, otp, userType = 'customer') => {
+    // If SMTP not configured, just log it
+    if (!process.env.SMTP_USER) {
+        console.warn(`[MAILER] SMTP not configured. Would have sent password reset email to: ${to}`)
+        return
+    }
+
+    const transporter = getTransporter()
+    await transporter.sendMail({
+        from: process.env.SMTP_FROM || '"Coolie Hire Security" <security@cooliehire.in>',
+        to,
+        subject: '🔐 Password Reset Request — Coolie Hire Platform',
+        html: `
+        <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#0f172a;color:#f1f5f9;padding:32px;border-radius:16px">
+          <h2 style="color:#f97316;margin-top:0">🔐 Password Reset Request</h2>
+          <p>Hi <strong>${name}</strong>,</p>
+          <p>You requested to reset your password for your <strong>${userType === 'coolie' ? 'Coolie' : 'Customer'}</strong> account.</p>
+          <div style="background:#1e293b;border-left:4px solid #f97316;padding:16px;border-radius:8px;margin:20px 0">
+            <p style="margin:0;color:#cbd5e1">Your One-Time Password (OTP) is:</p>
+            <p style="margin:16px 0;font-size:32px;font-weight:bold;color:#f97316;text-align:center;letter-spacing:2px">${otp}</p>
+          </div>
+          <p style="color:#94a3b8;">This OTP will expire in <strong>15 minutes</strong>.</p>
+          <p>If you didn't request this, please ignore this email or contact support immediately.</p>
+          <p style="color:#64748b;font-size:13px;margin-top:32px">© Coolie Hire Platform</p>
+        </div>
+        `
+    })
+}
+
 module.exports = { 
     sendLockoutEmail, 
     sendApprovalEmail, 
@@ -307,5 +339,6 @@ module.exports = {
     sendBusinessRegistrationEmail,
     sendBusinessLevel1ApprovalEmail,
     sendBusinessLevel2ApprovalEmail,
-    sendBusinessRejectionEmail
+    sendBusinessRejectionEmail,
+    sendPasswordResetEmail
 }

@@ -5,7 +5,8 @@ import {
     Home, Search, MapPin, CreditCard, Clock, Star, Train,
     Map, User, LogOut, ChevronLeft, ChevronRight,
     Briefcase, DollarSign, Award, BarChart2, Users,
-    AlertTriangle, Menu, X, Zap, Building2, Store
+    AlertTriangle, Menu, X, Zap, Building2, Store,
+    Receipt
 } from 'lucide-react'
 
 const CUSTOMER_ITEMS = [
@@ -13,9 +14,9 @@ const CUSTOMER_ITEMS = [
     { path: '/customer/book', icon: Search, label: 'Book Coolie' },
     { path: '/customer/track', icon: MapPin, label: 'Track Coolie' },
     { path: '/customer/trains', icon: Train, label: 'Train Status' },
-    { path: '/customer/map', icon: Map, label: 'Station Map' },
     { path: '/customer/businesses', icon: Store, label: 'Hotels & Restaurants' },
     { path: '/customer/history', icon: Clock, label: 'My Bookings' },
+    { path: '/customer/receipts', icon: Receipt, label: 'My Receipts' },
     { path: '/customer/profile', icon: User, label: 'My Profile' },
     { path: '/customer/payment', icon: CreditCard, label: 'Payments' },
     { path: '/customer/rate', icon: Star, label: 'Rate & Review' },
@@ -26,6 +27,9 @@ const COOLIE_ITEMS = [
     { path: '/coolie/profile', icon: User, label: 'My Profile' },
     { path: '/coolie/earnings', icon: DollarSign, label: 'Earnings' },
     { path: '/coolie/leaderboard', icon: Award, label: 'Leaderboard' },
+    { path: '/coolie/rankings', icon: Award, label: 'Hero Rankings' },
+    { path: '/coolie/verification', icon: Award, label: 'Verification' },
+    { path: '/coolie/receipts', icon: Receipt, label: 'My Receipts' },
 ]
 
 const ADMIN_ITEMS = [
@@ -499,7 +503,7 @@ export default function Sidebar({ role = 'customer' }) {
                 ref={sidebarRef}
                 style={{
                     display: 'flex',
-                    position: 'fixed', top: 0, left: 0, height: '100%', zIndex: 50,
+                    position: 'fixed', top: 0, left: 0, height: '100%', zIndex: 1000,
                     width: collapsed ? 72 : 256,
                     background: 'linear-gradient(180deg,#0f1729 0%,#0d1424 60%,#0a1020 100%)',
                     borderRight: `1px solid rgba(${cfg.accentRgb},0.12)`,
@@ -540,7 +544,7 @@ export default function Sidebar({ role = 'customer' }) {
             <button
                 onClick={() => setMobileOpen(true)}
                 style={{
-                    position: 'fixed', top: 16, left: 16, zIndex: 50,
+                    position: 'fixed', top: 16, left: 16, zIndex: 1000,
                     width: 42, height: 42, borderRadius: 12,
                     background: '#0f1729',
                     border: `1px solid rgba(${cfg.accentRgb},0.3)`,
@@ -555,7 +559,7 @@ export default function Sidebar({ role = 'customer' }) {
 
             {/* ── MOBILE SIDEBAR ── */}
             {mobileOpen && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex' }}>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex' }}>
                     <div style={{
                         width: 264, height: '100%',
                         background: 'linear-gradient(180deg,#0f1729 0%,#0a1020 100%)',

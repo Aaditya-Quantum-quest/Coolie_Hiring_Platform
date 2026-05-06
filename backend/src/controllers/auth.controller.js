@@ -320,4 +320,87 @@ const logout = async (req, res) => {
     }
 }
 
-module.exports = { registerCustomer, loginCustomer, registerCoolie, loginCoolie, getMe, refreshAccessToken, logout }
+// ─── PASSWORD RESET ───────────────────────────────────────
+const requestPasswordReset = async (req, res) => {
+    try {
+        const { email, userType } = req.body
+        
+        if (!email || !userType || !['customer', 'coolie'].includes(userType)) {
+            return res.status(400).json({ success: false, message: 'Email and user type are required.' })
+        }
+
+        // Find user by email
+        const user = userType === 'customer' 
+            ? await authService.findCustomerByEmail(email)
+            : await authService.findCoolieByEmail(email)
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'No account found with this email.' })
+        }
+
+        // Generate and store reset token
+        const token = await authService.createPasswordResetToken(email, userType)
+        
+        // Send email with OTP (use token as OTP)
+        const { sendPasswordResetEmail } = require('../utils/mailer')
+        await sendPasswordResetEmail(email, user.name, token, userType)
+
+        res.status(200).json({ 
+            success: true, 
+            message: `Password reset OTP sent to ${email}. Check your email.` 
+        })
+    } catch (err) {
+        console.error('requestPasswordReset:', err)
+        res.status(500).json({ success: false, message: 'Server error.' })
+    }
+}
+
+const resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body
+
+        if (!token || !newPassword) {
+            return res.status(400).json({ success: false, message: 'Token and new password are required.' })
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long.' })
+        }
+
+        // Find valid reset token
+        const resetToken = await authService.findPasswordResetToken(token)
+        if (!resetToken) {
+            return res.status(400).json({ success: false, message: 'Invalid or expired reset token.' })
+        }
+
+        // Update password based on user type
+        if (resetToken.user_type === 'customer') {
+            await authService.updateCustomerPassword(resetToken.email, newPassword)
+        } else if (resetToken.user_type === 'coolie') {
+            await authService.updateCooliePassword(resetToken.email, newPassword)
+        }
+
+        // Mark token as used
+        await authService.markResetTokenAsUsed(token)
+
+        res.status(200).json({ 
+            success: true, 
+            message: 'Password reset successfully. You can now login with your new password.' 
+        })
+    } catch (err) {
+        console.error('resetPassword:', err)
+        res.status(500).json({ success: false, message: 'Server error.' })
+    }
+}
+
+module.exports = { 
+    registerCustomer, 
+    loginCustomer, 
+    registerCoolie, 
+    loginCoolie, 
+    getMe, 
+    refreshAccessToken, 
+    logout,
+    requestPasswordReset,
+    resetPassword
+}

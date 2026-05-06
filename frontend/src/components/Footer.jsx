@@ -15,7 +15,7 @@ export default function Footer() {
                     <Link to="/" className="hover:text-white transition-colors font-medium">Contact</Link>
                 </div>
                 <div className="text-xs sm:text-sm text-[#6B6188] font-normal">
-                    © 2024 CoolieSeva
+                    © 2025 CoolieSeva
                 </div>
             </div>
         </footer>

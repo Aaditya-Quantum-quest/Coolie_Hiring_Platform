@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAll, getOne, approveLevel1, approveLevel2, reject, deactivate, getStats } = require('../../controllers/admin/businessAdmin.controller');
+const { getAll, getOne, approveLevel1, approveLevel2, reject, deactivate, getStats, deleteBusiness } = require('../../controllers/admin/businessAdmin.controller');
 const { protectAdmin, requireRegularAdmin, requireSuperAdmin } = require('../../middleware/adminAuth.middleware');
 
 router.get('/stats', protectAdmin, requireRegularAdmin, getStats);
@@ -15,5 +15,8 @@ router.patch('/:businessId/approve-level2', protectAdmin, requireSuperAdmin, app
 
 router.patch('/:businessId/reject', protectAdmin, requireRegularAdmin, reject);
 router.patch('/:businessId/deactivate', protectAdmin, requireRegularAdmin, deactivate);
+
+// DELETE — super admin only 🚨
+router.delete('/:businessId', protectAdmin, requireSuperAdmin, deleteBusiness);
 
 module.exports = router;

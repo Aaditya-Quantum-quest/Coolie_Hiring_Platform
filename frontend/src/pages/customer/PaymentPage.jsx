@@ -45,7 +45,7 @@ function PaymentSuccess({ amount, onDone }) {
                     onClick={onDone}
                     className="w-full py-2.5 rounded-xl bg-[#7B2FFF] text-white text-sm font-bold hover:bg-[#5B1FCC] transition-colors"
                 >
-                    View Booking Details
+                    View Receipt
                 </button>
             </div>
         </div>
@@ -58,16 +58,17 @@ export default function PaymentPage() {
     const locState = useLocation().state || {}
 
     const b = locState.booking
+    const bookingRef = b?.booking_ref || b?.id || 'BK-2024-1847'
     const booking = b ? {
-        id: b.id,
-        coolie: b.coolieName,
-        coolieRating: b.coolieRating,
-        coolieTrips: b.coolieTrips,
-        pickup: b.station,
-        dropoff: b.destination,
-        basePrice: b.amount,
-        discount: 0,
-        finalPrice: b.amount,
+        id: bookingRef,
+        coolie: b.coolieName || b.coolie_name || 'Porter',
+        coolieRating: b.coolieRating || b.coolie_rating || 4.8,
+        coolieTrips: b.coolieTrips || b.total_trips || 0,
+        pickup: b.station || b.initial_station_name || b.pickup || 'Station',
+        dropoff: b.destination || b.destination_station_name || b.dropoff || 'Destination',
+        basePrice: b.amount || b.basePrice || 100,
+        discount: b.discount || 0,
+        finalPrice: b.amount || b.finalPrice || 100,
     } : BOOKING
 
     const [method, setMethod] = useState('upi')
@@ -98,17 +99,16 @@ export default function PaymentPage() {
         setProcessing(true)
         try {
             if (method === 'cash') {
-                if (booking.id !== 'BK-2024-1847') {
-                    // Just mark as paid or handled, backend payBooking sets status to paid
-                    await axios.post(`/api/bookings/${booking.id}/pay`);
+                if (bookingRef !== 'BK-2024-1847') {
+                    await axios.post(`/api/bookings/${bookingRef}/pay`, {}, { withCredentials: true });
                 } else {
                     await new Promise(r => setTimeout(r, 2000));
                 }
                 setProcessing(false);
                 setSuccess(true);
             } else if (method === 'upi') {
-                if (booking.id !== 'BK-2024-1847') {
-                    await axios.post(`/api/bookings/${booking.id}/pay`);
+                if (bookingRef !== 'BK-2024-1847') {
+                    await axios.post(`/api/bookings/${bookingRef}/pay`, {}, { withCredentials: true });
                 } else {
                     await new Promise(r => setTimeout(r, 2000));
                 }
@@ -348,7 +348,7 @@ export default function PaymentPage() {
             {success && (
                 <PaymentSuccess
                     amount={booking.finalPrice}
-                    onDone={() => navigate('/customer/history')}
+                    onDone={() => navigate(`/customer/receipt/${booking.id}`)}
                 />
             )}
         </div>

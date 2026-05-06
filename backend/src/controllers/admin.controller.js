@@ -566,7 +566,8 @@ const getAllBookingsAdmin = async (req, res) => {
         let query = `
             SELECT b.id, b.booking_ref, b.initial_station_name, b.destination_station_name, b.platform, 
                    b.amount, b.status, b.created_at as date, b.otp, b.train_no,
-                   c.name as customer_name, co.name as coolie_name
+                   c.name as customer_name, co.name as coolie_name,
+                   c.id as customerId, co.coolie_id as coolieId
             FROM bookings b
             LEFT JOIN customers c ON b.customer_id = c.id
             LEFT JOIN coolies co ON b.coolie_id = co.id
@@ -601,14 +602,17 @@ const getAllBookingsAdmin = async (req, res) => {
             id: b.booking_ref,
             dbId: b.id,
             customer: b.customer_name || 'Demo Customer',
+            customerId: b.customerId || 'N/A',
             coolie: b.coolie_name || 'Demo Coolie',
+            coolieId: b.coolieId || 'N/A',
             initialStation: b.initial_station_name,
             station: b.destination_station_name,
             from: b.platform,
             amount: b.amount,
             status: b.status,
-            date: new Date(b.date).toLocaleString(),
-            payment: 'UPI'
+            date: b.date,
+            otp: b.otp,
+            trainNo: b.train_no
         }));
         
         res.status(200).json({ success: true, data: formatted, total: parseInt(countResult.rows[0].count) });
@@ -774,6 +778,68 @@ const getStationPerformanceAdmin = async (req, res) => {
     }
 }
 
+const deleteCoolie = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { id } = req.params;
+        await client.query('BEGIN');
+
+        // Delete dependencies
+        await client.query('DELETE FROM xp_transactions WHERE coolie_id = $1', [id]);
+        await client.query('DELETE FROM coolie_xp_profiles WHERE coolie_id = $1', [id]);
+        await client.query('DELETE FROM coolie_achievements WHERE coolie_id = $1', [id]);
+        await client.query('DELETE FROM location_logs WHERE coolie_id = $1', [id]);
+        await client.query('DELETE FROM disputes WHERE coolie_id = $1', [id]);
+        await client.query('DELETE FROM bookings WHERE coolie_id = $1', [id]);
+        
+        // Delete the coolie
+        const result = await client.query('DELETE FROM coolies WHERE id = $1 RETURNING name', [id]);
+        
+        if (result.rowCount === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, message: 'Coolie not found.' });
+        }
+
+        await client.query('COMMIT');
+        res.status(200).json({ success: true, message: `Coolie ${result.rows[0].name} and all related data deleted completely.` });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('deleteCoolie:', err);
+        res.status(500).json({ success: false, message: 'Server error during deletion.' });
+    } finally {
+        client.release();
+    }
+}
+
+const deleteCustomer = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { id } = req.params;
+        await client.query('BEGIN');
+
+        // Delete dependencies
+        await client.query('DELETE FROM disputes WHERE customer_id = $1', [id]);
+        await client.query('DELETE FROM bookings WHERE customer_id = $1', [id]);
+        
+        // Delete the customer
+        const result = await client.query('DELETE FROM customers WHERE id = $1 RETURNING name', [id]);
+        
+        if (result.rowCount === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, message: 'Customer not found.' });
+        }
+
+        await client.query('COMMIT');
+        res.status(200).json({ success: true, message: `Customer ${result.rows[0].name} and all related data deleted completely.` });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('deleteCustomer:', err);
+        res.status(500).json({ success: false, message: 'Server error during deletion.' });
+    } finally {
+        client.release();
+    }
+}
+
 module.exports = {
     loginAdmin,
     getPendingCoolies, getCoolieDetail, getAllCoolies,
@@ -783,5 +849,6 @@ module.exports = {
     getDashboardStats, getLiveBookings, getRevenueData, getStationCoverage, getUrgentDisputes,
     getAllBookingsAdmin, getBookingDetailAdmin, updateBookingStatusAdmin,
     getAllDisputes, getDisputeDetails, resolveDispute,
-    getAnalyticsData, getUserGrowth, getRevenueAnalytics, getStationPerformanceAdmin
+    getAnalyticsData, getUserGrowth, getRevenueAnalytics, getStationPerformanceAdmin,
+    deleteCoolie, deleteCustomer
 }

@@ -169,12 +169,6 @@ export async function getLiveTrainStatus(trainNumber) {
     throw err
   }
 }
-// ─────────────────────────────────────────────────────────────────────────────
-// 7. PNR Status (Not supported by RailRadar)
-// ─────────────────────────────────────────────────────────────────────────────
-export async function getPNRStatus(pnrNumber) {
-  return { status: false, message: 'PNR Status is currently unavailable on the new RailRadar API.' }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. Train Schedule

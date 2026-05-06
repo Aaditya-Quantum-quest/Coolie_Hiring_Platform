@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Building2, Hotel, Utensils, CheckCircle, XCircle, Clock, Shield, Search, ChevronDown, RefreshCw, Eye, Check, X } from 'lucide-react';
+import { Building2, Hotel, Utensils, CheckCircle, XCircle, Clock, Shield, Search, ChevronDown, RefreshCw, Eye, Check, X, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useApp } from '../../context/AppContext';
 
 import { adminBusinessesService } from '../../services/adminService';
+import { getAssetUrl } from '../../utils/assets';
 
 const STATUS_COLOR = {
     pending: '#f59e0b',
@@ -19,9 +21,9 @@ const STATUS_LABEL = {
     rejected: 'Rejected',
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
 export default function AdminBusinesses() {
+    const { user } = useApp();
+    const adminRole = user?.adminRole || 'admin';
     const [businesses, setBusinesses] = useState([]);
     const [stats, setStats] = useState({ pending: 0, level1_approved: 0, fully_approved: 0, rejected: 0, restaurants: 0, hotels: 0, total: 0 });
     const [loading, setLoading] = useState(true);
@@ -66,12 +68,25 @@ export default function AdminBusinesses() {
         finally { setActing(false); }
     };
 
+    const handleDeleteBusiness = async (b) => {
+        if (!window.confirm(`Are you sure you want to permanently delete ${b.business_name}?`)) return;
+        setActing(true);
+        try {
+            const res = await adminBusinessesService.deleteBusiness(b.id);
+            if (res.success) {
+                toast.success('Business deleted');
+                fetchAll();
+                setSelected(null);
+            } else toast.error(res.error?.message || 'Delete failed');
+        } catch (e) { toast.error('Error deleting business'); }
+        finally { setActing(false); }
+    };
+
     const handleViewDetail = async (b) => {
         try {
             setSelected({ ...b, loading: true });
             const res = await adminBusinessesService.getBusinessDetails(b.id);
             if (res.success) {
-                // The backend returns { success: true, business: { ... } }
                 setSelected({ ...b, ...res.business, loading: false });
             }
         } catch (error) {
@@ -220,7 +235,7 @@ export default function AdminBusinesses() {
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-3">
                                                     {b.logo_url
-                                                        ? <img src={b.logo_url} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                                                        ? <img src={getAssetUrl(b.logo_url)} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" />
                                                         : <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-xs shrink-0">{b.business_name?.[0]}</div>
                                                     }
                                                     <div className="min-w-0">
@@ -276,6 +291,12 @@ export default function AdminBusinesses() {
                                                             <Shield size={14} />
                                                         </button>
                                                     )}
+                                                    {adminRole === 'super_admin' && (
+                                                        <button onClick={() => handleDeleteBusiness(b)} disabled={acting} title="PERMANENT DELETE"
+                                                            className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors">
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -288,7 +309,7 @@ export default function AdminBusinesses() {
                 </div>
             </div>
 
-            {/* Detail Modal — FIXED: added missing closing </div> for the outer modal wrapper */}
+            {/* Detail Modal */}
             {selected && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4" onClick={() => setSelected(null)}>
                     <div className="bg-slate-900 border border-white/10 rounded-2xl p-4 sm:p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -311,9 +332,9 @@ export default function AdminBusinesses() {
                                                 <div className="shrink-0">
                                                     <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1.5 font-semibold">Logo</p>
                                                     <div className="w-20 h-20 rounded-xl border border-white/10 overflow-hidden bg-white/5">
-                                                        <img 
-                                                            src={selected.logo_url.startsWith('http') ? selected.logo_url : `${API_BASE}${selected.logo_url}`} 
-                                                            alt="Logo" 
+                                                        <img
+                                                            src={getAssetUrl(selected.logo_url)}
+                                                            alt="Logo"
                                                             className="w-full h-full object-cover"
                                                             onError={(e) => { e.target.src = 'https://via.placeholder.com/150?text=No+Logo'; }}
                                                         />
@@ -323,12 +344,15 @@ export default function AdminBusinesses() {
                                             {selected.cover_photo_url && (
                                                 <div className="flex-1 min-w-[200px]">
                                                     <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1.5 font-semibold">Cover Photo</p>
-                                                    <div className="h-20 rounded-xl border border-white/10 overflow-hidden bg-white/5">
-                                                        <img 
-                                                            src={selected.cover_photo_url.startsWith('http') ? selected.cover_photo_url : `${API_BASE}${selected.cover_photo_url}`} 
-                                                            alt="Cover" 
-                                                            className="w-full h-full object-cover"
-                                                            onError={(e) => { e.target.src = 'https://via.placeholder.com/400x150?text=No+Cover'; }}
+                                                    <div className="w-full h-20 rounded-xl border border-white/10 overflow-hidden relative">
+                                                        <img
+                                                            src={getAssetUrl(selected.cover_photo_url)}
+                                                            className="absolute w-full h-full object-cover blur-md scale-110 opacity-50"
+                                                        />
+                                                        <img
+                                                            src={getAssetUrl(selected.cover_photo_url)}
+                                                            alt="Cover"
+                                                            className="relative max-h-full mx-auto object-contain"
                                                         />
                                                     </div>
                                                 </div>
@@ -343,9 +367,9 @@ export default function AdminBusinesses() {
                                             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                                                 {selected.photos.map((p, i) => (
                                                     <div key={i} className="w-24 h-16 rounded-lg border border-white/10 overflow-hidden bg-white/5 shrink-0">
-                                                        <img 
-                                                            src={p.photo_url.startsWith('http') ? p.photo_url : `${API_BASE}${p.photo_url}`} 
-                                                            alt={`Gallery ${i}`} 
+                                                        <img
+                                                            src={getAssetUrl(p.photo_url)}
+                                                            alt={`Gallery ${i}`}
                                                             className="w-full h-full object-cover"
                                                             onError={(e) => { e.target.src = 'https://via.placeholder.com/150?text=Image'; }}
                                                         />
@@ -356,39 +380,39 @@ export default function AdminBusinesses() {
                                     )}
 
                                     <div className="space-y-3">
-                                    {[
-                                        ['Type', selected.business_type ? selected.business_type.charAt(0).toUpperCase() + selected.business_type.slice(1) : '—'],
-                                        ['Business Name', selected.business_name || '—'],
-                                        ['Description', selected.description || 'N/A'],
-                                        ['GST Number', selected.gst_number || 'N/A'],
-                                        ['Year Established', selected.year_established || '—'],
-                                        ['Full Address', selected.full_address || '—'],
-                                        ['City', selected.city || '—'],
-                                        ['State', selected.state || '—'],
-                                        ['Pincode', selected.pincode || '—'],
-                                        ['Opening Time', selected.opening_time || '—'],
-                                        ['Closing Time', selected.closing_time || '—'],
-                                        ['Days Open', Array.isArray(selected.days_open) ? selected.days_open.join(', ') : selected.days_open || '—'],
-                                        ['Closed on Holidays', selected.closed_on_holidays != null ? (selected.closed_on_holidays ? 'Yes' : 'No') : '—'],
-                                        ['Payment Modes', Array.isArray(selected.payment_modes) ? selected.payment_modes.join(', ') : selected.payment_modes || '—'],
-                                        ['Owner', selected.owner_name || selected.full_name || '—'],
-                                        ['Owner Email', selected.owner_email || selected.email || '—'],
-                                        ['Owner Phone', selected.owner_phone || selected.phone_primary || '—'],
-                                        ['Status', STATUS_LABEL[selected.verification_status] || selected.verification_status || '—'],
-                                        ['Verification Level', `Level ${selected.verification_level ?? 0}`],
-                                        ['Active', selected.is_active != null ? (selected.is_active ? 'Yes' : 'No') : '—'],
-                                        ['Profile Views', selected.profile_views ?? '—'],
-                                        ['Admin Reviewed At', selected.admin_reviewed_at ? new Date(selected.admin_reviewed_at).toLocaleString() : '—'],
-                                        ['Registered At', selected.created_at ? new Date(selected.created_at).toLocaleString() : '—'],
-                                        ['L1 Approved At', selected.level1_approved_at ? new Date(selected.level1_approved_at).toLocaleString() : '—'],
-                                        ['L2 Approved At', selected.level2_approved_at ? new Date(selected.level2_approved_at).toLocaleString() : '—'],
-                                        ['Rejection Reason', selected.rejection_reason || '—'],
-                                    ].filter(([, v]) => v !== undefined).map(([k, v]) => (
-                                        <div key={k} className="flex gap-2 sm:gap-3">
-                                            <span className="text-slate-500 w-28 sm:w-36 shrink-0 text-xs sm:text-sm">{k}</span>
-                                            <span className="text-slate-200 text-xs sm:text-sm break-all">{v}</span>
-                                        </div>
-                                    ))}
+                                        {[
+                                            ['Type', selected.business_type ? selected.business_type.charAt(0).toUpperCase() + selected.business_type.slice(1) : '—'],
+                                            ['Business Name', selected.business_name || '—'],
+                                            ['Description', selected.description || 'N/A'],
+                                            ['GST Number', selected.gst_number || 'N/A'],
+                                            ['Year Established', selected.year_established || '—'],
+                                            ['Full Address', selected.full_address || '—'],
+                                            ['City', selected.city || '—'],
+                                            ['State', selected.state || '—'],
+                                            ['Pincode', selected.pincode || '—'],
+                                            ['Opening Time', selected.opening_time || '—'],
+                                            ['Closing Time', selected.closing_time || '—'],
+                                            ['Days Open', Array.isArray(selected.days_open) ? selected.days_open.join(', ') : selected.days_open || '—'],
+                                            ['Closed on Holidays', selected.closed_on_holidays != null ? (selected.closed_on_holidays ? 'Yes' : 'No') : '—'],
+                                            ['Payment Modes', Array.isArray(selected.payment_modes) ? selected.payment_modes.join(', ') : selected.payment_modes || '—'],
+                                            ['Owner', selected.owner_name || selected.full_name || '—'],
+                                            ['Owner Email', selected.owner_email || selected.email || '—'],
+                                            ['Owner Phone', selected.owner_phone || selected.phone_primary || '—'],
+                                            ['Status', STATUS_LABEL[selected.verification_status] || selected.verification_status || '—'],
+                                            ['Verification Level', `Level ${selected.verification_level ?? 0}`],
+                                            ['Active', selected.is_active != null ? (selected.is_active ? 'Yes' : 'No') : '—'],
+                                            ['Profile Views', selected.profile_views ?? '—'],
+                                            ['Admin Reviewed At', selected.admin_reviewed_at ? new Date(selected.admin_reviewed_at).toLocaleString() : '—'],
+                                            ['Registered At', selected.created_at ? new Date(selected.created_at).toLocaleString() : '—'],
+                                            ['L1 Approved At', selected.level1_approved_at ? new Date(selected.level1_approved_at).toLocaleString() : '—'],
+                                            ['L2 Approved At', selected.level2_approved_at ? new Date(selected.level2_approved_at).toLocaleString() : '—'],
+                                            ['Rejection Reason', selected.rejection_reason || '—'],
+                                        ].filter(([, v]) => v !== undefined).map(([k, v]) => (
+                                            <div key={k} className="flex gap-2 sm:gap-3">
+                                                <span className="text-slate-500 w-28 sm:w-36 shrink-0 text-xs sm:text-sm">{k}</span>
+                                                <span className="text-slate-200 text-xs sm:text-sm break-all">{v}</span>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}
@@ -409,6 +433,12 @@ export default function AdminBusinesses() {
                                     <button onClick={() => act(selected.id, 'approve-level2')} disabled={acting || selected.loading}
                                         className="w-full py-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium text-xs sm:text-sm hover:bg-blue-500/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                                         <Shield size={16} /> Approve L2 (Super Admin)
+                                    </button>
+                                )}
+                                {adminRole === 'super_admin' && (
+                                    <button onClick={() => handleDeleteBusiness(selected)} disabled={acting || selected.loading}
+                                        className="w-full py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mt-2">
+                                        <Trash2 size={16} /> Delete Permanently
                                     </button>
                                 )}
                             </div>

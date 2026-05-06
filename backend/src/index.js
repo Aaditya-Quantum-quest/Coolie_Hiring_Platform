@@ -155,8 +155,18 @@ app.use('/uploads', (req, res, next) => {
     if (fs.existsSync(localPath) && fs.lstatSync(localPath).isFile()) {
         return next();
     }
-    // Fallback to production Render server
-    res.redirect(`https://coolie-hiring-platform.onrender.com/uploads${req.path}`);
+    
+    // Only fallback to production Render server if NOT in production
+    // AND NOT already on the production host to avoid infinite loops
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isRenderHost = req.get('host') === 'coolie-hiring-platform.onrender.com';
+
+    if (!isProduction && !isRenderHost) {
+        return res.redirect(`https://coolie-hiring-platform.onrender.com/uploads${req.path}`);
+    }
+    
+    // If on production or already on Render host and file doesn't exist, just 404
+    res.status(404).json({ success: false, message: 'File not found' });
 });
 
 app.use(
@@ -205,20 +215,28 @@ app.use('/api/v1/admin/businesses', businessAdminRoutes);
 // ─────────────────────────────────────────────────────────────
 app.get('/api/health', async (req, res) => {
     try {
+        const startTime = Date.now();
         await pool.query('SELECT 1');
+        const responseTime = Date.now() - startTime;
 
         res.status(200).json({
             success: true,
             message: 'Coolie Hiring API Running',
             environment: process.env.NODE_ENV,
-            database: 'connected',
+            database: {
+                status: 'connected',
+                responseTime: `${responseTime}ms`
+            },
             timestamp: new Date().toISOString(),
         });
     } catch (err) {
         res.status(500).json({
             success: false,
             message: 'Health check failed',
-            database: 'disconnected',
+            database: {
+                status: 'disconnected',
+                error: err.message
+            },
         });
     }
 });
@@ -266,12 +284,27 @@ httpServer.listen(PORT, '0.0.0.0', async () => {
     console.log(`📁 Environment: ${process.env.NODE_ENV}`);
     console.log('────────────────────────────────');
 
-    // DB Test
-    try {
-        await pool.query('SELECT 1');
-        console.log('✅ PostgreSQL connected');
-    } catch (err) {
-        console.error('❌ Database failed:', err.message);
+    // DB Test with retry logic
+    let dbConnected = false;
+    let retryCount = 0;
+    const maxRetries = 5;
+    
+    while (!dbConnected && retryCount < maxRetries) {
+        try {
+            await pool.query('SELECT 1');
+            console.log('✅ PostgreSQL connected');
+            dbConnected = true;
+        } catch (err) {
+            retryCount++;
+            console.error(`❌ Database connection failed (attempt ${retryCount}/${maxRetries}):`, err.message);
+            
+            if (retryCount < maxRetries) {
+                console.log(`⏳ Retrying in ${retryCount * 2} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
+            } else {
+                console.error('❌ Max database connection retries reached. Server will continue but database features may not work.');
+            }
+        }
     }
 
     // Cron Jobs

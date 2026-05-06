@@ -21,11 +21,14 @@ import SettingsPage from './pages/business/SettingsPage'
 import NotificationsPage from './pages/business/NotificationsPage'
 import NearbyBusinesses from './pages/business/NearbyBusinesses'
 import BusinessDetail from './pages/business/BusinessDetail'
+import OwnerProfile from './pages/business/OwnerProfile'
+import LocationAndMap from './pages/business/LocationAndMap'
 
 // Public Pages
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
 
 // Customer Pages
 import CustomerDashboard from './pages/customer/CustomerDashboard'
@@ -34,9 +37,9 @@ import TrackCoolie from './pages/customer/TrackCoolie'
 import PaymentPage from './pages/customer/PaymentPage'
 import BookingHistory from './pages/customer/BookingHistory'
 import RatingPage from './pages/customer/RatingPage'
-import StationMap from './pages/customer/StationMap'
 import TrainStatus from './pages/customer/TrainStatus'
 import CustomerProfile from './pages/customer/CustomerProfile'
+import ReceiptsPage from './pages/customer/ReceiptsPage'
 import BookingReceipt from './pages/customer/BookingReceipt'
 import CustomerBusinesses from './pages/customer/CustomerBusinesses'
 
@@ -47,6 +50,7 @@ import CoolieEarnings from './pages/coolie/CoolieEarnings'
 import Leaderboard from './pages/coolie/Leaderboard'
 import CoolieHeroRanking from './pages/coolie/CoolieHeroRanking'
 import CoolieVerification from './pages/coolie/CoolieVerification'
+import CoolieReceiptsPage from './pages/coolie/CoolieReceiptsPage'
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -72,6 +76,7 @@ function AppRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
       {/* Customer */}
       <Route path="/customer" element={<ProtectedRoute allowedRole="customer"><CustomerDashboard /></ProtectedRoute>} />
@@ -80,9 +85,9 @@ function AppRoutes() {
       <Route path="/customer/payment" element={<ProtectedRoute allowedRole="customer"><PaymentPage /></ProtectedRoute>} />
       <Route path="/customer/history" element={<ProtectedRoute allowedRole="customer"><BookingHistory /></ProtectedRoute>} />
       <Route path="/customer/rate" element={<ProtectedRoute allowedRole="customer"><RatingPage /></ProtectedRoute>} />
-      <Route path="/customer/map" element={<ProtectedRoute allowedRole="customer"><StationMap /></ProtectedRoute>} />
-      <Route path="/customer/trains" element={<ProtectedRoute allowedRole="customer"><TrainStatus /></ProtectedRoute>} />
+            <Route path="/customer/trains" element={<ProtectedRoute allowedRole="customer"><TrainStatus /></ProtectedRoute>} />
       <Route path="/customer/profile" element={<ProtectedRoute allowedRole="customer"><CustomerProfile /></ProtectedRoute>} />
+                        <Route path="/customer/receipts" element={<ProtectedRoute allowedRole="customer"><ReceiptsPage /></ProtectedRoute>} />
       <Route path="/customer/receipt/:id" element={<ProtectedRoute allowedRole="customer"><BookingReceipt /></ProtectedRoute>} />
       <Route path="/customer/businesses" element={<ProtectedRoute allowedRole="customer"><CustomerBusinesses /></ProtectedRoute>} />
 
@@ -92,6 +97,7 @@ function AppRoutes() {
       <Route path="/coolie/earnings" element={<ProtectedRoute allowedRole="coolie"><CoolieEarnings /></ProtectedRoute>} />
       <Route path="/coolie/leaderboard" element={<ProtectedRoute allowedRole="coolie"><Leaderboard /></ProtectedRoute>} />
       <Route path="/coolie/rankings" element={<ProtectedRoute allowedRole="coolie"><CoolieHeroRanking /></ProtectedRoute>} />
+                        <Route path="/coolie/receipts" element={<ProtectedRoute allowedRole="coolie"><CoolieReceiptsPage /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin" element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
@@ -102,10 +108,13 @@ function AppRoutes() {
       <Route path="/admin/disputes" element={<ProtectedRoute allowedRole="admin"><AdminDisputes /></ProtectedRoute>} />
       <Route path="/admin/analytics" element={<ProtectedRoute allowedRole="admin"><AdminAnalytics /></ProtectedRoute>} />
 
+
       {/* Business Portal */}
       <Route path="/register/business" element={<BusinessRegister />} />
       <Route path="/business/login" element={<BusinessLogin />} />
       <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+      <Route path="/owner/profile" element={<OwnerProfile />} />
+      <Route path="/owner/location" element={<LocationAndMap />} />
       <Route path="/owner/menu" element={<MenuManagement />} />
       <Route path="/owner/rooms" element={<RoomManagement />} />
       <Route path="/owner/halls" element={<HallManagement />} />

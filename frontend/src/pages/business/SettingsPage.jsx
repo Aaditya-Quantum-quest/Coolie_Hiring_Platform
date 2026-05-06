@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import BusinessLayout from '../../components/business/BusinessLayout';
 import { useBusinessAuth } from '../../context/BusinessAuthContext';
 import toast from 'react-hot-toast';
+import { Lock, Shield, Key } from 'lucide-react';
 
 export default function SettingsPage() {
     const { authFetch } = useBusinessAuth();
@@ -12,22 +13,22 @@ export default function SettingsPage() {
         if (!pw.old_password || !pw.new_password) { toast.error('All fields are required'); return; }
         if (pw.new_password !== pw.confirm_password) { toast.error('Passwords do not match'); return; }
         if (pw.new_password.length < 6) { toast.error('New password must be at least 6 characters'); return; }
-        
+
         setSaving(true);
         try {
             const res = await authFetch('/api/v1/business/auth/change-password', {
-                method: 'POST', 
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    old_password: pw.old_password, 
-                    new_password: pw.new_password 
+                body: JSON.stringify({
+                    old_password: pw.old_password,
+                    new_password: pw.new_password
                 })
             });
-            
+
             const data = await res.json();
-            if (data.success) { 
-                toast.success('Password updated successfully!'); 
-                setPw({ old_password: '', new_password: '', confirm_password: '' }); 
+            if (data.success) {
+                toast.success('Password updated successfully!');
+                setPw({ old_password: '', new_password: '', confirm_password: '' });
             } else {
                 toast.error(data.error?.message || 'Failed to update password');
             }
@@ -49,10 +50,14 @@ export default function SettingsPage() {
 
     return (
         <BusinessLayout>
-            <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>Account Settings</h1>
+            <h1 className="text-2xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <Lock size={24} className="text-[#7B2FFF]" /> Account Settings
+            </h1>
             <div className="max-w-lg space-y-6">
                 <div className="rounded-xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
-                    <h2 className="font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Change Password</h2>
+                    <h2 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                        <Key size={18} className="text-[#7B2FFF]" /> Change Password
+                    </h2>
                     <div className="space-y-4">
                         <Input label="Current Password" type="password" value={pw.old_password} onChange={e => setPw(p => ({ ...p, old_password: e.target.value }))} />
                         <Input label="New Password" type="password" value={pw.new_password} onChange={e => setPw(p => ({ ...p, new_password: e.target.value }))} />
@@ -66,7 +71,7 @@ export default function SettingsPage() {
                     </div>
                 </div>
 
-                <div className="rounded-xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                {/* <div className="rounded-xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
                     <h2 className="font-bold mb-2" style={{ color: '#ef4444' }}>Danger Zone</h2>
                     <p className="text-sm mb-4" style={{ color: 'var(--text-body)' }}>Deactivating your listing will remove it from public search results immediately.</p>
                     <button onClick={() => { if (confirm('Are you sure you want to deactivate your listing?')) toast.error('Feature requires admin action'); }}
@@ -76,7 +81,7 @@ export default function SettingsPage() {
                         onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}>
                         Deactivate My Business Listing
                     </button>
-                </div>
+                </div> */}
             </div>
         </BusinessLayout>
     );

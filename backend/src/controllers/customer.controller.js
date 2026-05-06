@@ -13,13 +13,13 @@ exports.getAllCoolies = async (req, res) => {
     try {
         const customerId = req.user.id;
         
-        // Fetch the current station for the customer
-        const customerResult = await db.query('SELECT current_station FROM customers WHERE id = $1', [customerId]);
+        // Fetch the city for customer
+        const customerResult = await db.query('SELECT city FROM customers WHERE id = $1', [customerId]);
         if (customerResult.rows.length === 0) {
             return res.status(404).json({ success: false, message: 'Customer not found' });
         }
         
-        const currentStation = customerResult.rows[0].current_station;
+        const customerCity = customerResult.rows[0].city;
 
         let query = `
             SELECT id, name, age, station_name as station,
@@ -31,10 +31,10 @@ exports.getAllCoolies = async (req, res) => {
         `;
         let params = [];
 
-        if (currentStation) {
-            // Filter by the detected current station
+        if (customerCity) {
+            // Filter by customer city matching coolie station_name
             query += ` WHERE station_name = $1`;
-            params.push(currentStation);
+            params.push(customerCity);
         }
 
         const result = await db.query(query, params);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import BusinessLayout from '../../components/business/BusinessLayout';
 import { useBusinessAuth } from '../../context/BusinessAuthContext';
+import { Star, MessageSquare, Filter, Eye, EyeOff } from 'lucide-react';
 
 export default function ReviewsPage() {
     const { authFetch } = useBusinessAuth();
@@ -53,8 +54,12 @@ export default function ReviewsPage() {
                 <div className="flex flex-wrap gap-8 items-start">
                     <div className="text-center">
                         <p className="text-5xl font-black" style={{ color: 'var(--text-primary)' }}>{stats.avg_rating}</p>
-                        <p className="text-yellow-400 text-2xl mt-1">{'★'.repeat(Math.round(parseFloat(stats.avg_rating)))}</p>
-                        <p className="text-xs mt-1" style={{ color: 'var(--text-body)' }}>Average Rating</p>
+                        <div className="flex justify-center gap-1 text-yellow-400 mt-2">
+                            {[...Array(5)].map((_, i) => (
+                                <Star key={i} size={20} fill={i < Math.round(parseFloat(stats.avg_rating)) ? "currentColor" : "none"} />
+                            ))}
+                        </div>
+                        <p className="text-xs mt-2" style={{ color: 'var(--text-body)' }}>Average Rating</p>
                     </div>
                     <div className="flex-1 min-w-[200px] space-y-2">
                         {[5, 4, 3, 2, 1].map(star => {
@@ -62,7 +67,7 @@ export default function ReviewsPage() {
                             const count = parseInt(row?.count || 0);
                             return (
                                 <div key={star} className="flex items-center gap-3">
-                                    <span className="text-xs w-4 shrink-0" style={{ color: 'var(--text-body)' }}>{star}★</span>
+                                    <span className="text-xs w-6 shrink-0 flex items-center gap-0.5" style={{ color: 'var(--text-body)' }}>{star} <Star size={10} fill="currentColor" /></span>
                                     <div className="flex-1 rounded-full h-2" style={{ backgroundColor: 'var(--bg-card2)' }}>
                                         <div className="bg-yellow-400 h-2 rounded-full" style={{ width: `${(count / maxCount) * 100}%` }} />
                                     </div>
@@ -94,7 +99,7 @@ export default function ReviewsPage() {
                 <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-[#7B2FFF] border-t-transparent rounded-full animate-spin" /></div>
             ) : reviews.length === 0 ? (
                 <div className="rounded-xl text-center py-20" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
-                    <p className="text-4xl mb-3">⭐</p>
+                    <Star size={48} className="mx-auto mb-4 text-gray-600 opacity-20" />
                     <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>No reviews yet</p>
                 </div>
             ) : (
@@ -106,13 +111,18 @@ export default function ReviewsPage() {
                                     <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm" style={{ backgroundColor: 'var(--bg-card2)', color: '#7B2FFF' }}>U</div>
                                     <div>
                                         <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>User #{r.user_id}</p>
-                                        <p className="text-yellow-400 text-sm">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</p>
+                                        <div className="flex gap-0.5 text-yellow-400">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} size={12} fill={i < r.rating ? "currentColor" : "none"} />
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                     <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{new Date(r.created_at).toLocaleDateString()}</span>
                                     <button onClick={() => toggleVisibility(r.id, r.is_visible)}
-                                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${r.is_visible ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                                        className={`px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 ${r.is_visible ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                                        {r.is_visible ? <Eye size={10}/> : <EyeOff size={10}/>}
                                         {r.is_visible ? 'Visible' : 'Hidden'}
                                     </button>
                                 </div>
@@ -133,7 +143,7 @@ export default function ReviewsPage() {
                                         style={{ backgroundColor: '#7B2FFF', color: 'white' }}
                                         onMouseEnter={e => e.target.style.backgroundColor = '#5B1FCC'}
                                         onMouseLeave={e => e.target.style.backgroundColor = '#7B2FFF'}>
-                                        💬 Reply
+                                        <MessageSquare size={14} /> Reply
                                     </button>
                                 </div>
                             )}

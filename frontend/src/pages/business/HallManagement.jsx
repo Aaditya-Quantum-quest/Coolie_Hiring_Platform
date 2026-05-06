@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import BusinessLayout from '../../components/business/BusinessLayout';
 import { useBusinessAuth } from '../../context/BusinessAuthContext';
-import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Building2, Upload, Users, CreditCard, Snowflake, Video, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const HallModal = ({ hall, onClose, onSave, authFetch }) => {
@@ -23,43 +23,101 @@ const HallModal = ({ hall, onClose, onSave, authFetch }) => {
     };
 
     const Toggle = ({ k, l }) => (
-        <div className="flex items-center justify-between">
-            <span className="text-sm text-[#444653]">{l}</span>
-            <button type="button" onClick={() => setForm(p => ({ ...p, [k]: !p[k] }))}
-                className={`w-11 h-6 rounded-full relative transition-colors ${form[k] ? 'bg-[#00288E]' : 'bg-[#C4C5D5]'}`}>
-                <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${form[k] ? 'translate-x-6' : 'translate-x-1'}`} />
+        <div className="flex items-center justify-between p-2 rounded-xl transition-colors hover:bg-white/5">
+            <span className="text-sm font-medium" style={{ color: 'var(--text-body)' }}>{l}</span>
+            <button
+                type="button"
+                onClick={() => setForm(p => ({ ...p, [k]: !p[k] }))}
+                style={{
+                    position: 'relative',
+                    width: '44px',
+                    height: '24px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: form[k] ? '#7B2FFF' : '#1e293b',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.25s',
+                    flexShrink: 0,
+                }}
+            >
+                <span
+                    style={{
+                        position: 'absolute',
+                        top: '3px',
+                        left: form[k] ? 'calc(100% - 19px)' : '3px',
+                        width: '16px',
+                        height: '16px',
+                        backgroundColor: 'white',
+                        borderRadius: '50%',
+                        transition: 'left 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.35)',
+                    }}
+                />
             </button>
         </div>
     );
 
     return (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-xl">
-                <div className="flex items-center justify-between p-5 border-b border-[#E5EEFF]">
-                    <h3 className="font-bold text-[#0b1c30]">{hall ? 'Edit Hall' : 'Add Hall / Banquet'}</h3>
-                    <button onClick={onClose}><X size={18} className="text-[#757684]" /></button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="rounded-2xl w-full max-w-md shadow-2xl overflow-hidden my-auto" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
+                <div className="flex items-center justify-between p-5 border-b sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                    <h3 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>{hall ? 'Edit Hall' : 'Add Hall / Banquet'}</h3>
+                    <button onClick={onClose} className="p-1 pl-3 hover:bg-white/10 rounded-lg transition-colors"><X size={20} style={{ color: 'var(--text-body)' }} /></button>
                 </div>
-                <div className="p-5 space-y-4">
-                    <input placeholder="Hall Name *" value={form.hall_name} onChange={e => setForm(p => ({ ...p, hall_name: e.target.value }))} className="w-full border border-[#C4C5D5] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#00288E]" />
-                    <div className="grid grid-cols-2 gap-3">
-                        <input type="number" placeholder="Capacity (persons)" value={form.capacity} onChange={e => setForm(p => ({ ...p, capacity: e.target.value }))} className="border border-[#C4C5D5] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#00288E]" />
-                        <input type="number" placeholder="Price per Event (₹)" value={form.price_per_event} onChange={e => setForm(p => ({ ...p, price_per_event: e.target.value }))} className="border border-[#C4C5D5] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#00288E]" />
+                <div className="p-6 space-y-5">
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-body)' }}>Hall Name *</label>
+                        <input placeholder="e.g. Royal Grand Ballroom" value={form.hall_name} onChange={e => setForm(p => ({ ...p, hall_name: e.target.value }))}
+                            className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all focus:ring-1 focus:ring-[#7B2FFF]"
+                            style={{ backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
                     </div>
-                    <Toggle k="has_ac" l="AC Available" />
-                    <Toggle k="has_av_equipment" l="Projector/AV Equipment" />
-                    <Toggle k="is_available" l="Available for Booking" />
-                    <textarea placeholder="Description (optional)" value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} className="w-full border border-[#C4C5D5] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#00288E] resize-none" rows={2} />
-                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#C4C5D5] rounded-xl p-5 cursor-pointer hover:border-[#00288E] transition-colors">
-                        <span className="text-xl mb-1">📤</span>
-                        <span className="text-[#00288E] text-sm font-medium">Upload Hall Photos</span>
-                        <span className="text-[#757684] text-xs">Up to 5 images</span>
-                        <input type="file" accept="image/*" multiple className="hidden" onChange={e => setPhotos(Array.from(e.target.files).slice(0, 5))} />
-                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-body)' }}>Capacity (persons)</label>
+                            <input type="number" placeholder="0" value={form.capacity} onChange={e => setForm(p => ({ ...p, capacity: e.target.value }))}
+                                className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all focus:ring-1 focus:ring-[#7B2FFF]"
+                                style={{ backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-body)' }}>Price per Event (₹)</label>
+                            <input type="number" placeholder="0" value={form.price_per_event} onChange={e => setForm(p => ({ ...p, price_per_event: e.target.value }))}
+                                className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all focus:ring-1 focus:ring-[#7B2FFF]"
+                                style={{ backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
+                        </div>
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                        <Toggle k="has_ac" l="AC Available" />
+                        <Toggle k="has_av_equipment" l="Projector/AV Equipment" />
+                        <Toggle k="is_available" l="Available for Booking" />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-body)' }}>Description (optional)</label>
+                        <textarea placeholder="Tell us more about the space..." value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                            className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all focus:ring-1 focus:ring-[#7B2FFF] resize-none"
+                            style={{ backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} rows={3} />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-body)' }}>Hall Photos</label>
+                        <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-6 cursor-pointer hover:border-[#7B2FFF]/50 hover:bg-[#7B2FFF]/5 transition-all group"
+                            style={{ borderColor: 'var(--border-color)' }}>
+                            <Upload size={24} className="mb-2 text-[#7B2FFF] transition-transform group-hover:-translate-y-1" />
+                            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Upload Hall Photos</span>
+                            <span className="text-xs mt-1" style={{ color: 'var(--text-body)' }}>Up to 5 images</span>
+                            <input type="file" accept="image/*" multiple className="hidden" onChange={e => setPhotos(Array.from(e.target.files).slice(0, 5))} />
+                        </label>
+                        {photos.length > 0 && (
+                            <p className="text-xs mt-2 font-medium" style={{ color: '#7B2FFF' }}>{photos.length} image(s) selected</p>
+                        )}
+                    </div>
                 </div>
-                <div className="flex gap-3 p-5 border-t border-[#E5EEFF]">
-                    <button onClick={onClose} className="flex-1 py-2 border border-[#C4C5D5] rounded-lg text-sm text-[#444653]">Cancel</button>
-                    <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-[#00288E] text-white rounded-lg text-sm font-semibold disabled:opacity-60">
-                        {saving ? 'Saving...' : 'Save Hall'}
+                <div className="flex gap-3 p-6 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                    <button onClick={onClose} className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:bg-white/5" style={{ border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>Cancel</button>
+                    <button onClick={handleSave} disabled={saving} className="flex-1 py-3 rounded-xl text-sm font-bold shadow-lg shadow-[#7B2FFF]/20 transition-all hover:scale-[1.02] disabled:opacity-50"
+                        style={{ backgroundColor: '#7B2FFF', color: 'white' }}>
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : (hall ? 'Update Hall' : 'Save Hall')}
                     </button>
                 </div>
             </div>
@@ -88,45 +146,66 @@ export default function HallManagement() {
 
     return (
         <BusinessLayout>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-[#0b1c30]">Halls & Banquet</h1>
-                    <p className="text-[#757684] text-sm mt-1">Manage your event halls and banquet spaces.</p>
+                    <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Halls & Banquet</h1>
+                    <p className="text-sm mt-1" style={{ color: 'var(--text-body)' }}>Manage your event halls and banquet spaces.</p>
                 </div>
-                <button onClick={() => setModal({})} className="flex items-center gap-2 px-4 py-2.5 bg-[#00288E] text-white rounded-lg text-sm font-semibold hover:bg-[#001a6b] transition-colors">
-                    <Plus size={16} /> Add Hall
+                <button onClick={() => setModal({})} className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-[#7B2FFF]/20 transition-all hover:scale-[1.02]"
+                    style={{ backgroundColor: '#7B2FFF', color: 'white' }}>
+                    <Plus size={18} /> Add Hall
                 </button>
             </div>
 
             {loading ? (
-                <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-[#00288E] border-t-transparent rounded-full animate-spin" /></div>
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                    <Loader2 className="w-8 h-8 text-[#7B2FFF] animate-spin" />
+                    <p className="text-sm" style={{ color: 'var(--text-body)' }}>Loading halls...</p>
+                </div>
             ) : halls.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[#E5EEFF] text-center py-20">
-                    <p className="text-4xl mb-3">🏛️</p>
-                    <p className="text-[#0b1c30] font-semibold">No halls added yet</p>
+                <div className="rounded-2xl text-center py-20" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
+                    <Building2 size={48} className="mx-auto mb-4 text-[#7B2FFF] opacity-20" />
+                    <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>No halls added yet</p>
+                    <p className="text-sm mt-1" style={{ color: 'var(--text-body)' }}>Add your first banquet space to get started.</p>
                 </div>
             ) : (
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-6">
                     {halls.map(hall => (
-                        <div key={hall.id} className="bg-white rounded-xl border border-[#E5EEFF] shadow-sm p-5">
-                            <div className="flex items-start justify-between gap-2 mb-3">
-                                <div>
-                                    <p className="font-bold text-[#0b1c30]">{hall.hall_name}</p>
-                                    <div className="flex gap-3 text-xs text-[#757684] mt-1">
-                                        {hall.capacity && <span>👥 {hall.capacity} persons</span>}
-                                        {hall.price_per_event && <span>₹{hall.price_per_event}/event</span>}
+                        <div key={hall.id} className="group rounded-2xl border p-6 transition-all hover:scale-[1.01] hover:shadow-xl"
+                            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                            <div className="flex items-start justify-between gap-4 mb-4">
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-lg leading-tight" style={{ color: 'var(--text-primary)' }}>{hall.hall_name}</h3>
+                                    <div className="flex gap-4 text-xs mt-2 items-center" style={{ color: 'var(--text-body)' }}>
+                                        {hall.capacity && <span className="flex items-center gap-1.5"><Users size={14} className="text-[#7B2FFF]" /> {hall.capacity} Guests</span>}
+                                        {hall.price_per_event && <span className="flex items-center gap-1.5"><CreditCard size={14} className="text-[#7B2FFF]" /> ₹{hall.price_per_event}</span>}
                                     </div>
                                 </div>
-                                <div className="flex gap-2 shrink-0">
-                                    <button onClick={() => setModal(hall)} className="text-[#757684] hover:text-[#00288E]"><Edit2 size={14} /></button>
-                                    <button onClick={() => deleteHall(hall.id)} className="text-[#757684] hover:text-red-500"><Trash2 size={14} /></button>
+                                <div className="flex gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => setModal(hall)} className="p-2 hover:bg-[#7B2FFF]/10 rounded-lg transition-colors" style={{ color: '#7B2FFF' }}><Edit2 size={16} /></button>
+                                    <button onClick={() => deleteHall(hall.id)} className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400"><Trash2 size={16} /></button>
                                 </div>
                             </div>
-                            <div className="flex gap-2 flex-wrap">
-                                {hall.has_ac && <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-medium">❄️ AC</span>}
-                                {hall.has_av_equipment && <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full text-[10px] font-medium">📽️ AV</span>}
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${hall.is_available ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
-                                    {hall.is_available ? '✅ Available' : '❌ Unavailable'}
+
+                            {hall.description && (
+                                <p className="text-sm mb-5 line-clamp-2" style={{ color: 'var(--text-body)' }}>{hall.description}</p>
+                            )}
+
+                            <div className="flex gap-2 flex-wrap pt-2">
+                                {hall.has_ac && (
+                                    <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-[10px] font-bold flex items-center gap-1.5 border border-blue-500/20">
+                                        <Snowflake size={10} /> AC INCLUDED
+                                    </span>
+                                )}
+                                {hall.has_av_equipment && (
+                                    <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full text-[10px] font-bold flex items-center gap-1.5 border border-purple-500/20">
+                                        <Video size={10} /> AV SYSTEMS
+                                    </span>
+                                )}
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 border ${hall.is_available ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-gray-500/10 text-gray-500 border-gray-500/20'
+                                    }`}>
+                                    {hall.is_available ? <CheckCircle2 size={10} /> : <AlertCircle size={10} />}
+                                    {hall.is_available ? 'READY' : 'UNAVAILABLE'}
                                 </span>
                             </div>
                         </div>

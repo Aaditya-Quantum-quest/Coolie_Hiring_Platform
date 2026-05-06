@@ -3,7 +3,7 @@ import Sidebar from '../../components/Sidebar'
 import {
     Search, Eye, Download, MapPin, Star, Package,
     Clock, X, CheckCircle, AlertTriangle, ChevronDown, ChevronUp,
-    User, CreditCard, Calendar, ArrowRight
+    User, CreditCard, Calendar, ArrowRight, Hash
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { adminBookingsService } from '../../services/adminService'
@@ -77,6 +77,14 @@ function BookingCard({ b, onView }) {
 
             {expanded && (
                 <div className="border-t border-slate-800 px-4 py-3 space-y-2 text-xs">
+                    <div className="flex justify-between">
+                        <span className="text-slate-400">Customer ID</span>
+                        <span className="text-white">{b.customerId}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-slate-400">Coolie ID</span>
+                        <span className="text-white">{b.coolieId}</span>
+                    </div>
                     <div className="flex justify-between">
                         <span className="text-slate-400">Route</span>
                         <span className="text-white font-medium">
@@ -317,7 +325,9 @@ export default function AdminBookings() {
                                     {[
                                         ['Booking ID', selected.id, null],
                                         ['Customer', selected.customer, <User size={13} />],
+                                        ['Customer ID', selected.customerId, <Hash size={13} />],
                                         ['Coolie', selected.coolie, <User size={13} />],
+                                        ['Coolie ID', selected.coolieId, <Hash size={13} />],
                                         ['Station', selected.station, <MapPin size={13} />],
                                         ['Route', `${selected.initialStation} → ${selected.station}`, <ArrowRight size={13} />],
                                         ['Amount', `₹${selected.amount}`, null],

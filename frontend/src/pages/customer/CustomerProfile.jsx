@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { customerService } from '../../services/customerService'
 import toast from 'react-hot-toast'
+import { getAssetUrl } from '../../utils/assets'
 
 export default function CustomerProfile() {
     const { user: authUser, setUser: setAuthUser } = useApp()
@@ -36,7 +37,7 @@ export default function CustomerProfile() {
                 setProfile(res.customer)
                 setPhone(res.customer.phone || '')
                 setCity(res.customer.city || '')
-                setPhotoPreview(res.customer.profile_photo_url ? res.customer.profile_photo_url : null)
+                setPhotoPreview(res.customer.profile_photo_url ? getAssetUrl(res.customer.profile_photo_url) : null)
             }
         } catch (err) {
             console.error('Fetch profile error:', err)

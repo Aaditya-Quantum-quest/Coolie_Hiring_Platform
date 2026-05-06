@@ -7,7 +7,7 @@ import {
     Wind, Car, Building2, Filter
 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || '';
+import { getAssetUrl } from '../../utils/assets';
 
 function BusinessCard({ biz, onClick }) {
     const isHotel = biz.business_type === 'hotel';
@@ -23,7 +23,7 @@ function BusinessCard({ biz, onClick }) {
             <div className="relative h-40 bg-slate-800 overflow-hidden">
                 {biz.cover_photo_url ? (
                     <img
-                        src={`${API}${biz.cover_photo_url}`}
+                        src={getAssetUrl(biz.cover_photo_url)}
                         alt={biz.business_name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
@@ -52,7 +52,7 @@ function BusinessCard({ biz, onClick }) {
                 {/* Logo overlay */}
                 {biz.logo_url && (
                     <img
-                        src={`${API}${biz.logo_url}`}
+                        src={getAssetUrl(biz.logo_url)}
                         alt="logo"
                         className="absolute bottom-0 left-3 translate-y-1/2 w-9 h-9 rounded-xl object-cover border-2 border-slate-900 bg-slate-900"
                     />
@@ -141,6 +141,7 @@ export default function CustomerBusinesses() {
             const params = new URLSearchParams({ sort, page, limit: LIMIT });
             if (type !== 'all') params.append('type', type);
             if (search) params.append('search', search);
+            const API = import.meta.env.VITE_API_URL || '';
             const res = await fetch(`${API}/api/v1/public/businesses?${params}`);
             const data = await res.json();
             if (data.success) {

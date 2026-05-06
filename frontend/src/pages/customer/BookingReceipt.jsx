@@ -8,6 +8,7 @@ import {
     CheckCircle, Shield, CreditCard, Hash
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getAssetUrl } from '../../utils/assets';
 
 export default function BookingReceipt() {
     const { id } = useParams(); // booking_ref
@@ -164,7 +165,7 @@ export default function BookingReceipt() {
                                         <div className="flex gap-4">
                                             <div className="w-24 h-24 rounded-2xl bg-[#12102A] border border-[#1E1A40] overflow-hidden shrink-0">
                                                 {booking.luggage_img_url ? (
-                                                    <img src={booking.luggage_img_url} alt="Luggage" className="w-full h-full object-cover" />
+                                                    <img src={getAssetUrl(booking.luggage_img_url)} alt="Luggage" className="w-full h-full object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center text-[#3a3560]">
                                                         <Package size={32} />

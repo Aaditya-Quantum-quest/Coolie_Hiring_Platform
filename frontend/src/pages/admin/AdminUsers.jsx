@@ -1,11 +1,15 @@
 import React, { useState } from 'react'
 import Sidebar from '../../components/Sidebar'
-import { Search, Filter, UserX, UserCheck, Eye, Mail, Phone, MapPin, Star, Download, X } from 'lucide-react'
+import { Search, Filter, UserX, UserCheck, Eye, Mail, Phone, MapPin, Star, Download, X, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { getAssetUrl } from '../../utils/assets'
 
 import { adminUsersService } from '../../services/adminService'
+import { useApp } from '../../context/AppContext'
 
 export default function AdminUsers() {
+    const { user } = useApp()
+    const adminRole = user?.adminRole || 'admin'
     const [users, setUsers] = useState([])
     const [search, setSearch] = useState('')
     const [filterStatus, setFilterStatus] = useState('all')
@@ -99,6 +103,21 @@ export default function AdminUsers() {
         }
     }
 
+    const handleDeleteCustomer = async (u) => {
+        if (!window.confirm(`🚨 DANGER: Are you sure you want to PERMANENTLY delete customer "${u.name}"? This will remove all their bookings and history. This action cannot be undone.`)) return
+        
+        try {
+            const res = await adminUsersService.deleteCustomer(u.id)
+            if (res.success) {
+                toast.success(res.message)
+                setSelected(null)
+                fetchUsers()
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to delete customer')
+        }
+    }
+
     const STATUS_BADGE = {
         active: 'status-available',
         suspended: 'status-busy',
@@ -178,7 +197,7 @@ export default function AdminUsers() {
                                                 <td className="py-2.5 sm:py-3 px-3 sm:px-4">
                                                     <div className="flex items-center gap-2 sm:gap-3">
                                                         {u.photo ? (
-                                                            <img src={u.photo} alt={u.name} className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover shrink-0 border border-slate-700" />
+                                                            <img src={getAssetUrl(u.photo)} alt={u.name} className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover shrink-0 border border-slate-700" />
                                                         ) : (
                                                             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
                                                                 {u.name[0]}
@@ -236,6 +255,16 @@ export default function AdminUsers() {
                                                         >
                                                             {u.status === 'banned' ? <UserCheck size={13} /> : <UserX size={13} />}
                                                         </button>
+
+                                                        {adminRole === 'super_admin' && (
+                                                            <button
+                                                                onClick={() => handleDeleteCustomer(u)}
+                                                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500/20"
+                                                                title="PERMANENT DELETE"
+                                                            >
+                                                                <Trash2 size={13} />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -261,7 +290,7 @@ export default function AdminUsers() {
                                 </div>
                                 <div className="text-center mb-4">
                                     {selected.photo ? (
-                                        <img src={selected.photo} alt={selected.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover mx-auto mb-2 border-2 border-slate-700 shadow-lg" />
+                                        <img src={getAssetUrl(selected.photo)} alt={selected.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover mx-auto mb-2 border-2 border-slate-700 shadow-lg" />
                                     ) : (
                                         <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-black text-2xl mx-auto mb-2">
                                             {selected.name[0]}
@@ -293,6 +322,16 @@ export default function AdminUsers() {
                                     >
                                         {selected.status === 'banned' ? 'Unban User' : 'Ban User'}
                                     </button>
+
+                                    {adminRole === 'super_admin' && (
+                                        <button
+                                            onClick={() => handleDeleteCustomer(selected)}
+                                            className="btn-danger flex-1 text-xs sm:text-sm py-2 bg-red-600 hover:bg-red-700 text-white font-bold"
+                                        >
+                                            Delete Permanently
+                                        </button>
+                                    )}
+                                    
                                     <button onClick={() => setSelected(null)} className="btn-secondary flex-1 text-xs sm:text-sm py-2">Close</button>
                                 </div>
                             </div>

@@ -4,7 +4,7 @@ const {
     goOnline, goOffline, getStatus, getProfile,
     getDashboardStats, getActiveJobs, getCompletedToday, getUpcomingRequests,
     getDashboardOverview, getPublicProfile, updateProfile,
-    getEarnings, getTransactions, getWeeklySummary
+    getEarnings, getTransactions, getWeeklySummary, acceptBooking
 } = require('../controllers/coolie.controller');
 const { protect } = require('../middleware/auth.middleware');
 
@@ -14,6 +14,7 @@ router.get('/status/:coolieId', protect, getStatus);
 router.get('/profile', protect, getProfile);
 router.put('/profile/:coolieId', protect, updateProfile);
 router.get('/verify/:coolieId', getPublicProfile);
+router.post('/booking/:id/accept', protect, acceptBooking);
 
 // Dashboard routes
 router.get('/dashboard-overview/:coolieId', protect, getDashboardOverview);

@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || '';
+import { getAssetUrl } from '../../utils/assets';
 
 const BusinessCard = ({ biz, onClick }) => (
     <div onClick={onClick} className="bg-white rounded-xl border border-[#E5EEFF] shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all group">
         <div className="relative h-44 bg-[#DCE9FF] overflow-hidden">
             {biz.cover_photo_url ? (
-                <img src={`${API}${biz.cover_photo_url}`} alt={biz.business_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <img src={getAssetUrl(biz.cover_photo_url)} alt={biz.business_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
             ) : (
                 <div className="w-full h-full flex items-center justify-center text-5xl">{biz.business_type === 'hotel' ? '🏨' : '🍽️'}</div>
             )}
@@ -52,6 +52,7 @@ export default function NearbyBusinesses() {
 
     useEffect(() => {
         setLoading(true);
+        const API = import.meta.env.VITE_API_URL || '';
         fetch(`${API}/api/v1/public/stations/${stationId}/businesses?type=${type}&sort=${sort}&search=${search}`)
             .then(r => r.json())
             .then(d => { if (d.success) setBusinesses(d.businesses); })
@@ -59,6 +60,7 @@ export default function NearbyBusinesses() {
     }, [stationId, type, sort, search]);
 
     useEffect(() => {
+        const API = import.meta.env.VITE_API_URL || '';
         fetch(`${API}/api/v1/public/stations`).then(r => r.json()).then(d => {
             if (d.success) { const s = d.stations.find(s => s.id == stationId); if (s) setStation(s.name); }
         });

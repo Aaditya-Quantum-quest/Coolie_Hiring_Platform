@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Clock, Navigation, Star, ArrowLeft, ChevronRight, Phone, Mail, Store, CreditCard } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || '';
+import { getAssetUrl } from '../../utils/assets';
 
 export default function BusinessDetail() {
     const { businessId } = useParams();
@@ -12,6 +12,7 @@ export default function BusinessDetail() {
     const [tab, setTab] = useState('overview');
 
     useEffect(() => {
+        const API = import.meta.env.VITE_API_URL || '';
         fetch(`${API}/api/v1/public/businesses/${businessId}`)
             .then(r => r.json())
             .then(d => { if (d.success) setData(d); })
@@ -68,7 +69,7 @@ export default function BusinessDetail() {
             {/* Hero */}
             <div className="relative h-[45vh] md:h-[55vh] bg-[#12102A] overflow-hidden">
                 {business.cover_photo_url ? (
-                    <img src={`${API}${business.cover_photo_url}`} alt={business.business_name} className="w-full h-full object-cover opacity-80" />
+                    <img src={getAssetUrl(business.cover_photo_url)} alt={business.business_name} className="w-full h-full object-cover opacity-80" />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-[#12102A]">
                         <span className="text-8xl md:text-9xl opacity-20 drop-shadow-2xl">{isRestaurant ? '🍽️' : '🏨'}</span>
@@ -210,7 +211,7 @@ export default function BusinessDetail() {
 
                                     <div className="h-40 bg-slate-800 relative overflow-hidden">
                                         {d.photo_url ? (
-                                            <img src={`${API}${d.photo_url}`} alt={d.dish_name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                            <img src={getAssetUrl(d.photo_url)} alt={d.dish_name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-4xl opacity-10">🍲</div>
                                         )}
@@ -243,7 +244,7 @@ export default function BusinessDetail() {
                                 <div key={r.id} className="bg-[#12102A] rounded-3xl border border-[#1E1A40] overflow-hidden group hover:border-orange-500/30 transition-colors">
                                     <div className="h-48 bg-slate-800 relative overflow-hidden">
                                         {r.photos?.length > 0 ? (
-                                            <img src={`${API}${r.photos[0]}`} alt={r.room_type} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                                            <img src={getAssetUrl(r.photos[0])} alt={r.room_type} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-5xl opacity-10">🏨</div>
                                         )}

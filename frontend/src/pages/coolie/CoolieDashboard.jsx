@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import axios from 'axios'
 import Sidebar from '../../components/Sidebar'
 import {
     CheckCircle, XCircle, Clock, Star, Package,
@@ -107,8 +108,25 @@ function RequestCard({ req, onAccept, onReject }) {
 
 /* ── Active Job Card ─────────────────────────────────────────── */
 function ActiveJobCard({ job, onComplete }) {
+    const [arrived, setArrived] = useState(false)
+    const [markingArrival, setMarkingArrival] = useState(false)
     const [otp, setOtp] = useState('')
     const [otpVerified, setOtpVerified] = useState(false)
+
+    const handleMarkArrived = async () => {
+        setMarkingArrival(true)
+        try {
+            await axios.post(`/api/bookings/${job.id}/confirm-arrival`, {}, { withCredentials: true })
+            setArrived(true)
+            toast.success('✅ Arrival confirmed! Waiting for customer to verify OTP...')
+        } catch (error) {
+            console.error('Error confirming arrival:', error)
+            toast.error('Failed to confirm arrival. Please try again.')
+        } finally {
+            setMarkingArrival(false)
+        }
+    }
+
     const verifyOtp = async () => {
         if (otp === String(job.otp)) { 
             try {
@@ -125,10 +143,12 @@ function ActiveJobCard({ job, onComplete }) {
     }
 
     return (
-        <div className="bg-[#0E0C1E] border border-red-500/40 rounded-2xl p-4">
+        <div className={`bg-[#0E0C1E] border rounded-2xl p-4 ${arrived ? 'border-green-500/40' : 'border-red-500/40'}`}>
             <div className="flex items-center gap-2 mb-3">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-red-400 text-xs font-bold uppercase tracking-wider">On Duty</span>
+                <span className={`w-2 h-2 rounded-full animate-pulse ${arrived ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className={`text-xs font-bold uppercase tracking-wider ${arrived ? 'text-green-400' : 'text-red-400'}`}>
+                    {arrived ? (otpVerified ? 'In Progress' : 'Arrived — Awaiting OTP') : 'On Duty'}
+                </span>
                 <span className="text-[#6B6188] text-xs font-mono ml-1">{job.id}</span>
             </div>
             <div className="flex items-center gap-3 mb-3">
@@ -139,16 +159,33 @@ function ActiveJobCard({ job, onComplete }) {
                 </div>
                 <p className="text-green-400 font-black text-xl">₹{job.price}</p>
             </div>
-            {!otpVerified ? (
+
+            {/* Step 1: Mark Arrival */}
+            {!arrived && (
+                <button
+                    onClick={handleMarkArrived}
+                    disabled={markingArrival}
+                    className="w-full py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                    {markingArrival ? '⏳ Confirming...' : '📍 I Have Arrived at Customer Location'}
+                </button>
+            )}
+
+            {/* Step 2: Wait for or enter OTP */}
+            {arrived && !otpVerified && (
                 <div className="bg-[#7B2FFF]/10 border border-[#7B2FFF]/30 rounded-xl p-3">
-                    <p className="text-[#A855F7] text-xs font-semibold mb-2">🔑 Enter OTP from Customer</p>
+                    <p className="text-[#A855F7] text-xs font-semibold mb-1">⏳ Waiting for Customer OTP</p>
+                    <p className="text-[#6B6188] text-[11px] mb-2">Customer will enter their OTP. You may also verify below.</p>
                     <div className="flex gap-2">
                         <input maxLength={4} className="flex-1 bg-[#12102A] border border-[#1E1A40] rounded-lg px-3 py-2 text-white text-center font-mono tracking-widest outline-none focus:border-[#7B2FFF]"
                             placeholder="- - - -" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))} />
                         <button onClick={verifyOtp} className="px-4 rounded-lg bg-[#7B2FFF] text-white font-bold text-sm hover:bg-[#5B1FCC]">Verify</button>
                     </div>
                 </div>
-            ) : (
+            )}
+
+            {/* Step 3: Mark Complete */}
+            {otpVerified && (
                 <div className="space-y-2">
                     <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-2.5 flex items-center gap-2 text-green-400 text-sm">
                         <CheckCircle size={14} /> OTP Verified — Job in progress!

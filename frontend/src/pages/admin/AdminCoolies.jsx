@@ -3,9 +3,10 @@ import Sidebar from '../../components/Sidebar'
 import {
     Search, UserX, UserCheck, Eye, Shield, Star, Download,
     CheckCircle, MapPin, X, Award, Filter, ChevronDown, ChevronUp,
-    Phone, Calendar, Activity, Mail, User, Zap, Building2, Landmark, CreditCard
+    Phone, Calendar, Activity, Mail, User, Zap, Building2, Landmark, CreditCard, Trash2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { getAssetUrl } from '../../utils/assets';
 import { adminUsersService } from '../../services/adminService'
 import { useApp } from '../../context/AppContext'
 
@@ -28,7 +29,7 @@ const STATUS_LABEL = {
 }
 
 /* ─── Compact mobile card ─── */
-function CoolieCard({ c, onView, onVerifyKYC, onFinalApprove, onToggleSuspend, adminRole }) {
+function CoolieCard({ c, onView, onVerifyKYC, onFinalApprove, onToggleSuspend, onDelete, adminRole }) {
     const [expanded, setExpanded] = useState(false)
     return (
         <div className="card mb-3 overflow-hidden">
@@ -106,6 +107,15 @@ function CoolieCard({ c, onView, onVerifyKYC, onFinalApprove, onToggleSuspend, a
                             className={`flex-1 min-w-[80px] py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 ${c.status === 'suspended' ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}
                         >
                             {c.status === 'suspended' ? <><UserCheck size={13} /> Reinstate</> : <><UserX size={13} /> Suspend</>}
+                        </button>
+                    )}
+
+                    {adminRole === 'super_admin' && (
+                        <button
+                            onClick={() => onDelete(c)}
+                            className="flex-1 min-w-[80px] py-2 rounded-xl bg-red-500 text-white text-xs font-semibold flex items-center justify-center gap-1 hover:bg-red-600"
+                        >
+                            <Trash2 size={13} /> Delete
                         </button>
                     )}
                 </div>
@@ -221,6 +231,21 @@ export default function AdminCoolies() {
         }
     }
 
+    const handleDeleteCoolie = async (c) => {
+        if (!window.confirm(`🚨 DANGER: Are you sure you want to PERMANENTLY delete coolie "${c.name}"? This will remove all their bookings, XP, and history. This action cannot be undone.`)) return
+        
+        try {
+            const res = await adminUsersService.deleteCoolie(c.dbId)
+            if (res.success) {
+                toast.success(res.message)
+                setSelected(null)
+                fetchCoolies()
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to delete coolie')
+        }
+    }
+
     const filterTabs = ['all', 'active', 'suspended', 'pending', 'level1_approved']
 
     return (
@@ -314,6 +339,7 @@ export default function AdminCoolies() {
                                     onVerifyKYC={verifyKYC}
                                     onFinalApprove={finalApprove}
                                     onToggleSuspend={toggleSuspend}
+                                    onDelete={handleDeleteCoolie}
                                     adminRole={adminRole}
                                 />
                             ))
@@ -451,6 +477,16 @@ export default function AdminCoolies() {
                                                                 {c.status === 'suspended' ? <UserCheck size={14} /> : <UserX size={14} />}
                                                             </button>
                                                         )}
+
+                                                        {adminRole === 'super_admin' && (
+                                                            <button
+                                                                onClick={() => handleDeleteCoolie(c)}
+                                                                className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500/20"
+                                                                title="PERMANENT DELETE"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -543,7 +579,7 @@ export default function AdminCoolies() {
                                                         <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{doc.label}</p>
                                                         <a href={doc.url} target="_blank" rel="noopener noreferrer" className="block group">
                                                             <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-800 border border-slate-700 group-hover:border-orange-500/50 transition-all">
-                                                                <img src={doc.url} alt={doc.label} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                                <img src={getAssetUrl(doc.url)} alt={doc.label} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                                             </div>
                                                         </a>
                                                     </div>
@@ -581,6 +617,15 @@ export default function AdminCoolies() {
                                             ? <><UserCheck size={14} /> Reinstate</>
                                             : <><UserX size={14} /> Suspend</>}
                                     </button>
+
+                                    {adminRole === 'super_admin' && (
+                                        <button
+                                            onClick={() => handleDeleteCoolie(selected)}
+                                            className="btn-danger text-sm py-2.5 flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-700 text-white"
+                                        >
+                                            <Trash2 size={14} /> Permanent Delete
+                                        </button>
+                                    )}
 
                                     <button
                                         onClick={() => setSelected(null)}

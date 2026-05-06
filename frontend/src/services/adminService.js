@@ -194,6 +194,28 @@ export const adminUsersService = {
       throw error;
     }
   },
+
+  // Delete customer (Super Admin only)
+  deleteCustomer: async (customerId) => {
+    try {
+      const response = await api.delete(`/admin/customers/${customerId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      throw error;
+    }
+  },
+
+  // Delete coolie (Super Admin only)
+  deleteCoolie: async (coolieId) => {
+    try {
+      const response = await api.delete(`/admin/coolies/${coolieId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting coolie:', error);
+      throw error;
+    }
+  },
 };
 
 // Admin Bookings Service
@@ -379,6 +401,17 @@ export const adminBusinessesService = {
       return response.data;
     } catch (error) {
       console.error('Error rejecting business:', error);
+      throw error;
+    }
+  },
+
+  // Delete business (Super Admin only)
+  deleteBusiness: async (businessId) => {
+    try {
+      const response = await api.delete(`/admin/businesses/${businessId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting business:', error);
       throw error;
     }
   },

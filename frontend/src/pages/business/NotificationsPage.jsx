@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import BusinessLayout from '../../components/business/BusinessLayout';
 import { useBusinessAuth } from '../../context/BusinessAuthContext';
+import { Bell, CheckCircle2 } from 'lucide-react';
 
 export default function NotificationsPage() {
     const { authFetch } = useBusinessAuth();
@@ -27,28 +28,32 @@ export default function NotificationsPage() {
     return (
         <BusinessLayout>
             <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold text-[#0b1c30]">Notifications</h1>
+                <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Notifications</h1>
                 {notifications.some(n => !n.is_read) && (
-                    <button onClick={markAll} className="text-sm text-[#00288E] font-semibold hover:underline">Mark all as read</button>
+                    <button onClick={markAll} className="text-sm font-semibold hover:underline" style={{ color: '#7B2FFF' }}>Mark all as read</button>
                 )}
             </div>
 
             {loading ? (
-                <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-[#00288E] border-t-transparent rounded-full animate-spin" /></div>
+                <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-[#7B2FFF] border-t-transparent rounded-full animate-spin" /></div>
             ) : notifications.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[#E5EEFF] text-center py-20">
-                    <p className="text-4xl mb-3">🔔</p>
-                    <p className="text-[#0b1c30] font-semibold">No notifications yet</p>
+                <div className="rounded-xl text-center py-20" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
+                    <Bell size={48} className="mx-auto mb-4 text-[#7B2FFF] opacity-20" />
+                    <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>No notifications yet</p>
                 </div>
             ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {notifications.map(n => (
                         <div key={n.id} onClick={() => !n.is_read && markRead(n.id)}
-                            className={`bg-white rounded-xl border shadow-sm p-4 flex gap-4 cursor-pointer transition-all hover:shadow-md ${!n.is_read ? 'border-[#00288E]/30 bg-[#EFF4FF]' : 'border-[#E5EEFF]'}`}>
-                            <div className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-[#00288E]' : 'bg-[#C4C5D5]'}`} />
+                            className={`rounded-xl border shadow-sm p-4 flex gap-4 cursor-pointer transition-all hover:scale-[1.01] ${!n.is_read ? 'border-[#7B2FFF]/30' : ''}`}
+                            style={{ 
+                                backgroundColor: !n.is_read ? 'rgba(123, 47, 255, 0.1)' : 'var(--bg-card)',
+                                borderColor: !n.is_read ? 'rgba(123, 47, 255, 0.3)' : 'var(--border-color)'
+                            }}>
+                            <div className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${!n.is_read ? 'bg-[#7B2FFF]' : 'bg-[#6B6188]'}`} />
                             <div className="flex-1">
-                                <p className="text-sm text-[#0b1c30]">{n.message}</p>
-                                <p className="text-[11px] text-[#757684] mt-1">{new Date(n.created_at).toLocaleString()}</p>
+                                <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{n.message}</p>
+                                <p className="text-[11px] mt-1" style={{ color: 'var(--text-body)' }}>{new Date(n.created_at).toLocaleString()}</p>
                             </div>
                         </div>
                     ))}

@@ -487,6 +487,24 @@ CREATE TABLE IF NOT EXISTS price_tiers (
 );
 
 -- ============================================================
+-- PASSWORD RESET TOKENS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id              SERIAL PRIMARY KEY,
+    email           VARCHAR(150) NOT NULL,
+    token           VARCHAR(255) NOT NULL UNIQUE,
+    expires_at      TIMESTAMPTZ NOT NULL,
+    is_used         BOOLEAN DEFAULT FALSE,
+    user_type       VARCHAR(20) NOT NULL CHECK (user_type IN ('customer', 'coolie')),
+    created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_password_reset_email ON password_reset_tokens(email);
+CREATE INDEX IF NOT EXISTS idx_password_reset_token ON password_reset_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_password_reset_expires ON password_reset_tokens(expires_at);
+
+-- ============================================================
 -- FESTIVAL SURGES TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS festival_surges (

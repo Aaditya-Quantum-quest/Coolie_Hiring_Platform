@@ -77,10 +77,9 @@ export default function BusinessSidebar() {
                         to={to}
                         onClick={() => setOpen(false)}
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm font-medium transition-all ${
-                                isActive
-                                    ? 'text-white'
-                                    : 'hover:text-white'
+                            `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm font-medium transition-all ${isActive
+                                ? 'text-white'
+                                : 'hover:text-white'
                             }`
                         }
                         style={({ isActive }) => ({
@@ -96,15 +95,6 @@ export default function BusinessSidebar() {
 
             {/* Footer */}
             <div className="p-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
-                <button
-                    onClick={() => window.open(`/business/${business?.id}`, '_blank')}
-                    className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-colors mb-2"
-                    style={{ border: '1px solid rgba(123, 47, 255, 0.5)', color: '#7B2FFF' }}
-                    onMouseEnter={e => { e.target.style.backgroundColor = 'rgba(123, 47, 255, 0.1)'; }}
-                    onMouseLeave={e => { e.target.style.backgroundColor = 'transparent'; }}
-                >
-                    <ExternalLink size={12} /> View Public Profile
-                </button>
                 <button
                     onClick={handleLogout}
                     className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-colors"

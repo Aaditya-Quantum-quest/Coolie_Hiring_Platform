@@ -2,14 +2,16 @@ import React, { useEffect, useState } from 'react';
 import BusinessLayout from '../../components/business/BusinessLayout';
 import { useBusinessAuth } from '../../context/BusinessAuthContext';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Hand, Utensils, Bed, MessageSquare, Star, Eye, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 
 const COLORS = ['#7B2FFF', '#A855F7', '#22c55e', '#ef4444', '#06b6d4', '#eab308'];
 
 const StatCard = ({ icon, label, value, trend }) => (
     <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
         <div className="flex items-start justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ backgroundColor: 'var(--bg-card2)' }}>{icon}</div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ backgroundColor: 'var(--bg-card2)' }}>
+                {icon}
+            </div>
             {trend !== undefined && (
                 <span className={`flex items-center gap-1 text-xs font-semibold ${trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                     {trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}{Math.abs(trend)}%
@@ -49,23 +51,26 @@ export default function OwnerDashboard() {
             {/* Greeting */}
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Welcome back, {owner?.full_name?.split(' ')[0]} 👋</h1>
+                    <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                        Welcome back, {owner?.full_name?.split(' ')[0]} <Hand size={24} className="text-yellow-400" />
+                    </h1>
                     <p className="mt-1" style={{ color: 'var(--text-body)' }}>Here's what's happening at {business?.name} today.</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${
                     business?.status === 'approved' ? 'bg-green-500/20 text-green-400' :
                     business?.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'
                 }`}>
-                    {business?.status === 'approved' ? '✅ Approved' : business?.status === 'pending' ? '⏳ Pending' : '❌ Rejected'}
+                    {business?.status === 'approved' ? <CheckCircle2 size={12}/> : business?.status === 'pending' ? <Clock size={12}/> : <AlertCircle size={12}/>}
+                    {business?.status?.toUpperCase()}
                 </span>
             </div>
 
             {/* Stat Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <StatCard icon={isRestaurant ? '🍽️' : '🛏️'} label={isRestaurant ? 'Total Dishes' : 'Room Types'} value={isRestaurant ? stats.total_dishes ?? 0 : stats.total_room_types ?? 0} trend={0} />
-                <StatCard icon="📝" label="Total Reviews" value={stats.total_reviews ?? 0} trend={12} />
-                <StatCard icon="⭐" label="Average Rating" value={stats.avg_rating ?? '0.0'} trend={0.2} />
-                <StatCard icon="👁️" label="Profile Views" value={stats.profile_views >= 1000 ? `${(stats.profile_views / 1000).toFixed(1)}k` : stats.profile_views ?? 0} trend={-3} />
+                <StatCard icon={isRestaurant ? <Utensils size={20} className="text-[#7B2FFF]" /> : <Bed size={20} className="text-[#7B2FFF]" />} label={isRestaurant ? 'Total Dishes' : 'Room Types'} value={isRestaurant ? stats.total_dishes ?? 0 : stats.total_room_types ?? 0} trend={0} />
+                <StatCard icon={<MessageSquare size={20} className="text-[#7B2FFF]" />} label="Total Reviews" value={stats.total_reviews ?? 0} trend={12} />
+                <StatCard icon={<Star size={20} className="text-[#7B2FFF]" />} label="Average Rating" value={stats.avg_rating ?? '0.0'} trend={0.2} />
+                <StatCard icon={<Eye size={20} className="text-[#7B2FFF]" />} label="Profile Views" value={stats.profile_views >= 1000 ? `${(stats.profile_views / 1000).toFixed(1)}k` : stats.profile_views ?? 0} trend={-3} />
             </div>
 
             {/* Charts */}
